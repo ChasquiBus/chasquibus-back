@@ -20,7 +20,6 @@ export const DRIZZLE = 'DRIZZLE';
           password: configService.get<string>('DB_PASSWORD'),
           database: configService.get<string>('DB_DATABASE'),
         });
-
         return drizzle(pool, { schema }); 
       },
     },
