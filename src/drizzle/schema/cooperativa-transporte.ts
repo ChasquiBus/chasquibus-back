@@ -4,7 +4,7 @@ import { boolean, pgTable, serial, timestamp, varchar } from "drizzle-orm/pg-cor
 export const cooperativaTransporte = pgTable('cooperativa_transporte', {
   id: serial('id').primaryKey(),
   nombre: varchar('nombre', { length: 100 }),
-  logo: varchar('logo', { length: 50 }),
+  logo: varchar('logo', { length: 100 }),
   colorPrimario: varchar('color_primario', { length: 20 }),
   colorSecundario: varchar('color_secundario', { length: 20 }),
   email: varchar('email', { length: 100 }),
