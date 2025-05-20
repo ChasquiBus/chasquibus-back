@@ -1,4 +1,4 @@
-import { boolean, date, integer, pgTable, serial, timestamp, varchar } from "drizzle-orm/pg-core";
+import {  date, integer, pgTable, serial, timestamp, varchar } from "drizzle-orm/pg-core";
 import { usuarios } from "./usuarios";
 
 export const choferes = pgTable("choferes", {

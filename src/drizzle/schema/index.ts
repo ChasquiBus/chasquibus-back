@@ -1,3 +1,4 @@
+import { choferes } from './choferes';
 import { clientes } from './clientes';
 import { cooperativaTransporte } from './cooperativa-transporte';
 import { usuarioCooperativa } from './usuario-cooperativa';
@@ -7,5 +8,6 @@ export const schema = {
   usuarios,
   clientes,
   usuarioCooperativa,
-  cooperativaTransporte
+  cooperativaTransporte,
+  choferes
 };
