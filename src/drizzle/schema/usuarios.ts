@@ -9,7 +9,7 @@ export const usuarios = pgTable("usuarios", {
   cedula: varchar("cedula", { length: 20 }).notNull().unique(),
   telefono: varchar("telefono", { length: 20 }),
   activo: boolean("activo").default(true),
-  rol: integer("rol").notNull(),
+  rol: integer("rol").notNull(), //1=Admin, 2=Oficinista, 3=Chofer, 4=Cliente, 5=Superadmin
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
   deletedAt: timestamp("deleted_at"),
