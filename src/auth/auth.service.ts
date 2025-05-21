@@ -20,15 +20,12 @@ export class AuthService {
   ) {}
 
   async login(dto: LoginDto) {
-    const user = await this.findUserByEmail(dto.email);
-    if (!user) throw new UnauthorizedException('Credenciales inválidas');
+  const user = await this.findUserByEmail(dto.email);
+  if (!user) throw new UnauthorizedException('Credenciales inválidas');
 
-    // const valid = await bcrypt.compare(dto.password, user.passwordHash);
-    // if (!valid) throw new UnauthorizedException('Credenciales inválidas');
-
-    if (dto.password !== user.passwordHash) {
-    throw new UnauthorizedException('Credenciales inválidas');
-  }
+  // Esta es la única comparación que necesitas
+  const valid = await bcrypt.compare(dto.password, user.passwordHash);
+  if (!valid) throw new UnauthorizedException('Credenciales inválidas');
 
 
     const payload = {
