@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import { schema } from './schema';
+import type { Database } from './database'; 
 
 export const DRIZZLE = 'DRIZZLE';
 
@@ -12,7 +13,7 @@ export const DRIZZLE = 'DRIZZLE';
     {
       provide: DRIZZLE,
       inject: [ConfigService],
-      useFactory: async (configService: ConfigService) => {
+      useFactory: async (configService: ConfigService): Promise<Database> => {
         const pool = new Pool({
           host: configService.get<string>('DB_HOST'),
           port: configService.get<number>('DB_PORT'),
@@ -20,7 +21,7 @@ export const DRIZZLE = 'DRIZZLE';
           password: configService.get<string>('DB_PASSWORD'),
           database: configService.get<string>('DB_DATABASE'),
         });
-        return drizzle(pool, { schema }); 
+        return drizzle(pool, { schema });
       },
     },
   ],

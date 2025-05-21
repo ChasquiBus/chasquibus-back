@@ -1,0 +1,1 @@
+ALTER TABLE "cooperativa_transporte" ALTER COLUMN "ruc" DROP NOT NULL;
