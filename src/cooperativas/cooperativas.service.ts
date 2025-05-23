@@ -38,7 +38,7 @@ export class CooperativasService {
   remove(id: number) {
     return db
       .update(cooperativaTransporte)
-      .set({ activo: false })
+      .set({ activo: false, deletedAt: new Date() })
       .where(eq(cooperativaTransporte.id, id))
       .returning();
   }

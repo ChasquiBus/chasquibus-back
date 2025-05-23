@@ -4,8 +4,6 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
-  IsUrl,
-  Length,
   Matches,
 } from 'class-validator';
 
@@ -23,11 +21,9 @@ export class CreateCooperativaDto {
   logo?: string;
 
   @IsOptional()
-  @Matches(/^#([0-9A-Fa-f]{6})$/)
   colorPrimario?: string;
 
   @IsOptional()
-  @Matches(/^#([0-9A-Fa-f]{6})$/)
   colorSecundario?: string;
 
   @IsOptional()

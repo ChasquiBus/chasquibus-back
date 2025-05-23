@@ -23,5 +23,4 @@ export class LoginResponseDto {
   access_token: string;
   @ApiProperty({ example: '1', description: 'Rol: 1=Admin, 2=Oficinista, 3=Chofer, 4=Cliente, 5=Superadministrador' })
   rol: string;
-
 }
