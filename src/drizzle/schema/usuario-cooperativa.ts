@@ -4,7 +4,6 @@ import { cooperativaTransporte } from './cooperativa-transporte';
 
 export const usuarioCooperativa = pgTable('usuario_cooperativa', {
   id: serial("id").primaryKey(),
-  cooperativaTransporteId: integer("cooperativa_transporte_id").references(() => cooperativaTransporte.id),
-  usuarioId: integer("usuario_id").notNull().references(() => usuarios.id),
- // 1 Admin 2 Oficinista
+  cooperativaTransporteId: integer("cooperativa_transporte_id").notNull().references(() => cooperativaTransporte.id),
+  usuarioId: integer("usuario_id").notNull().references(() => usuarios.id).unique(),
 });

@@ -1,0 +1,167 @@
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { db } from '../drizzle/database';
+import { usuarios } from '../drizzle/schema/usuarios';
+import { usuarioCooperativa } from '../drizzle/schema/usuario-cooperativa';
+import { CreateAdminDto } from './dto/create-admin.dto';
+import { hash } from 'bcrypt';
+import { and, eq, isNull } from 'drizzle-orm';
+import { RolUsuario } from '../auth/roles.enum';
+import { UpdateAdminDto } from './dto/update-admin.dto';
+import { UsuarioCooperativaEntity } from './entities/admin-cooperativa.entity';
+
+@Injectable()
+export class AdminCooperativasService {
+  async create(dto: CreateAdminDto) {
+    const passwordHash = await hash(dto.password, 10);
+    const [usuario] = await db
+      .insert(usuarios)
+      .values({
+        nombre: dto.nombre,
+        apellido: dto.apellido,
+        cedula: dto.cedula,
+        telefono: dto.telefono,
+        email: dto.email,
+        passwordHash,
+        rol: RolUsuario.ADMIN,
+      })
+      .returning();
+
+    await db.insert(usuarioCooperativa).values({
+      cooperativaTransporteId: dto.cooperativaTransporteId,
+      usuarioId: usuario.id,
+    });
+
+    return usuario;
+  }
+  async findAll(): Promise<UsuarioCooperativaEntity[]> {
+    return db
+      .select({
+        id: usuarioCooperativa.id,
+        cooperativaTransporteId: usuarioCooperativa.cooperativaTransporteId,
+        usuario: {
+          id: usuarios.id,
+          email: usuarios.email,
+          nombre: usuarios.nombre,
+          apellido: usuarios.apellido,
+          cedula: usuarios.cedula,
+          telefono: usuarios.telefono,
+          activo: usuarios.activo,
+          rol: usuarios.rol,
+          createdAt: usuarios.createdAt,
+          updatedAt: usuarios.updatedAt,
+          deletedAt: usuarios.deletedAt,
+        },
+      })
+      .from(usuarioCooperativa)
+      .innerJoin(usuarios, eq(usuarioCooperativa.usuarioId, usuarios.id))
+      .where(isNull(usuarios.deletedAt));
+  }
+
+  async findOne(id: number): Promise<UsuarioCooperativaEntity> {
+    const [result] = await db
+      .select({
+        id: usuarioCooperativa.id,
+        cooperativaTransporteId: usuarioCooperativa.cooperativaTransporteId,
+        usuario: {
+          id: usuarios.id,
+          email: usuarios.email,
+          nombre: usuarios.nombre,
+          apellido: usuarios.apellido,
+          cedula: usuarios.cedula,
+          telefono: usuarios.telefono,
+          activo: usuarios.activo,
+          rol: usuarios.rol,
+          createdAt: usuarios.createdAt,
+          updatedAt: usuarios.updatedAt,
+          deletedAt: usuarios.deletedAt,
+        },
+      })
+      .from(usuarioCooperativa)
+      .innerJoin(usuarios, eq(usuarioCooperativa.usuarioId, usuarios.id))
+      .where(and(eq(usuarioCooperativa.id, id), isNull(usuarios.deletedAt)))
+      .limit(1);
+
+    if (!result) {
+      throw new NotFoundException(`Administrador con ID ${id} no encontrado.`);
+    }
+
+    return result;
+  }
+  //--
+  async update(id: number, dto: UpdateAdminDto) {
+    const existingUser = await db
+      .select()
+      .from(usuarios)
+      .where(eq(usuarios.id, id))
+      .limit(1);
+
+    if (existingUser.length === 0) {
+      throw new NotFoundException(`Usuario con ID ${id} no encontrado.`);
+    }
+
+    const updateData: Partial<typeof usuarios.$inferInsert> = {};
+
+    if (dto.nombre !== undefined) updateData.nombre = dto.nombre;
+    if (dto.apellido !== undefined) updateData.apellido = dto.apellido;
+    if (dto.cedula !== undefined) updateData.cedula = dto.cedula;
+    if (dto.telefono !== undefined) updateData.telefono = dto.telefono;
+    if (dto.email !== undefined) updateData.email = dto.email;
+    if (dto.activo !== undefined) updateData.activo = dto.activo;
+
+    if (dto.password !== undefined && dto.password.length > 0) {
+      updateData.passwordHash = await hash(dto.password, 10);
+    }
+
+    updateData.updatedAt = new Date();
+    // -------------------------------------------------------------------------
+
+    if (
+      Object.keys(updateData).length === 0 &&
+      dto.cooperativaTransporteId === undefined
+    ) {
+      // Si la única actualización era updatedAt, y no había otros datos,
+      // esto aún lanzaría un error. Podrías ajustar esta lógica si quieres
+      // permitir un "toque" sin datos, pero generalmente no es el caso de uso.
+      throw new BadRequestException(
+        'No se proporcionaron datos para actualizar.',
+      );
+    }
+
+    const [updatedUser] = await db
+      .update(usuarios)
+      .set(updateData)
+      .where(eq(usuarios.id, id))
+      .returning();
+
+    if (dto.cooperativaTransporteId !== undefined) {
+      await db
+        .insert(usuarioCooperativa)
+        .values({
+          usuarioId: id,
+          cooperativaTransporteId: dto.cooperativaTransporteId,
+        })
+        .onConflictDoUpdate({
+            target: usuarioCooperativa.usuarioId, 
+          set: { cooperativaTransporteId: dto.cooperativaTransporteId },
+        });
+    }
+
+    return updatedUser;
+  }
+
+  remove(id: number) {
+    // --- ¡NUEVO! Actualizar 'activo' a false y 'deletedAt' a la fecha y hora actuales ---
+    return db
+      .update(usuarios)
+      .set({
+        activo: false,
+        deletedAt: new Date(), // Establece la fecha de eliminación lógica
+      })
+      .where(eq(usuarios.id, id))
+      .returning();
+  }
+}

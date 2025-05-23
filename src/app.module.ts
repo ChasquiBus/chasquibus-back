@@ -3,6 +3,8 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
+import { CooperativasModule } from './cooperativas/cooperativas.module';
+import { AdminCooperativasModule } from './admin-cooperativas/admin-cooperativas.module';
 
 
 @Module({
@@ -11,6 +13,8 @@ import { AuthModule } from './auth/auth.module';
       isGlobal: true,
     }),
     AuthModule,
+    CooperativasModule,
+    AdminCooperativasModule,
     
   ],
   controllers: [AppController],
