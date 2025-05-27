@@ -1,4 +1,4 @@
-import { IsBoolean, IsEmail, IsNotEmpty, IsNumber, IsOptional, IsPositive, IsString, Matches, MaxLength, MinLength } from "class-validator";
+import {IsNotEmpty, IsNumber,  IsPositive} from "class-validator";
 import { CreateUserDto } from "common/dto/create.usuario";
 
 export class CreateAdminDto extends CreateUserDto{
