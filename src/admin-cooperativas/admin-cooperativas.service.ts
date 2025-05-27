@@ -4,13 +4,13 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { db } from '../drizzle/database';
-import { usuarios } from '../drizzle/schema/usuarios';
 import { usuarioCooperativa } from '../drizzle/schema/usuario-cooperativa';
 import { CreateAdminDto } from './dto/create-admin.dto';
 import { hash } from 'bcrypt';
 import { and, eq, isNull } from 'drizzle-orm';
 import { RolUsuario } from '../auth/roles.enum';
 import { UpdateAdminDto } from './dto/update-admin.dto';
+import { usuarios } from '../drizzle/schema/usuarios';
 import { UsuarioCooperativaEntity } from './entities/admin-cooperativa.entity';
 
 @Injectable()
