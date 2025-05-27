@@ -5,6 +5,7 @@ import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
 import { CooperativasModule } from './cooperativas/cooperativas.module';
 import { AdminCooperativasModule } from './admin-cooperativas/admin-cooperativas.module';
+import { BusesModule } from './buses/buses.module';
 
 
 @Module({
@@ -15,6 +16,7 @@ import { AdminCooperativasModule } from './admin-cooperativas/admin-cooperativas
     AuthModule,
     CooperativasModule,
     AdminCooperativasModule,
+    BusesModule,
     
   ],
   controllers: [AppController],
