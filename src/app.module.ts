@@ -5,6 +5,8 @@ import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
 import { CooperativasModule } from './cooperativas/cooperativas.module';
 import { AdminCooperativasModule } from './admin-cooperativas/admin-cooperativas.module';
+import { ClientesController } from './clientes/clientes.controller';
+import { ClientesModule } from './clientes/clientes.module';
 
 
 @Module({
@@ -15,9 +17,10 @@ import { AdminCooperativasModule } from './admin-cooperativas/admin-cooperativas
     AuthModule,
     CooperativasModule,
     AdminCooperativasModule,
+    ClientesModule,
     
   ],
-  controllers: [AppController],
+  controllers: [AppController, ClientesController],
   providers: [AppService],
 })
 export class AppModule {}
