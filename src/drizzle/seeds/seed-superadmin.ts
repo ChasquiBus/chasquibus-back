@@ -11,9 +11,14 @@ async function seedSuperadmins() {
     SUPERADMIN_EMAIL_1,
     SUPERADMIN_PASSWORD_1,
     SUPERADMIN_CEDULA_1,
+    SUPERADMIN_TELEFONO_1,
+    SUPERADMIN_NOMBRE_1,
+    SUPERADMIN_APELLIDO_1,
   } = process.env;
 
-  if (!SUPERADMIN_EMAIL_1 || !SUPERADMIN_PASSWORD_1 || !SUPERADMIN_CEDULA_1) {
+  if (!SUPERADMIN_EMAIL_1 || !SUPERADMIN_PASSWORD_1 || !SUPERADMIN_CEDULA_1|| !SUPERADMIN_TELEFONO_1 
+    || !SUPERADMIN_NOMBRE_1 || !SUPERADMIN_APELLIDO_1
+  ) {
     throw new Error('❌ Faltan variables de entorno para el superadmin');
   }
 
@@ -22,9 +27,9 @@ async function seedSuperadmins() {
       email: SUPERADMIN_EMAIL_1,
       cedula: SUPERADMIN_CEDULA_1,
       password: SUPERADMIN_PASSWORD_1,
-      telefono: '0954623289',
-      nombre: 'Javier',
-      apellido: 'Fiallos',
+      telefono: SUPERADMIN_TELEFONO_1,
+      nombre: SUPERADMIN_NOMBRE_1,
+      apellido: SUPERADMIN_APELLIDO_1,
     },
   ];
 
