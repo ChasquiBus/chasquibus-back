@@ -18,7 +18,7 @@ export class CreateClienteDto extends CreateUserDto {
   })
   @IsBoolean({ message: 'El campo esDiscapacitado debe ser un valor booleano.' })
   @IsOptional()
-  esDiscapacitado?: boolean = false;
+    esDiscapacitado?: boolean | null = null;
 
   @ApiPropertyOptional({
     description: 'Porcentaje de discapacidad (0 a 100)',
