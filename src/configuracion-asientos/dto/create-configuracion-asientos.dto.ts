@@ -6,7 +6,7 @@ export class CreateConfiguracionAsientosDto {
 
   @IsString()
   tipoAsiento: string;
-
+//tener presente que el tipo de dato precioBase esta como string y no decimal ojo 
   @IsNumber()
   cantidad: number;
 
