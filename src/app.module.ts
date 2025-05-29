@@ -7,6 +7,7 @@ import { CooperativasModule } from './cooperativas/cooperativas.module';
 import { AdminCooperativasModule } from './admin-cooperativas/admin-cooperativas.module';
 import { ClientesController } from './clientes/clientes.controller';
 import { ClientesModule } from './clientes/clientes.module';
+import { BusesModule } from './buses/buses.module';
 
 
 @Module({
@@ -18,6 +19,8 @@ import { ClientesModule } from './clientes/clientes.module';
     CooperativasModule,
     AdminCooperativasModule,
     ClientesModule,
+    BusesModule,
+
     
   ],
   controllers: [AppController, ClientesController],
