@@ -13,7 +13,7 @@ import { ClienteEntity } from './entities/cliente.entity'; // Asegúrate de que 
 @ApiTags('clientes')
 @ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA, RolUsuario.CLIENTE) // Define qué roles pueden acceder a estas rutas
+@Role(RolUsuario.ADMIN)
 export class ClientesController {
   constructor(private readonly clientesService: ClientesService) {}
 
