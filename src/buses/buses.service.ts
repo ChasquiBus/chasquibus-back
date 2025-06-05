@@ -24,7 +24,7 @@ export class BusesService {
   async update(id: number, updateBusDto: UpdateBusDto) {
     return await db.update(buses).set(updateBusDto).where(eq(buses.id, id)).returning();
   }
-
+//identifica el numero de bus 
   async remove(id: number) {
     return await db.delete(buses).where(eq(buses.id, id)).returning();
   }
