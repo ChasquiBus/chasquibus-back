@@ -28,4 +28,5 @@ export class BusesService {
   async remove(id: number) {
     return await db.delete(buses).where(eq(buses.id, id)).returning();
   }
+  //codigo documentado 
 }
