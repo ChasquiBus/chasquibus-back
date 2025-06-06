@@ -16,17 +16,9 @@ import { ClienteEntity } from './entities/cliente.entity'; // Asegúrate de que 
 export class ClientesController {
   constructor(private readonly clientesService: ClientesService) {}
 
-  @Post()
-  @Role(RolUsuario.CLIENTE) // Solo el Cliente tiene la capacidad de crear 
-  @ApiOperation({ summary: 'Crea un nuevo cliente' })
-  @ApiOkResponse({ type: ClienteEntity }) // Se asume que CreateClienteDto o el retorno de create() mapea a ClienteEntity
-  @Role(RolUsuario.SUPERADMIN) // Opcional: Define un rol específico para la creación si es diferente
-  create(@Body() createClienteDto: CreateClienteDto) {
-    return this.clientesService.create(createClienteDto);
-  }
 
   @Get()
-  @Role(RolUsuario.CLIENTE, RolUsuario.ADMIN, RolUsuario.OFICINISTA) 
+  @Role( RolUsuario.ADMIN, RolUsuario.OFICINISTA) 
   @ApiOperation({ summary: 'Obtiene todos los clientes' })
   @ApiOkResponse({ type: ClienteEntity, isArray: true })
   findAll() {
@@ -42,7 +34,7 @@ export class ClientesController {
   }
 
   @Patch(':id')
-  @Role(RolUsuario.CLIENTE) 
+  @Role(RolUsuario.CLIENTE, RolUsuario.ADMIN) 
   @ApiOperation({ summary: 'Actualiza un cliente existente' })
   @ApiOkResponse({ type: ClienteEntity })
   update(@Param('id') id: string, @Body() updateClienteDto: UpdateClienteDto) {
