@@ -11,6 +11,7 @@ import { ConfiguracionAsientosModule } from './configuracion-asientos/configurac
 import { ClientesController } from './clientes/clientes.controller';
 import { ClientesModule } from './clientes/clientes.module';
 import { BusesModule } from './buses/buses.module';
+import { ChoferesModule } from './choferes/choferes.module';
 
 
 
@@ -22,11 +23,10 @@ import { BusesModule } from './buses/buses.module';
     AuthModule,
     CooperativasModule,
     AdminCooperativasModule,
-
     ConfiguracionAsientosModule,
-
     ClientesModule,
     BusesModule,
+    ChoferesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
