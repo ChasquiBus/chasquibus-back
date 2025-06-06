@@ -1,6 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
 import {IsNotEmpty, IsNumber,  IsPositive} from "class-validator";
-import { CreateUserDto } from "common/dto/create.usuario";
+import { CreateUserDto } from "usuarios/dto/create.usuario";
 
 export class CreateAdminDto extends CreateUserDto{
 

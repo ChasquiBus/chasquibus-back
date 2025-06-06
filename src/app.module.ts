@@ -12,6 +12,7 @@ import { ClientesController } from './clientes/clientes.controller';
 import { ClientesModule } from './clientes/clientes.module';
 import { BusesModule } from './buses/buses.module';
 import { ChoferesModule } from './choferes/choferes.module';
+import { UsuariosModule } from 'usuarios/usuario.module';
 
 
 
@@ -21,6 +22,7 @@ import { ChoferesModule } from './choferes/choferes.module';
       isGlobal: true,
     }),
     AuthModule,
+    UsuariosModule,
     CooperativasModule,
     AdminCooperativasModule,
     ConfiguracionAsientosModule,

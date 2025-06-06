@@ -1,6 +1,6 @@
 import { IsDateString,  IsNotEmpty,  IsNumber,  IsOptional, IsPositive, IsString, MaxLength } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { CreateUserDto } from 'common/dto/create.usuario';
+import { CreateUserDto } from 'usuarios/dto/create.usuario';
 
 export class CreateChoferDto extends CreateUserDto{
 
