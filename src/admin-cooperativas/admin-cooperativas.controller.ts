@@ -20,7 +20,7 @@ export class AdminCooperativasController {
   @Role(RolUsuario.SUPERADMIN)
   @ApiOperation({ summary: 'Crea un nuevo administrador de cooperativa' })
   create(@Body() dto: CreateAdminDto) {
-    return this.service.create(dto);
+    return this.service.create(dto, dto.rol);
   }
 
  @Get()
