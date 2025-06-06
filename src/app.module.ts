@@ -5,7 +5,13 @@ import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
 import { CooperativasModule } from './cooperativas/cooperativas.module';
 import { AdminCooperativasModule } from './admin-cooperativas/admin-cooperativas.module';
+
 import { ConfiguracionAsientosModule } from './configuracion-asientos/configuracion-asientos.module';
+
+import { ClientesController } from './clientes/clientes.controller';
+import { ClientesModule } from './clientes/clientes.module';
+import { BusesModule } from './buses/buses.module';
+
 
 
 @Module({
@@ -16,10 +22,16 @@ import { ConfiguracionAsientosModule } from './configuracion-asientos/configurac
     AuthModule,
     CooperativasModule,
     AdminCooperativasModule,
+
     ConfiguracionAsientosModule,
+
+    ClientesModule,
+    BusesModule,
+
+
     
   ],
-  controllers: [AppController],
+  controllers: [AppController, ClientesController],
   providers: [AppService],
 })
 export class AppModule {}
