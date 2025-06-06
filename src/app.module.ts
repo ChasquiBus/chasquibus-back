@@ -27,11 +27,8 @@ import { BusesModule } from './buses/buses.module';
 
     ClientesModule,
     BusesModule,
-
-
-    
   ],
-  controllers: [AppController, ClientesController],
+  controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule {}
