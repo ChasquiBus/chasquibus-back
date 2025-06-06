@@ -6,18 +6,29 @@ import {
   Patch,
   Param,
   Delete,
+  UseGuards,
 } from '@nestjs/common';
 import { ConfiguracionAsientosService } from './configuracion-asientos.service';
 import { CreateConfiguracionAsientosDto } from './dto/create-configuracion-asientos.dto';
 import { UpdateConfiguracionAsientosDto } from './dto/update-configuracion-asientos.dto';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { Role } from 'auth/decorators/roles.decorator';
+import { RolUsuario } from 'auth/roles.enum';
+import { JwtAuthGuard } from 'auth/guards/jwt-auth.guard';
+import { RolesGuard } from 'auth/guards/roles.guard';
 
-@ApiTags('configuracion-asientos') // Esto agrupa tus endpoints en Swagger
+
 @Controller('configuracion-asientos')
+@ApiTags('configuracion-asientos')
+@ApiBearerAuth('access-token')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
+
 export class ConfiguracionAsientosController {
   constructor(private readonly service: ConfiguracionAsientosService) {}
 
   @Post()
+  @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
   @ApiOperation({ summary: 'Crear configuración de asientos' })
   create(@Body() dto: CreateConfiguracionAsientosDto) {
     return this.service.create(dto);

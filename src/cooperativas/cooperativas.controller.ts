@@ -21,31 +21,35 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 @ApiTags('cooperativas')
 @ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard, RolesGuard )
-@Role(RolUsuario.SUPERADMIN)
 export class CooperativasController {
   constructor(private readonly service: CooperativasService) {}
 
   @Post()
+  @Role( RolUsuario.SUPERADMIN)
   create(@Body() dto: CreateCooperativaDto) {
     return this.service.create(dto);
   }
 
   @Get()
+  @Role(RolUsuario.SUPERADMIN)
   findAll() {
     return this.service.findAll();
   }
 
   @Get(':id')
+  @Role(RolUsuario.ADMIN, RolUsuario.SUPERADMIN)
   findOne(@Param('id') id: number) {
     return this.service.findOne(id);
   }
 
   @Put(':id')
+  @Role(RolUsuario.ADMIN, RolUsuario.SUPERADMIN)
   update(@Param('id') id: number, @Body() dto: UpdateCooperativaDto) {
     return this.service.update(id, dto);
   }
 
   @Delete(':id')
+  @Role( RolUsuario.SUPERADMIN)
   remove(@Param('id') id: number) {
     return this.service.remove(id);
   }
