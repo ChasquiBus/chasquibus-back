@@ -3,10 +3,7 @@ import { IsBoolean, IsDateString, IsInt, IsNotEmpty, IsOptional, Max, Min } from
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateClienteDto extends CreateUserDto {
-  @ApiProperty({
-    description: 'ID del usuario asociado al cliente',
-    example: 1,
-  })
+
   @IsInt({ message: 'El campo usuarioId debe ser un número entero.' })
   @IsNotEmpty({ message: 'El campo usuarioId es obligatorio.' })
   usuarioId: number;

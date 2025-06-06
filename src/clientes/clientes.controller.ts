@@ -13,11 +13,11 @@ import { ClienteEntity } from './entities/cliente.entity'; // Asegúrate de que 
 @ApiTags('clientes')
 @ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA, RolUsuario.CLIENTE) // Define qué roles pueden acceder a estas rutas
 export class ClientesController {
   constructor(private readonly clientesService: ClientesService) {}
 
   @Post()
+  @Role(RolUsuario.CLIENTE) // Solo el Cliente tiene la capacidad de crear 
   @ApiOperation({ summary: 'Crea un nuevo cliente' })
   @ApiOkResponse({ type: ClienteEntity }) // Se asume que CreateClienteDto o el retorno de create() mapea a ClienteEntity
   @Role(RolUsuario.SUPERADMIN) // Opcional: Define un rol específico para la creación si es diferente
@@ -26,6 +26,7 @@ export class ClientesController {
   }
 
   @Get()
+  @Role(RolUsuario.CLIENTE, RolUsuario.ADMIN, RolUsuario.OFICINISTA) 
   @ApiOperation({ summary: 'Obtiene todos los clientes' })
   @ApiOkResponse({ type: ClienteEntity, isArray: true })
   findAll() {
@@ -33,6 +34,7 @@ export class ClientesController {
   }
 
   @Get(':id')
+  @Role(RolUsuario.CLIENTE) 
   @ApiOperation({ summary: 'Obtiene un cliente por ID' })
   @ApiOkResponse({ type: ClienteEntity })
   findOne(@Param('id') id: string) {
@@ -40,6 +42,7 @@ export class ClientesController {
   }
 
   @Patch(':id')
+  @Role(RolUsuario.CLIENTE) 
   @ApiOperation({ summary: 'Actualiza un cliente existente' })
   @ApiOkResponse({ type: ClienteEntity })
   update(@Param('id') id: string, @Body() updateClienteDto: UpdateClienteDto) {
@@ -50,6 +53,7 @@ export class ClientesController {
    * Desactiva (elimina lógicamente) un cliente por su ID.
    */
   @Delete(':id')
+  @Role(RolUsuario.CLIENTE, RolUsuario.ADMIN, RolUsuario.OFICINISTA) 
   @ApiOperation({ summary: 'Desactiva un cliente' })
   @ApiOkResponse({ type: ClienteEntity }) // Debería devolver el usuario actualizado/desactivado
   @Role(RolUsuario.SUPERADMIN) // Opcional: Define un rol específico para la desactivación si es diferente
