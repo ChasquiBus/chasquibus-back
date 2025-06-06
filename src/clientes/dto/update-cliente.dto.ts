@@ -3,14 +3,6 @@ import { IsBoolean, IsDateString, IsInt, IsNotEmpty, IsOptional, Max, Min } from
 import {  ApiPropertyOptional } from '@nestjs/swagger';
 
 export class UpdateClienteDto extends UpdateUsuarioDto {
-    @ApiPropertyOptional({
-        description: 'ID del usuario asociado al cliente',
-        example: 1,
-      })
-      @IsOptional()
-      @IsInt({ message: 'El campo usuarioId debe ser un número entero.' })
-      @IsNotEmpty({ message: 'El campo usuarioId es obligatorio.' })
-      usuarioId: number;
     
       @ApiPropertyOptional({
         description: 'Indica si el cliente es discapacitado',
