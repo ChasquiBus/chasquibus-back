@@ -16,9 +16,11 @@ import { UsuarioService } from 'usuarios/usuarios.service';
 
 @Injectable()
 export class ClientesService {
+  private readonly rol = RolUsuario.CLIENTE;
   constructor(private readonly usuarioService: UsuarioService) {}
   async create(dto: CreateClienteDto) {
-    const usuario = await this.usuarioService.createUser(dto, dto.rol);
+
+    const usuario = await this.usuarioService.createUser(dto, this.rol);
     const [cliente] = await db
       .insert(clientes)
       .values({
