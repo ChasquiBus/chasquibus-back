@@ -19,12 +19,7 @@ export class CreateUserDto {
   @IsNotEmpty({ message: 'El nombre es obligatorio.' })
   @IsString({ message: 'El nombre debe ser una cadena de texto.' })
   nombre: string;
-
-  //REVISAR ESTO!
-  @IsOptional()
-  @ApiProperty({ example: '1', description: 'Rol del Usuario, Solo es obligatoria para admins y oficinistas' })
-  rol: number;
-
+  
   @ApiProperty({ example: 'Pérez', description: 'Apellido del usuario' })
   @IsNotEmpty({ message: 'El apellido es obligatorio.' })
   @IsString({ message: 'El apellido debe ser una cadena de texto.' })
