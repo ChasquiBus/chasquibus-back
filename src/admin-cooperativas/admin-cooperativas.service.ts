@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -8,36 +9,34 @@ import { usuarioCooperativa } from '../drizzle/schema/usuario-cooperativa';
 import { CreateAdminDto } from './dto/create-admin.dto';
 import { hash } from 'bcrypt';
 import { and, eq, isNull } from 'drizzle-orm';
-import { RolUsuario } from '../auth/roles.enum';
 import { UpdateAdminDto } from './dto/update-admin.dto';
 import { usuarios } from '../drizzle/schema/usuarios';
 import { UsuarioCooperativaEntity } from './entities/admin-cooperativa.entity';
+import { UsuarioService } from 'usuarios/usuarios.service';
 
 @Injectable()
 export class AdminCooperativasService {
-  async create(dto: CreateAdminDto) {
-    const passwordHash = await hash(dto.password, 10);
-    const [usuario] = await db
-      .insert(usuarios)
-      .values({
-        nombre: dto.nombre,
-        apellido: dto.apellido,
-        cedula: dto.cedula,
-        telefono: dto.telefono,
-        email: dto.email,
-        passwordHash,
-        rol: RolUsuario.ADMIN,
-      })
-      .returning();
+  constructor(private readonly usuarioService: UsuarioService) {}
 
+  //Pasamos el rol 1 o 2
+  async create(dto: CreateAdminDto, rol: number) {
+    if (![1, 2].includes(rol)) {
+      throw new BadRequestException(
+        'Rol inválido. Solo se permiten los roles 1 o 2.',
+      );
+    }
+    const usuario = await this.usuarioService.createUser(dto, rol);
     await db.insert(usuarioCooperativa).values({
       cooperativaTransporteId: dto.cooperativaTransporteId,
       usuarioId: usuario.id,
     });
-
-    return usuario;
+    return {
+      cooperativaTransporteId: dto.cooperativaTransporteId,
+      usuario,
+    };
   }
-  async findAll(): Promise<UsuarioCooperativaEntity[]> {
+
+  async findAll(rol:number): Promise<UsuarioCooperativaEntity[]> {
     return db
       .select({
         id: usuarioCooperativa.id,
@@ -58,39 +57,36 @@ export class AdminCooperativasService {
       })
       .from(usuarioCooperativa)
       .innerJoin(usuarios, eq(usuarioCooperativa.usuarioId, usuarios.id))
-      .where(isNull(usuarios.deletedAt));
+          .where(
+      and(
+        isNull(usuarios.deletedAt),
+        eq(usuarios.rol, rol)
+      )
+    );
   }
 
   async findOne(id: number): Promise<UsuarioCooperativaEntity> {
-    const [result] = await db
+    const [record] = await db
       .select({
         id: usuarioCooperativa.id,
         cooperativaTransporteId: usuarioCooperativa.cooperativaTransporteId,
-        usuario: {
-          id: usuarios.id,
-          email: usuarios.email,
-          nombre: usuarios.nombre,
-          apellido: usuarios.apellido,
-          cedula: usuarios.cedula,
-          telefono: usuarios.telefono,
-          activo: usuarios.activo,
-          rol: usuarios.rol,
-          createdAt: usuarios.createdAt,
-          updatedAt: usuarios.updatedAt,
-          deletedAt: usuarios.deletedAt,
-        },
+        usuarioId: usuarioCooperativa.usuarioId,
       })
       .from(usuarioCooperativa)
-      .innerJoin(usuarios, eq(usuarioCooperativa.usuarioId, usuarios.id))
-      .where(and(eq(usuarioCooperativa.id, id), isNull(usuarios.deletedAt)))
+      .where(eq(usuarioCooperativa.id, id))
       .limit(1);
 
-    if (!result) {
+    if (!record) {
       throw new NotFoundException(`Administrador con ID ${id} no encontrado.`);
     }
-
-    return result;
+    const usuario = await this.usuarioService.findUserById(record.usuarioId);
+    return {
+      id: record.id,
+      cooperativaTransporteId: record.cooperativaTransporteId,
+      usuario,
+    };
   }
+
   //--
   async update(id: number, dto: UpdateAdminDto) {
     const existingUser = await db
@@ -145,7 +141,7 @@ export class AdminCooperativasService {
           cooperativaTransporteId: dto.cooperativaTransporteId,
         })
         .onConflictDoUpdate({
-            target: usuarioCooperativa.usuarioId, 
+          target: usuarioCooperativa.usuarioId,
           set: { cooperativaTransporteId: dto.cooperativaTransporteId },
         });
     }
@@ -153,15 +149,7 @@ export class AdminCooperativasService {
     return updatedUser;
   }
 
-  remove(id: number) {
-    // --- ¡NUEVO! Actualizar 'activo' a false y 'deletedAt' a la fecha y hora actuales ---
-    return db
-      .update(usuarios)
-      .set({
-        activo: false,
-        deletedAt: new Date(), // Establece la fecha de eliminación lógica
-      })
-      .where(eq(usuarios.id, id))
-      .returning();
+  async remove(id: number) {
+    return this.usuarioService.deleteUser(id);
   }
 }

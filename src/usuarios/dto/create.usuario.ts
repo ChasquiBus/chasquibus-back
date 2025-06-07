@@ -1,4 +1,4 @@
-import { IsBoolean, IsEmail, IsNotEmpty, IsOptional, IsString, Matches, MaxLength, MinLength } from "class-validator";
+import { IsBoolean, IsEmail, IsNotEmpty, IsNumber, IsOptional, IsString, Matches, MaxLength, MinLength } from "class-validator";
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateUserDto {
@@ -19,7 +19,7 @@ export class CreateUserDto {
   @IsNotEmpty({ message: 'El nombre es obligatorio.' })
   @IsString({ message: 'El nombre debe ser una cadena de texto.' })
   nombre: string;
-
+  
   @ApiProperty({ example: 'Pérez', description: 'Apellido del usuario' })
   @IsNotEmpty({ message: 'El apellido es obligatorio.' })
   @IsString({ message: 'El apellido debe ser una cadena de texto.' })

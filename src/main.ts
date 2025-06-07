@@ -28,6 +28,9 @@ async function bootstrap() {
     .addTag('auth', 'Modulo de Autenticacion')
     .addTag('cooperativas', 'Modulo de Gestion de cooperativas')
     .addTag('admin-cooperativas', 'Modulo de Gestion de Admins Cooperativos')
+    .addTag('choferes', "Modulo de gestion de choferes")
+    .addTag('cliente-registro', "Registro de Cliente")
+    .addTag('clientes', "Modulo de gestion de clientes")
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
