@@ -36,7 +36,7 @@ export class AdminCooperativasService {
     };
   }
 
-  async findAll(): Promise<UsuarioCooperativaEntity[]> {
+  async findAll(rol:number): Promise<UsuarioCooperativaEntity[]> {
     return db
       .select({
         id: usuarioCooperativa.id,
@@ -57,7 +57,12 @@ export class AdminCooperativasService {
       })
       .from(usuarioCooperativa)
       .innerJoin(usuarios, eq(usuarioCooperativa.usuarioId, usuarios.id))
-      .where(isNull(usuarios.deletedAt)); // Filtra solo usuarios que no han sido eliminados
+          .where(
+      and(
+        isNull(usuarios.deletedAt),
+        eq(usuarios.rol, rol)
+      )
+    );
   }
 
   async findOne(id: number): Promise<UsuarioCooperativaEntity> {
