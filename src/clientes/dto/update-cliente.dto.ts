@@ -1,4 +1,4 @@
-import { UpdateUsuarioDto } from "common/dto/update.usuario";
+import { UpdateUsuarioDto } from "usuarios/dto/update.usuario";
 import { IsBoolean, IsDateString, IsInt, IsNotEmpty, IsOptional, Max, Min } from 'class-validator';
 import {  ApiPropertyOptional } from '@nestjs/swagger';
 

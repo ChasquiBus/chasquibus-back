@@ -1,4 +1,4 @@
-import { CreateUserDto } from "common/dto/create.usuario";
+import { CreateUserDto } from "usuarios/dto/create.usuario";
 import { IsBoolean, IsDateString, IsInt, IsNotEmpty, IsOptional, Max, Min } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
