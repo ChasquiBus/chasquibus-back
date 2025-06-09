@@ -92,6 +92,13 @@
       "when": 1749259521196,
       "tag": "0012_jittery_hairball",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1749434296957,
+      "tag": "0013_chief_ender_wiggin",
+      "breakpoints": true
     }
   ]
 }
