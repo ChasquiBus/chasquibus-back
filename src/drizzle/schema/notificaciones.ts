@@ -1,10 +1,12 @@
 // notificaciones.ts
 import { pgTable, serial, integer, varchar, text, boolean, timestamp } from 'drizzle-orm/pg-core';
+import { cooperativaTransporte } from './cooperativa-transporte';
+import { usuarios } from './usuarios';
 
 export const notificaciones = pgTable('notificaciones', {
   id: serial('id').primaryKey(),
-  cooperativaId: integer('cooperativa_id'),
-  usuarioId: integer('usuario_id'),
+  cooperativaId: integer('cooperativa_id').references(() => cooperativaTransporte.id),
+  usuarioId: integer('usuario_id').references(() => usuarios.id),
   tipo: varchar('tipo', { length: 100 }),
   titulo: text('titulo'),
   mensaje: text('mensaje'),
