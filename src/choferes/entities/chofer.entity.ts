@@ -1,3 +1,4 @@
+import { Cooperativa } from 'cooperativas/entities/cooperativa.entity';
 import { UsuarioEntity } from 'usuarios/entities/usuario.entity';
 
 export class Chofer {
@@ -7,5 +8,5 @@ export class Chofer {
   tipoSangre: string | null;
   fechaNacimiento: Date | null;
   usuario: UsuarioEntity;
-  cooperativaTransporteId: number;
+  cooperativaTransporte: Cooperativa|null;
 }
