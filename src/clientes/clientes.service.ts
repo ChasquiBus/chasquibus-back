@@ -164,4 +164,29 @@ export class ClientesService {
   async remove(id: number) {
     return this.usuarioService.deleteUser(id);
   }
+
+  async findByUsuarioId(usuarioId: number): Promise<ClienteEntity> {
+  const [cliente] = await db
+    .select()
+    .from(clientes)
+    .where(eq(clientes.usuarioId, usuarioId))
+    .limit(1);
+
+  if (!cliente) {
+    throw new NotFoundException(`Cliente con usuario ID ${usuarioId} no encontrado.`);
+  }
+
+  const usuario = await this.usuarioService.findUserById(usuarioId);
+
+  return {
+    id: cliente.id,
+    esDiscapacitado: cliente.esDiscapacitado,
+    porcentajeDiscapacidad: cliente.porcentajeDiscapacidad,
+    fechaNacimiento: cliente.fechaNacimiento
+      ? new Date(cliente.fechaNacimiento)
+      : null,
+    usuario,
+  };
+}
+
 }

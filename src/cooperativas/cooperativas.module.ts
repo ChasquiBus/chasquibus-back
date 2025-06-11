@@ -4,6 +4,7 @@ import { CooperativasService } from './cooperativas.service';
 
 @Module({
   controllers: [CooperativasController],
-  providers: [CooperativasService]
+  providers: [CooperativasService],
+  exports: [CooperativasService]
 })
 export class CooperativasModule {}
