@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { db } from '../drizzle/database';
 import { usuarioCooperativa } from '../drizzle/schema/usuario-cooperativa';
+import { cooperativaTransporte } from '../drizzle/schema/cooperativa-transporte';
 import { CreateAdminDto } from './dto/create-admin.dto';
 import { hash } from 'bcrypt';
 import { and, eq, isNull } from 'drizzle-orm';
@@ -13,10 +14,14 @@ import { UpdateAdminDto } from './dto/update-admin.dto';
 import { usuarios } from '../drizzle/schema/usuarios';
 import { UsuarioCooperativaEntity } from './entities/admin-cooperativa.entity';
 import { UsuarioService } from 'usuarios/usuarios.service';
+import { CooperativasService } from 'cooperativas/cooperativas.service';
 
 @Injectable()
 export class AdminCooperativasService {
-  constructor(private readonly usuarioService: UsuarioService) {}
+  constructor(private readonly usuarioService: UsuarioService,
+    private readonly cooperativaService: CooperativasService,
+  )
+   {}
 
   //Pasamos el rol 1 o 2
   async create(dto: CreateAdminDto, rol: number) {
@@ -36,11 +41,27 @@ export class AdminCooperativasService {
     };
   }
 
-  async findAll(rol:number): Promise<UsuarioCooperativaEntity[]> {
+  async findAll(rol: number): Promise<UsuarioCooperativaEntity[]> {
     return db
       .select({
         id: usuarioCooperativa.id,
-        cooperativaTransporteId: usuarioCooperativa.cooperativaTransporteId,
+
+        cooperativaTransporte: {
+          id: cooperativaTransporte.id,
+          nombre: cooperativaTransporte.nombre,
+          ruc: cooperativaTransporte.ruc,
+          logo: cooperativaTransporte.logo,
+          colorPrimario: cooperativaTransporte.colorPrimario,
+          colorSecundario: cooperativaTransporte.colorSecundario,
+          sitioWeb: cooperativaTransporte.sitioWeb,
+          email: cooperativaTransporte.email,
+          telefono: cooperativaTransporte.telefono,
+          direccion: cooperativaTransporte.direccion,
+          activo: cooperativaTransporte.activo,
+          createdAt: cooperativaTransporte.createdAt,
+          updatedAt: cooperativaTransporte.updatedAt,
+          deletedAt: cooperativaTransporte.deletedAt,
+        },
         usuario: {
           id: usuarios.id,
           email: usuarios.email,
@@ -57,19 +78,20 @@ export class AdminCooperativasService {
       })
       .from(usuarioCooperativa)
       .innerJoin(usuarios, eq(usuarioCooperativa.usuarioId, usuarios.id))
-          .where(
-      and(
-        isNull(usuarios.deletedAt),
-        eq(usuarios.rol, rol)
+      // Agregamos el inner join con la tabla de cooperativas
+      .innerJoin(
+        cooperativaTransporte,
+        eq(usuarioCooperativa.cooperativaTransporteId, cooperativaTransporte.id),
       )
-    );
+      .where(and(isNull(usuarios.deletedAt), eq(usuarios.rol, rol)));
   }
 
-  async findOne(id: number): Promise<UsuarioCooperativaEntity> {
+
+ async findOne(id: number): Promise<UsuarioCooperativaEntity> {
     const [record] = await db
       .select({
         id: usuarioCooperativa.id,
-        cooperativaTransporteId: usuarioCooperativa.cooperativaTransporteId,
+        cooperativaTransporteId: usuarioCooperativa.cooperativaTransporteId, // Necesitamos el ID para buscar la cooperativa
         usuarioId: usuarioCooperativa.usuarioId,
       })
       .from(usuarioCooperativa)
@@ -79,10 +101,21 @@ export class AdminCooperativasService {
     if (!record) {
       throw new NotFoundException(`Administrador con ID ${id} no encontrado.`);
     }
+
+    // Obtenemos el usuario completo
     const usuario = await this.usuarioService.findUserById(record.usuarioId);
+    // Obtenemos la cooperativa completa usando el servicio de cooperativas
+    const cooperativa = await this.cooperativaService.findOne(record.cooperativaTransporteId);
+
+    if (!cooperativa) {
+      // Maneja el caso si la cooperativa no se encuentra (opcional, dependiendo de tu lógica de negocio)
+      // Por ejemplo, podrías lanzar un error o retornar null para 'cooperativaTransporte'
+      console.warn(`Cooperativa con ID ${record.cooperativaTransporteId} no encontrada para el registro ${record.id}`);
+    }
+
     return {
       id: record.id,
-      cooperativaTransporteId: record.cooperativaTransporteId,
+      cooperativaTransporte: cooperativa, // Asignamos el objeto cooperativa completo
       usuario,
     };
   }
@@ -152,4 +185,30 @@ export class AdminCooperativasService {
   async remove(id: number) {
     return this.usuarioService.deleteUser(id);
   }
+
+  async findByUsuarioId(usuarioId: number): Promise<UsuarioCooperativaEntity> {
+  const [record] = await db
+    .select({
+      id: usuarioCooperativa.id,
+      cooperativaTransporteId: usuarioCooperativa.cooperativaTransporteId,
+      usuarioId: usuarioCooperativa.usuarioId,
+    })
+    .from(usuarioCooperativa)
+    .where(eq(usuarioCooperativa.usuarioId, usuarioId))
+    .limit(1);
+
+  if (!record) {
+    throw new NotFoundException(`Usuario-cooperativa con usuario ID ${usuarioId} no encontrado.`);
+  }
+
+  const usuario = await this.usuarioService.findUserById(usuarioId);
+  const cooperativa = await this.cooperativaService.findOne(record.cooperativaTransporteId);
+
+  return {
+    id: record.id,
+    cooperativaTransporte: cooperativa,
+    usuario,
+  };
+}
+
 }

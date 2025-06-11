@@ -1,31 +1,54 @@
 import { Injectable } from '@nestjs/common';
 import { db } from '../drizzle/database';
 import { cooperativaTransporte } from '../drizzle/schema/cooperativa-transporte';
-import { eq } from 'drizzle-orm';
+import { eq, and , isNull } from 'drizzle-orm';
 import { CreateCooperativaDto } from './dto/create-cooperativa.dto';
 import { UpdateCooperativaDto } from './dto/update-cooperativa.dto';
+import { Cooperativa } from './entities/cooperativa.entity';
 
 @Injectable()
+
 export class CooperativasService {
-  create(data: CreateCooperativaDto) {
-    return db.insert(cooperativaTransporte).values(data).returning();
+  async create(data: CreateCooperativaDto): Promise<Cooperativa[]> {
+    const now = new Date();
+    return db
+      .insert(cooperativaTransporte)
+      .values({
+        ...data,
+        activo: true,
+        createdAt: now,
+        updatedAt: now,
+      })
+      .returning();
   }
 
-  findAll() {
+  async findAll(): Promise<Cooperativa[]> {
     return db
       .select()
       .from(cooperativaTransporte)
-      .where(eq(cooperativaTransporte.activo, true));
+      .where(
+        and(
+          eq(cooperativaTransporte.activo, true),
+          isNull(cooperativaTransporte.deletedAt),
+        ),
+      );
   }
 
-  findOne(id: number) {
-    return db
+  async findOne(id: number): Promise<Cooperativa | null> {
+    const [cooperativa] = await db
       .select()
       .from(cooperativaTransporte)
-      .where(eq(cooperativaTransporte.id, id));
+      .where(
+        and(
+          eq(cooperativaTransporte.id, id),
+          eq(cooperativaTransporte.activo, true),
+          isNull(cooperativaTransporte.deletedAt),
+        ),
+      );
+    return cooperativa || null;
   }
 
-  update(id: number, data: UpdateCooperativaDto) {
+  async update(id: number, data: UpdateCooperativaDto): Promise<Cooperativa[]> {
     return db
       .update(cooperativaTransporte)
       .set({
@@ -35,7 +58,8 @@ export class CooperativasService {
       .where(eq(cooperativaTransporte.id, id))
       .returning();
   }
-  remove(id: number) {
+
+  async remove(id: number): Promise<Cooperativa[]> {
     return db
       .update(cooperativaTransporte)
       .set({ activo: false, deletedAt: new Date() })
