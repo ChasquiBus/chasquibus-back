@@ -7,6 +7,6 @@ export const paradas = pgTable('paradas', {
   ciudadId: integer('ciudad_id').references(() => ciudades.id),
   nombreParada: varchar('nombre_parada', { length: 255 }),
   direccion: varchar('direccion', { length: 255 }),
-  estado: varchar('estado', { length: 50 }), // Activa, Inactiva, suspendida
+  estado: boolean('estado'), // activa, inactiva
   esTerminal: boolean('es_terminal')
 });

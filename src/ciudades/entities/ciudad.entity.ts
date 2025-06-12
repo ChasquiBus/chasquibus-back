@@ -1,1 +1,5 @@
-export class Ciudad {}
+export class Ciudad {
+  id: number;
+  provincia: string;
+  ciudad: string;
+}
