@@ -13,6 +13,7 @@ import { ClientesModule } from './clientes/clientes.module';
 import { BusesModule } from './buses/buses.module';
 import { ChoferesModule } from './choferes/choferes.module';
 import { UsuariosModule } from 'usuarios/usuario.module';
+import { ResolucionesModule } from './resoluciones/resoluciones.module';
 
 
 
@@ -29,6 +30,7 @@ import { UsuariosModule } from 'usuarios/usuario.module';
     ClientesModule,
     BusesModule,
     ChoferesModule,
+    ResolucionesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
