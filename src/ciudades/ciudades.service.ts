@@ -1,26 +1,44 @@
 import { Injectable } from '@nestjs/common';
+import { db } from '../drizzle/database';
+import { ciudades } from '../drizzle/schema/ciudades';
+import { eq } from 'drizzle-orm';
 import { CreateCiudadDto } from './dto/create-ciudad.dto';
 import { UpdateCiudadDto } from './dto/update-ciudad.dto';
+import { Ciudad } from './entities/ciudad.entity';
 
 @Injectable()
 export class CiudadesService {
-  create(createCiudadeDto: CreateCiudadDto) {
-    return 'This action adds a new ciudade';
+  async create(data: CreateCiudadDto): Promise<Ciudad[]> {
+    return db
+      .insert(ciudades)
+      .values(data)
+      .returning();
   }
 
-  findAll() {
-    return `This action returns all ciudades`;
+  async findAll(): Promise<Ciudad[]> {
+    return db.select().from(ciudades);
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} ciudade`;
+  async findOne(id: number): Promise<Ciudad | null> {
+    const [ciudad] = await db
+      .select()
+      .from(ciudades)
+      .where(eq(ciudades.id, id));
+    return ciudad || null;
   }
 
-  update(id: number, updateCiudadeDto: UpdateCiudadDto) {
-    return `This action updates a #${id} ciudade`;
+  async update(id: number, data: UpdateCiudadDto): Promise<Ciudad[]> {
+    return db
+      .update(ciudades)
+      .set(data)
+      .where(eq(ciudades.id, id))
+      .returning();
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} ciudade`;
+  async remove(id: number): Promise<Ciudad[]> {
+    return db
+      .delete(ciudades)
+      .where(eq(ciudades.id, id))
+      .returning();
   }
 }
