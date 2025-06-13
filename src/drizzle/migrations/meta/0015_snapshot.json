@@ -1,5 +1,5 @@
 {
-  "id": "19c0745c-e8e3-4cb7-9ee4-36f15539f26f",
+  "id": "f953302b-b758-471e-8829-3c5cf79496e4",
   "prevId": "94b089f2-41c4-4c01-9f7d-441f1c626fa4",
   "version": "7",
   "dialect": "postgresql",
@@ -1382,26 +1382,6 @@
         "duracion_estimada_min": {
           "name": "duracion_estimada_min",
           "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "now()"
-        },
-        "deleted_at": {
-          "name": "deleted_at",
-          "type": "timestamp",
           "primaryKey": false,
           "notNull": false
         }
