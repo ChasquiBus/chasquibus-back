@@ -6,14 +6,25 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
+  ParseIntPipe,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
 import { CiudadesService } from './ciudades.service';
 import { CreateCiudadDto } from './dto/create-ciudad.dto';
 import { UpdateCiudadDto } from './dto/update-ciudad.dto';
+import { Role } from '../auth/decorators/roles.decorator';
+import { RolUsuario } from '../auth/roles.enum';
+import { Ciudad } from './entities/ciudad.entity';
+import { JwtAuthGuard } from 'auth/guards/jwt-auth.guard';
+import { RolesGuard } from 'auth/guards/roles.guard';
 
-@ApiTags('ciudades') // Agrupa estos endpoints bajo "Ciudades" en Swagger
+@ApiTags('ciudades') 
 @Controller('ciudades')
+@ApiBearerAuth('access-token')
+@UseGuards(JwtAuthGuard, RolesGuard )
+@Role( RolUsuario.SUPERADMIN, RolUsuario.OFICINISTA)
 export class CiudadesController {
   constructor(private readonly ciudadesService: CiudadesService) {}
 
@@ -31,14 +42,14 @@ export class CiudadesController {
     return this.ciudadesService.create(createCiudadDto);
   }
 
-  @Get()
-  @ApiOperation({ summary: 'Obtener todas las ciudades' })
-  @ApiResponse({
-    status: 200,
-    description: 'Listado completo de ciudades',
-  })
-  findAll() {
-    return this.ciudadesService.findAll();
+  @Get(':cooperativaId')
+  @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
+  @ApiOperation({ summary: 'Obtiene todas las ciudades de una cooperativa específica' })
+  @ApiResponse({ status: 200, description: 'Lista de ciudades', type: [Ciudad] })
+  findAll(
+    @Param('cooperativaId', ParseIntPipe) cooperativaId: number
+  ) {
+    return this.ciudadesService.findAll(cooperativaId);
   }
 
   @Get(':id')
