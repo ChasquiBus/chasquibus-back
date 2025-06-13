@@ -1,8 +1,8 @@
 import {
-
   Injectable,
   Inject,
   UnauthorizedException,
+  ConflictException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { LoginDto } from './dto/login.dto';
@@ -15,6 +15,7 @@ import { AdminCooperativasService } from 'admin-cooperativas/admin-cooperativas.
 import { ChoferesService } from 'choferes/choferes.service';
 import { ClientesService } from 'clientes/clientes.service';
 import { RolUsuario } from '../auth/roles.enum';
+import { CreateClienteDto } from '../clientes/dto/create-cliente.dto';
 
 @Injectable()
 export class AuthService {
@@ -26,7 +27,36 @@ export class AuthService {
     private readonly clienteService: ClientesService,
   ) {}
 
-   async login(dto: LoginDto) {
+  async registerCliente(createClienteDto: CreateClienteDto) {
+    // Verificar si el email ya está registrado
+    const existingUserByEmail = await this.findUserByEmail(createClienteDto.email);
+    if (existingUserByEmail) {
+      throw new ConflictException('El correo electrónico ya está registrado.');
+    }
+
+    // Crear el cliente usando el servicio de clientes
+    const cliente = await this.clienteService.create(createClienteDto);
+
+    // Generar token JWT
+    const payload = {
+      sub: cliente.usuario.id,
+      email: cliente.usuario.email,
+      rol: RolUsuario.CLIENTE,
+    };
+
+    return {
+      access_token: this.jwtService.sign(payload),
+      user: {
+        ...cliente.usuario,
+        clienteId: cliente.id,
+        esDiscapacitado: cliente.esDiscapacitado,
+        porcentajeDiscapacidad: cliente.porcentajeDiscapacidad,
+        fechaNacimiento: cliente.fechaNacimiento,
+      },
+    };
+  }
+
+  async login(dto: LoginDto) {
     const user = await this.findUserByEmail(dto.email);
     if (!user) throw new UnauthorizedException('Credenciales inválidas');
 
@@ -48,7 +78,7 @@ export class AuthService {
       }
 
       case RolUsuario.CHOFER: {
-        const chofer = await this.choferService.findByUsuarioId(user.id);
+        const chofer = await this.choferService.findByUsuarioId(user.id, user);
         enrichedUser = {
           ...user,
           choferId: chofer.id,

@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, UseGuards, Request, Query } from '@nestjs/common';
 import { AdminCooperativasService } from './admin-cooperativas.service';
 import { CreateAdminDto } from './dto/create-admin.dto';
 import { Role } from '../auth/decorators/roles.decorator';
@@ -38,15 +38,19 @@ export class AdminCooperativasController {
   @ApiOperation({ summary: 'Obtiene todos los administrador de cooperativa' })
   @ApiOkResponse({ type: UsuarioCooperativaEntity, isArray: true })
   findAllAdmins() {
-    return this.service.findAll(this.rolAdmin);
+    return this.service.findAll(this.rolAdmin, 0, true);
   }
 
-  @Get("obtener-oficinistas")
+  @Get("obtener-oficinistas/:cooperativaId")
   @Role(RolUsuario.ADMIN)
-  @ApiOperation({ summary: 'Obtiene todos los Oficinista de cooperativa' })
+  @ApiOperation({ summary: 'Obtiene todos los Oficinista de una cooperativa específica' })
   @ApiOkResponse({ type: UsuarioCooperativaEntity, isArray: true })
-  findAllOficinistas() {
-    return this.service.findAll(this.rolOfinista);
+  findAllOficinistas(
+    @Param('cooperativaId', ParseIntPipe) cooperativaId: number,
+    @Query('includeDeleted') includeDeleted?: string
+  ) {
+    const includeDeletedBool = includeDeleted === 'true';
+    return this.service.findAll(this.rolOfinista, cooperativaId, includeDeletedBool);
   }
 
   @Get(':id')
@@ -71,5 +75,12 @@ export class AdminCooperativasController {
   @ApiOperation({ summary: 'Desactiva un administrador de cooperativa' })
   remove(@Param('id') id: number) {
     return this.service.remove(id);
+  }
+
+  @Delete('oficinista/:id')
+  @Role(RolUsuario.ADMIN)
+  @ApiOperation({ summary: 'Desactiva un oficinista de la cooperativa' })
+  removeOficinista(@Param('id') id: number) {
+    return this.service.removeOficinista(id);
   }
 }

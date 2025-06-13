@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { db } from '../drizzle/database';
 import { usuarios } from '../drizzle/schema/usuarios';
@@ -189,4 +190,95 @@ export class ClientesService {
   };
 }
 
+  async updateProfile(usuarioId: number, dto: UpdateClienteDto) {
+    const [cliente] = await db
+      .select()
+      .from(clientes)
+      .where(eq(clientes.usuarioId, usuarioId))
+      .limit(1);
+
+    if (!cliente) {
+      throw new NotFoundException(`Cliente no encontrado.`);
+    }
+
+    const updateUsuarioData: Partial<typeof usuarios.$inferInsert> = {};
+
+    if (dto.nombre !== undefined) updateUsuarioData.nombre = dto.nombre;
+    if (dto.apellido !== undefined) updateUsuarioData.apellido = dto.apellido;
+    if (dto.cedula !== undefined) updateUsuarioData.cedula = dto.cedula;
+    if (dto.telefono !== undefined) updateUsuarioData.telefono = dto.telefono;
+    if (dto.email !== undefined) updateUsuarioData.email = dto.email;
+    if (dto.activo !== undefined) updateUsuarioData.activo = dto.activo;
+
+    if (dto.password !== undefined && dto.password.length > 0) {
+      updateUsuarioData.passwordHash = await hash(dto.password, 10);
+    }
+
+    updateUsuarioData.updatedAt = new Date();
+
+    if (
+      Object.keys(updateUsuarioData).length === 0 &&
+      dto.esDiscapacitado === undefined &&
+      dto.porcentajeDiscapacidad === undefined &&
+      dto.fechaNacimiento === undefined
+    ) {
+      throw new BadRequestException(
+        'No se proporcionaron datos para actualizar.',
+      );
+    }
+
+    const [updatedUsuario] = await db
+      .update(usuarios)
+      .set(updateUsuarioData)
+      .where(eq(usuarios.id, usuarioId))
+      .returning();
+
+    const clienteUpdateData: Partial<typeof clientes.$inferInsert> = {};
+    if (dto.esDiscapacitado !== undefined)
+      clienteUpdateData.esDiscapacitado = dto.esDiscapacitado;
+    if (dto.porcentajeDiscapacidad !== undefined)
+      clienteUpdateData.porcentajeDiscapacidad = dto.porcentajeDiscapacidad;
+    if (dto.fechaNacimiento !== undefined)
+      clienteUpdateData.fechaNacimiento = dto.fechaNacimiento;
+
+    if (Object.keys(clienteUpdateData).length > 0) {
+      await db
+        .update(clientes)
+        .set(clienteUpdateData)
+        .where(eq(clientes.id, cliente.id));
+    }
+
+    return {
+      id: cliente.id,
+      ...clienteUpdateData,
+      usuario: updatedUsuario,
+    };
+  }
+
+  async deleteAccount(usuarioId: number) {
+    const [cliente] = await db
+      .select()
+      .from(clientes)
+      .where(eq(clientes.usuarioId, usuarioId))
+      .limit(1);
+
+    if (!cliente) {
+      throw new NotFoundException(`Cliente no encontrado.`);
+    }
+
+    // Marcar como eliminado en lugar de eliminar físicamente
+    const [deletedUsuario] = await db
+      .update(usuarios)
+      .set({
+        activo: false,
+        deletedAt: new Date(),
+      })
+      .where(eq(usuarios.id, usuarioId))
+      .returning();
+
+    return {
+      id: cliente.id,
+      usuario: deletedUsuario,
+    };
+  }
 }
