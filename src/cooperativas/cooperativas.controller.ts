@@ -7,6 +7,7 @@ import {
   Param,
   Body,
   UseGuards,
+  Request,
 } from '@nestjs/common';
 import { CooperativasService } from './cooperativas.service';
 import { CreateCooperativaDto } from './dto/create-cooperativa.dto';
@@ -33,7 +34,7 @@ export class CooperativasController {
   @Get()
   @Role(RolUsuario.SUPERADMIN)
   findAll() {
-    return this.service.findAll();
+    return this.service.findAll(true);
   }
 
   @Get(':id')
@@ -44,8 +45,14 @@ export class CooperativasController {
 
   @Put(':id')
   @Role(RolUsuario.ADMIN, RolUsuario.SUPERADMIN)
-  update(@Param('id') id: number, @Body() dto: UpdateCooperativaDto) {
-    return this.service.update(id, dto);
+  update(
+    @Param('id') id: number, 
+    @Body() dto: UpdateCooperativaDto,
+    @Request() req
+  ) {
+    // Si es admin, pasamos su ID para verificar permisos
+    const adminId = req.user.rol === RolUsuario.ADMIN ? req.user.sub : undefined;
+    return this.service.update(id, dto, adminId);
   }
 
   @Delete(':id')

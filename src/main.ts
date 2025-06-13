@@ -31,6 +31,8 @@ async function bootstrap() {
     .addTag('choferes', "Modulo de gestion de choferes")
     .addTag('cliente-registro', "Registro de Cliente")
     .addTag('clientes', "Modulo de gestion de clientes")
+    .addTag('ciudades', "Modulo de gestion de ciudades")
+    .addTag('paradas', "Modulo de gestion de paradas")
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

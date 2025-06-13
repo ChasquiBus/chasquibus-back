@@ -99,6 +99,13 @@
       "when": 1749434296957,
       "tag": "0013_chief_ender_wiggin",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1749780721948,
+      "tag": "0014_lowly_gladiator",
+      "breakpoints": true
     }
   ]
 }
