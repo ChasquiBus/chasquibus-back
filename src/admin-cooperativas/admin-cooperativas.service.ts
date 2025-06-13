@@ -3,6 +3,7 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { db } from '../drizzle/database';
 import { usuarioCooperativa } from '../drizzle/schema/usuario-cooperativa';
@@ -15,6 +16,7 @@ import { usuarios } from '../drizzle/schema/usuarios';
 import { UsuarioCooperativaEntity } from './entities/admin-cooperativa.entity';
 import { UsuarioService } from 'usuarios/usuarios.service';
 import { CooperativasService } from 'cooperativas/cooperativas.service';
+import { RolUsuario } from 'auth/roles.enum';
 
 @Injectable()
 export class AdminCooperativasService {
@@ -41,11 +43,10 @@ export class AdminCooperativasService {
     };
   }
 
-  async findAll(rol: number): Promise<UsuarioCooperativaEntity[]> {
-    return db
+  async findAll(rol: number, cooperativaId: number, includeDeleted: boolean = false): Promise<UsuarioCooperativaEntity[]> {
+    const baseQuery = db
       .select({
         id: usuarioCooperativa.id,
-
         cooperativaTransporte: {
           id: cooperativaTransporte.id,
           nombre: cooperativaTransporte.nombre,
@@ -78,12 +79,22 @@ export class AdminCooperativasService {
       })
       .from(usuarioCooperativa)
       .innerJoin(usuarios, eq(usuarioCooperativa.usuarioId, usuarios.id))
-      // Agregamos el inner join con la tabla de cooperativas
       .innerJoin(
         cooperativaTransporte,
         eq(usuarioCooperativa.cooperativaTransporteId, cooperativaTransporte.id),
       )
-      .where(and(isNull(usuarios.deletedAt), eq(usuarios.rol, rol)));
+      .where(
+        and(
+          eq(usuarios.rol, rol),
+          ...(cooperativaId ? [eq(usuarioCooperativa.cooperativaTransporteId, cooperativaId)] : []),
+          ...(includeDeleted ? [] : [
+            eq(usuarios.activo, true),
+            isNull(usuarios.deletedAt)
+          ])
+        )
+      );
+
+    return baseQuery;
   }
 
 
@@ -132,6 +143,14 @@ export class AdminCooperativasService {
       throw new NotFoundException(`Usuario con ID ${id} no encontrado.`);
     }
 
+    // Si el usuario es un administrador de cooperativa (rol ADMIN) o oficinista (rol OFICINISTA)
+    // no permitir cambios de cooperativa ni rol
+    if (existingUser[0].rol === RolUsuario.ADMIN || existingUser[0].rol === RolUsuario.OFICINISTA) {
+      if (dto.cooperativaTransporteId !== undefined) {
+        throw new BadRequestException('No se puede cambiar la cooperativa asociada.');
+      }
+    }
+
     const updateData: Partial<typeof usuarios.$inferInsert> = {};
 
     if (dto.nombre !== undefined) updateData.nombre = dto.nombre;
@@ -146,15 +165,11 @@ export class AdminCooperativasService {
     }
 
     updateData.updatedAt = new Date();
-    // -------------------------------------------------------------------------
 
     if (
       Object.keys(updateData).length === 0 &&
       dto.cooperativaTransporteId === undefined
     ) {
-      // Si la única actualización era updatedAt, y no había otros datos,
-      // esto aún lanzaría un error. Podrías ajustar esta lógica si quieres
-      // permitir un "toque" sin datos, pero generalmente no es el caso de uso.
       throw new BadRequestException(
         'No se proporcionaron datos para actualizar.',
       );
@@ -183,6 +198,22 @@ export class AdminCooperativasService {
   }
 
   async remove(id: number) {
+    return this.usuarioService.deleteUser(id);
+  }
+
+  async removeOficinista(id: number) {
+    // Primero verificamos que el oficinista exista y pertenezca a la cooperativa del admin
+    const oficinista = await this.findOne(id);
+    
+    if (!oficinista) {
+      throw new NotFoundException(`Oficinista con ID ${id} no encontrado.`);
+    }
+
+    if (oficinista.usuario.rol !== RolUsuario.OFICINISTA) {
+      throw new BadRequestException('El usuario especificado no es un oficinista.');
+    }
+
+    // Eliminamos el oficinista
     return this.usuarioService.deleteUser(id);
   }
 
