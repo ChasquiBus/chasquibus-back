@@ -1,6 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { IsNumber, IsOptional, IsPositive } from "class-validator";
-import { UpdateUsuarioDto } from "common/dto/update.usuario";
+import { UpdateUsuarioDto } from "usuarios/dto/update.usuario";
 
 
 export class UpdateAdminDto extends UpdateUsuarioDto{

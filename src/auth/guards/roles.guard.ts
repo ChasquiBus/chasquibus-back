@@ -13,17 +13,21 @@ export class RolesGuard implements CanActivate {
   constructor(private readonly reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const requiredRol = this.reflector.getAllAndOverride<RolUsuario>('rol', [
+    const requiredRoles = this.reflector.getAllAndOverride<RolUsuario[]>('rol', [
       context.getHandler(),
       context.getClass(),
     ]);
 
-    if (requiredRol === undefined) return true;
-
     const request = context.switchToHttp().getRequest();
     const user = request.user as JwtPayload;
 
-    if (user.rol !== requiredRol) {
+    console.log(`[RolesGuard] Usuario con rol ${user.rol} intentando acceder a ${request.method} ${request.url}`);
+
+    if (!requiredRoles || requiredRoles.length === 0) {
+      return true; // No roles requeridos
+    }
+
+    if (!requiredRoles.includes(user.rol)) {
       throw new ForbiddenException('No tienes acceso a este recurso');
     }
 

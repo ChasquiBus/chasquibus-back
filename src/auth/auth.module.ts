@@ -7,6 +7,9 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RolesGuard } from './guards/roles.guard';
+import { ChoferesModule } from 'choferes/choferes.module';
+import { AdminCooperativasModule } from 'admin-cooperativas/admin-cooperativas.module';
+import { ClientesModule } from 'clientes/clientes.module';
 
 @Module({
   controllers: [AuthController],
@@ -24,6 +27,7 @@ import { RolesGuard } from './guards/roles.guard';
     }),
     ConfigModule,
     DrizzleModule,
+    ChoferesModule, AdminCooperativasModule, ClientesModule
   ],
   exports: [AuthService],
 })
