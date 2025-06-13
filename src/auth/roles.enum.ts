@@ -4,5 +4,5 @@ export enum RolUsuario {
   CHOFER = 3,
   CLIENTE = 4,
   SUPERADMIN =5,
-  CONTROLADOR=6
+  //CONTROLADOR=6
 }

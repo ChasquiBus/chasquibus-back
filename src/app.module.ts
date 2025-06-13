@@ -8,11 +8,11 @@ import { AdminCooperativasModule } from './admin-cooperativas/admin-cooperativas
 
 import { ConfiguracionAsientosModule } from './configuracion-asientos/configuracion-asientos.module';
 
-import { ClientesController } from './clientes/clientes.controller';
 import { ClientesModule } from './clientes/clientes.module';
 import { BusesModule } from './buses/buses.module';
 import { ChoferesModule } from './choferes/choferes.module';
 import { UsuariosModule } from 'usuarios/usuario.module';
+import { ResolucionesModule } from './resoluciones/resoluciones.module';
 import { CiudadesModule } from './ciudades/ciudades.module';
 import { ParadasModule } from './paradas/paradas.module';
 
@@ -31,8 +31,9 @@ import { ParadasModule } from './paradas/paradas.module';
     ClientesModule,
     BusesModule,
     ChoferesModule,
+    ResolucionesModule,
     CiudadesModule,
-    ParadasModule,
+    ParadasModule
   ],
   controllers: [AppController],
   providers: [AppService],
