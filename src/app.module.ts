@@ -15,6 +15,7 @@ import { UsuariosModule } from 'usuarios/usuario.module';
 import { ResolucionesModule } from './resoluciones/resoluciones.module';
 import { CiudadesModule } from './ciudades/ciudades.module';
 import { ParadasModule } from './paradas/paradas.module';
+import { RutasModule } from './rutas/rutas.module';
 
 
 
@@ -33,7 +34,8 @@ import { ParadasModule } from './paradas/paradas.module';
     ChoferesModule,
     ResolucionesModule,
     CiudadesModule,
-    ParadasModule
+    ParadasModule,
+    RutasModule
   ],
   controllers: [AppController],
   providers: [AppService],
