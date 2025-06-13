@@ -20,11 +20,18 @@ export class ConfiguracionAsientosService {
       throw new BadRequestException('El bus no existe');
     }
 
+    // Validar que el número total de asientos no exceda el total definido en el bus
+    if (dto.posiciones.length > bus.total_asientos) {
+      throw new BadRequestException(
+        `El número total de asientos (${dto.posiciones.length}) excede el total definido para el bus (${bus.total_asientos})`
+      );
+    }
+
     // Validar que las posiciones de asientos coincidan con el tipo de bus
     const isDoubleDecker = bus.piso_doble;
-    const invalidPositions = dto.posiciones.filter(pos => pos.piso > (isDoubleDecker ? 2 : 1));
+    const invalidPisoPositions = dto.posiciones.filter(pos => pos.piso > (isDoubleDecker ? 2 : 1));
     
-    if (invalidPositions.length > 0) {
+    if (invalidPisoPositions.length > 0) {
       throw new BadRequestException(
         `Posiciones inválidas para un bus ${isDoubleDecker ? 'de dos pisos' : 'de un piso'}. ` +
         'Los números de piso deben ser 1' + (isDoubleDecker ? ' o 2' : '')
@@ -55,6 +62,17 @@ export class ConfiguracionAsientosService {
           'Los precios de los asientos VIP deben ser mayores que los asientos normales'
         );
       }
+    }
+
+    // Validar que cada posición tenga todos los campos requeridos
+    const missingFieldsPositions = dto.posiciones.filter(
+      pos => !pos.fila || !pos.columna || !pos.piso || !pos.tipoAsiento || !pos.precio
+    );
+
+    if (missingFieldsPositions.length > 0) {
+      throw new BadRequestException(
+        'Todas las posiciones deben tener fila, columna, piso, tipoAsiento y precio'
+      );
     }
 
     // Convertir las posiciones a JSON para almacenamiento
@@ -95,6 +113,13 @@ export class ConfiguracionAsientosService {
 
       if (!bus) {
         throw new BadRequestException('El bus no existe');
+      }
+
+      // Validar que el número total de asientos no exceda el total definido en el bus
+      if (dto.posiciones.length > bus.total_asientos) {
+        throw new BadRequestException(
+          `El número total de asientos (${dto.posiciones.length}) excede el total definido para el bus (${bus.total_asientos})`
+        );
       }
 
       const isDoubleDecker = bus.piso_doble;

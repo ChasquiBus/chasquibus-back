@@ -35,7 +35,8 @@ export class ConfiguracionAsientosController {
     2. En el segundo piso pueden ser VIP o NORMAL
     3. Los precios de asientos VIP deben ser mayores que los asientos NORMAL
     4. Las filas y columnas deben ser números positivos
-    5. Los precios deben tener máximo 2 decimales`
+    5. Los precios deben tener máximo 2 decimales
+    6. El número total de asientos no puede exceder el total definido en el bus`
   })
   @ApiResponse({
     status: 201,
@@ -69,7 +70,7 @@ export class ConfiguracionAsientosController {
     schema: {
       example: {
         statusCode: 400,
-        message: 'Los asientos del primer piso solo pueden ser de tipo NORMAL',
+        message: 'El número total de asientos (X) excede el total definido para el bus (Y)',
         error: 'Bad Request'
       }
     }
