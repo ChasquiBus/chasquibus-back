@@ -1,5 +1,5 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { CreateConfiguracionAsientosDto } from './dto/create-configuracion-asientos.dto';
+import { CreateConfiguracionAsientosDto, TipoAsiento } from './dto/create-configuracion-asientos.dto';
 import { UpdateConfiguracionAsientosDto } from './dto/update-configuracion-asientos.dto';
 import { eq, and } from 'drizzle-orm';
 import { db } from 'drizzle/database';
@@ -31,15 +31,38 @@ export class ConfiguracionAsientosService {
       );
     }
 
+    // Validar que los asientos del primer piso sean NORMAL
+    const invalidFirstFloorSeats = dto.posiciones.filter(
+      pos => pos.piso === 1 && pos.tipoAsiento !== TipoAsiento.NORMAL
+    );
+    
+    if (invalidFirstFloorSeats.length > 0) {
+      throw new BadRequestException(
+        'Los asientos del primer piso solo pueden ser de tipo NORMAL'
+      );
+    }
+
+    // Validar que los precios de asientos VIP sean mayores que los normales
+    const normalSeats = dto.posiciones.filter(pos => pos.tipoAsiento === TipoAsiento.NORMAL);
+    const vipSeats = dto.posiciones.filter(pos => pos.tipoAsiento === TipoAsiento.VIP);
+
+    if (vipSeats.length > 0) {
+      const maxNormalPrice = Math.max(...normalSeats.map(pos => parseFloat(pos.precio)));
+      const minVipPrice = Math.min(...vipSeats.map(pos => parseFloat(pos.precio)));
+
+      if (minVipPrice <= maxNormalPrice) {
+        throw new BadRequestException(
+          'Los precios de los asientos VIP deben ser mayores que los asientos normales'
+        );
+      }
+    }
+
     // Convertir las posiciones a JSON para almacenamiento
     const posicionesJson = JSON.stringify(dto.posiciones);
 
     // Crear la configuración de asientos
     return db.insert(configuracionAsientos).values({
       busId: dto.busId,
-      tipoAsiento: dto.tipoAsiento,
-      cantidad: dto.cantidad,
-      precioBase: dto.precioBase,
       posicionesJson,
     }).returning();
   }
@@ -82,6 +105,32 @@ export class ConfiguracionAsientosService {
           `Posiciones inválidas para un bus ${isDoubleDecker ? 'de dos pisos' : 'de un piso'}. ` +
           'Los números de piso deben ser 1' + (isDoubleDecker ? ' o 2' : '')
         );
+      }
+
+      // Validar que los asientos del primer piso sean NORMAL
+      const invalidFirstFloorSeats = dto.posiciones.filter(
+        pos => pos.piso === 1 && pos.tipoAsiento !== TipoAsiento.NORMAL
+      );
+      
+      if (invalidFirstFloorSeats.length > 0) {
+        throw new BadRequestException(
+          'Los asientos del primer piso solo pueden ser de tipo NORMAL'
+        );
+      }
+
+      // Validar que los precios de asientos VIP sean mayores que los normales
+      const normalSeats = dto.posiciones.filter(pos => pos.tipoAsiento === TipoAsiento.NORMAL);
+      const vipSeats = dto.posiciones.filter(pos => pos.tipoAsiento === TipoAsiento.VIP);
+
+      if (vipSeats.length > 0) {
+        const maxNormalPrice = Math.max(...normalSeats.map(pos => parseFloat(pos.precio)));
+        const minVipPrice = Math.min(...vipSeats.map(pos => parseFloat(pos.precio)));
+
+        if (minVipPrice <= maxNormalPrice) {
+          throw new BadRequestException(
+            'Los precios de los asientos VIP deben ser mayores que los asientos normales'
+          );
+        }
       }
 
       // Convertir las posiciones a JSON para almacenamiento
