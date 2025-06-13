@@ -14,8 +14,6 @@ import { eq, and, isNull } from 'drizzle-orm';
 import { CreateChoferDto } from './dto/create-chofer.dto';
 import { UpdateChoferDto } from './dto/update-chofer.dto';
 import { cooperativaTransporte } from '../drizzle/schema/cooperativa-transporte';
-import { UsuarioService } from 'usuarios/usuarios.service';
-import { CooperativasService } from 'cooperativas/cooperativas.service';
 import { usuarioCooperativa } from '../drizzle/schema/usuario-cooperativa';
 import { AdminCooperativasService } from 'admin-cooperativas/admin-cooperativas.service';
 
@@ -23,14 +21,11 @@ import { AdminCooperativasService } from 'admin-cooperativas/admin-cooperativas.
 export class ChoferesService {
   private readonly rol = RolUsuario.CHOFER;
   constructor(
-    private readonly usuarioService: UsuarioService,
-    private readonly cooperativaService: CooperativasService,
     private readonly usuarioCooperativaService: AdminCooperativasService
   ) {}
 
   async create(createChoferDto: CreateChoferDto, user: any) {
     const { cooperativaTransporteId } = await this.validateUserAccess(user);
-
     if (createChoferDto.cooperativaTransporteId !== cooperativaTransporteId) {
       throw new ForbiddenException('No puedes crear choferes para otra cooperativa.');
     }
@@ -296,10 +291,11 @@ export class ChoferesService {
       );
     }
 
+    // Obtener la cooperativa del usuario
     const [userCoop] = await db
       .select()
       .from(usuarioCooperativa)
-      .where(eq(usuarioCooperativa.usuarioId, user.id))
+      .where(eq(usuarioCooperativa.usuarioId, user.sub))
       .limit(1);
 
     if (!userCoop) {
@@ -310,4 +306,5 @@ export class ChoferesService {
 
     return { cooperativaTransporteId: userCoop.cooperativaTransporteId };
   }
+
 }
