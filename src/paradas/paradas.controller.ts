@@ -1,11 +1,19 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, ParseIntPipe, UseGuards } from '@nestjs/common';
 import { ParadasService } from './paradas.service';
 import { CreateParadaDto } from './dto/create-parada.dto';
 import { UpdateParadaDto } from './dto/update-parada.dto';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { Role } from '../auth/decorators/roles.decorator';
+import { RolUsuario } from '../auth/roles.enum';
+import { Parada } from './entities/parada.entity';
+import { JwtAuthGuard } from 'auth/guards/jwt-auth.guard';
+import { RolesGuard } from 'auth/guards/roles.guard';
 
 @ApiTags('paradas')
 @Controller('paradas')
+@ApiBearerAuth('access-token')
+@UseGuards(JwtAuthGuard, RolesGuard )
+@Role( RolUsuario.SUPERADMIN, RolUsuario.OFICINISTA)
 export class ParadasController {
   constructor(private readonly paradasService: ParadasService) {}
 
@@ -16,10 +24,16 @@ export class ParadasController {
     return this.paradasService.create(createParadaDto);
   }
 
-  @Get()
-  @ApiOperation({ summary: 'Listar todas las paradas con ciudad' })
-  findAll() {
-    return this.paradasService.findAll();
+  @Get(':cooperativaId')
+  @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
+  @ApiOperation({ summary: 'Obtiene todas las paradas de una cooperativa específica' })
+  @ApiResponse({ status: 200, description: 'Lista de paradas', type: [Parada] })
+  findAll(
+    @Param('cooperativaId', ParseIntPipe) cooperativaId: number,
+    @Query('includeDeleted') includeDeleted?: string
+  ) {
+    const includeDeletedBool = includeDeleted === 'true';
+    return this.paradasService.findAll(cooperativaId, includeDeletedBool);
   }
 
   @Get(':id')
