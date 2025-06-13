@@ -1,5 +1,20 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsString } from 'class-validator';
+import { IsNumber, IsString, IsBoolean, ValidateNested, IsArray } from 'class-validator';
+import { Type } from 'class-transformer';
+
+class PosicionAsiento {
+  @ApiProperty({ example: 1, description: 'Número de fila' })
+  @IsNumber()
+  fila: number;
+
+  @ApiProperty({ example: 1, description: 'Número de columna' })
+  @IsNumber()
+  columna: number;
+
+  @ApiProperty({ example: 1, description: 'Número de piso (1 o 2)' })
+  @IsNumber()
+  piso: number;
+}
 
 export class CreateConfiguracionAsientosDto {
   @ApiProperty({ example: 1, description: 'ID del bus' })
@@ -14,14 +29,19 @@ export class CreateConfiguracionAsientosDto {
   @IsNumber()
   cantidad: number;
 
-  @ApiProperty({ example: '25.50', description: 'Precio base como string' })
-  @IsString() // porque mencionaste que es string en la DB
+  @ApiProperty({ example: '25.50', description: 'Precio base' })
+  @IsString()
   precioBase: string;
 
   @ApiProperty({
-    example: '[{"fila":1,"columna":1},{"fila":1,"columna":2}]',
-    description: 'Posiciones de los asientos en formato JSON',
+    example: [
+      { fila: 1, columna: 1, piso: 1 },
+      { fila: 1, columna: 2, piso: 1 }
+    ],
+    description: 'Posiciones de los asientos',
   })
-  @IsString()
-  posicionesJson: string;
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PosicionAsiento)
+  posiciones: PosicionAsiento[];
 }
