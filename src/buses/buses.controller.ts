@@ -14,6 +14,9 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
+import { db } from 'drizzle/database';
+import { usuarioCooperativa } from 'drizzle/schema/usuario-cooperativa';
+import { eq } from 'drizzle-orm';
 
 import { BusesService } from './buses.service';
 import { CreateBusDto } from './dto/create-bus.dto';
@@ -74,7 +77,7 @@ export class BusesController {
       }),
     }),
   )
-  create(
+  async create(
     @UploadedFile() file: Express.Multer.File,
     @Body() createBusDto: CreateBusDto,
     @Req() req: Request,
@@ -83,8 +86,18 @@ export class BusesController {
       createBusDto.imagen = file.filename;
     }
     const user = req.user as any;
+    const userId = user.id || user.sub;
     if (user.rol !== 'SUPERADMIN') {
-      createBusDto.cooperativa_id = user.cooperativaTransporte.id;
+      // Buscar la cooperativa del usuario en la base de datos
+      const [coop] = await db
+        .select()
+        .from(usuarioCooperativa)
+        .where(eq(usuarioCooperativa.usuarioId, userId))
+        .limit(1);
+      if (!coop) {
+        throw new Error('No tienes una cooperativa asignada.');
+      }
+      createBusDto.cooperativa_id = coop.cooperativaTransporteId;
     }
     return this.busesService.create(createBusDto);
   }
@@ -99,10 +112,21 @@ export class BusesController {
     status: 200, 
     description: 'Lista de buses obtenida exitosamente. Los usuarios ADMIN y OFICINISTA solo verán los buses de su cooperativa.' 
   })
-  findAll(@Req() req: Request) {
+  async findAll(@Req() req: Request) {
     const user = req.user as any;
-    const cooperativaId = user.rol === 'SUPERADMIN' ? undefined : user.cooperativaTransporte.id;
-    return this.busesService.findAll(cooperativaId);
+    if (user.rol === 'SUPERADMIN') {
+      return this.busesService.findAll();
+    }
+    const userId = user.id || user.sub;
+    const [coop] = await db
+      .select()
+      .from(usuarioCooperativa)
+      .where(eq(usuarioCooperativa.usuarioId, userId))
+      .limit(1);
+    if (!coop) {
+      throw new Error('No tienes una cooperativa asignada.');
+    }
+    return this.busesService.findAll(coop.cooperativaTransporteId);
   }
 
   @Get(':id')
@@ -114,10 +138,21 @@ export class BusesController {
   @ApiResponse({ status: 200, description: 'Bus encontrado exitosamente' })
   @ApiResponse({ status: 404, description: 'Bus no encontrado' })
   @ApiResponse({ status: 403, description: 'No tiene permiso para ver este bus' })
-  findOne(@Param('id') id: string, @Req() req: Request) {
+  async findOne(@Param('id') id: string, @Req() req: Request) {
     const user = req.user as any;
-    const cooperativaId = user.rol === 'SUPERADMIN' ? undefined : user.cooperativaTransporte.id;
-    return this.busesService.findOne(+id, cooperativaId);
+    if (user.rol === 'SUPERADMIN') {
+      return this.busesService.findOne(+id);
+    }
+    const userId = user.id || user.sub;
+    const [coop] = await db
+      .select()
+      .from(usuarioCooperativa)
+      .where(eq(usuarioCooperativa.usuarioId, userId))
+      .limit(1);
+    if (!coop) {
+      throw new Error('No tienes una cooperativa asignada.');
+    }
+    return this.busesService.findOne(+id, coop.cooperativaTransporteId);
   }
 
   @Patch(':id')
@@ -126,13 +161,40 @@ export class BusesController {
     summary: 'Actualizar un bus',
     description: 'Actualiza un bus específico. Los usuarios ADMIN y OFICINISTA solo pueden actualizar buses de su cooperativa. El SUPERADMIN puede actualizar cualquier bus.'
   })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        placa: { type: 'string', description: 'Placa del bus', example: 'XYZ-9876' },
+        numero_bus: { type: 'string', description: 'Número del bus', example: '102' },
+        marca_chasis: { type: 'string', description: 'Marca del chasis', example: 'Scania' },
+        marca_carroceria: { type: 'string', description: 'Marca de la carrocería', example: 'Modasa' },
+        imagen: { type: 'string', format: 'binary', description: 'Imagen del bus' },
+        piso_doble: { type: 'boolean', description: 'Indica si el bus es de dos pisos', example: true },
+        total_asientos: { type: 'number', description: 'Número total de asientos del bus', example: 50 },
+        activo: { type: 'boolean', description: 'Estado activo del bus', example: true },
+      },
+    },
+    description: 'Datos del bus a actualizar (al menos uno de los campos opcionales)'
+  })
   @ApiResponse({ status: 200, description: 'Bus actualizado exitosamente' })
   @ApiResponse({ status: 404, description: 'Bus no encontrado' })
   @ApiResponse({ status: 403, description: 'No tiene permiso para actualizar este bus' })
-  update(@Param('id') id: string, @Body() updateBusDto: UpdateBusDto, @Req() req: Request) {
+  async update(@Param('id') id: string, @Body() updateBusDto: UpdateBusDto, @Req() req: Request) {
     const user = req.user as any;
-    const cooperativaId = user.rol === 'SUPERADMIN' ? undefined : user.cooperativaTransporte.id;
-    return this.busesService.update(+id, updateBusDto, cooperativaId);
+    if (user.rol === 'SUPERADMIN') {
+      return this.busesService.update(+id, updateBusDto);
+    }
+    const userId = user.id || user.sub;
+    const [coop] = await db
+      .select()
+      .from(usuarioCooperativa)
+      .where(eq(usuarioCooperativa.usuarioId, userId))
+      .limit(1);
+    if (!coop) {
+      throw new Error('No tienes una cooperativa asignada.');
+    }
+    return this.busesService.update(+id, updateBusDto, coop.cooperativaTransporteId);
   }
 
   @Delete(':id')
@@ -144,9 +206,20 @@ export class BusesController {
   @ApiResponse({ status: 200, description: 'Bus eliminado exitosamente' })
   @ApiResponse({ status: 404, description: 'Bus no encontrado' })
   @ApiResponse({ status: 403, description: 'No tiene permiso para eliminar este bus' })
-  remove(@Param('id') id: string, @Req() req: Request) {
+  async remove(@Param('id') id: string, @Req() req: Request) {
     const user = req.user as any;
-    const cooperativaId = user.rol === 'SUPERADMIN' ? undefined : user.cooperativaTransporte.id;
-    return this.busesService.remove(+id, cooperativaId);
+    if (user.rol === 'SUPERADMIN') {
+      return this.busesService.remove(+id);
+    }
+    const userId = user.id || user.sub;
+    const [coop] = await db
+      .select()
+      .from(usuarioCooperativa)
+      .where(eq(usuarioCooperativa.usuarioId, userId))
+      .limit(1);
+    if (!coop) {
+      throw new Error('No tienes una cooperativa asignada.');
+    }
+    return this.busesService.remove(+id, coop.cooperativaTransporteId);
   }
 }
