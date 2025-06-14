@@ -1,5 +1,5 @@
 // rutas.ts
-import { pgTable, serial, integer, varchar, text, timestamp } from 'drizzle-orm/pg-core';
+import { pgTable, serial, integer, varchar, text, timestamp, boolean } from 'drizzle-orm/pg-core';
 import { paradas } from './paradas';
 import { resolucionesAnt } from './resoluciones-ant';
 import { cooperativaTransporte } from './cooperativa-transporte';
@@ -13,6 +13,7 @@ export const rutas = pgTable('rutas', {
   codigo: varchar('codigo', { length: 50 }),
   cooperativaId: integer('cooperativa_id').references(() => cooperativaTransporte.id),
   distanciaKm: integer('distancia_km'),
+  estado: boolean('estado'),
   duracionEstimadaMin: text('duracion_estimada_min'),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
