@@ -20,4 +20,14 @@ export class CreateResolucionDto {
   @IsBoolean()
   @Type(() => Boolean)
   estado: boolean;
+
+  @ApiProperty({ description: 'Indica si la resolución está en uso', default: false })
+  @IsBoolean()
+  @Type(() => Boolean)
+  enUso: boolean = false;
+
+  @ApiProperty({ description: 'Indica si la resolución está activa', default: true })
+  @IsBoolean()
+  @Type(() => Boolean)
+  activo: boolean = true;
 }

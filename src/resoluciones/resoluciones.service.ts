@@ -4,7 +4,7 @@ import { UpdateResolucionDto } from './dto/update-resolucion.dto';
 import { createClient } from '@supabase/supabase-js';
 import { db } from '../drizzle/database';
 import { resolucionesAnt } from '../drizzle/schema/resoluciones-ant';
-import { eq } from 'drizzle-orm';
+import { eq, and, isNull } from 'drizzle-orm';
 import { format } from 'date-fns';
 
 @Injectable()
@@ -44,22 +44,40 @@ export class ResolucionesService {
       documentoURL: publicUrl,
       fechaEmision: createResolucionDto.fechaEmision,
       fechaVencimiento: createResolucionDto.fechaVencimiento,
-      estado: createResolucionDto.estado,
+      estado: true, // Siempre se crea como activa
       cooperativaId: createResolucionDto.cooperativaId,
+      enUso: false, // Siempre se crea como no en uso
     }).returning();
 
     return resolucion;
   }
 
-  async findAll() {
-    return await db.select().from(resolucionesAnt);
+  async findAll(cooperativaId: number) {
+    if (!cooperativaId) {
+      throw new Error('Se requiere el ID de la cooperativa para listar las resoluciones');
+    }
+
+    return await db
+      .select()
+      .from(resolucionesAnt)
+      .where(
+        and(
+          eq(resolucionesAnt.cooperativaId, cooperativaId),
+          eq(resolucionesAnt.estado, true)
+        )
+      );
   }
 
   async findOne(id: number) {
     const [resolucion] = await db
       .select()
       .from(resolucionesAnt)
-      .where(eq(resolucionesAnt.id, id));
+      .where(
+        and(
+          eq(resolucionesAnt.id, id),
+          eq(resolucionesAnt.estado, true)
+        )
+      );
     return resolucion;
   }
 
@@ -95,8 +113,15 @@ export class ResolucionesService {
         fechaVencimiento: updateResolucionDto.fechaVencimiento,
         estado: updateResolucionDto.estado,
         cooperativaId: updateResolucionDto.cooperativaId,
+        enUso: updateResolucionDto.enUso,
+        updatedAt: new Date(),
       })
-      .where(eq(resolucionesAnt.id, id))
+      .where(
+        and(
+          eq(resolucionesAnt.id, id),
+          eq(resolucionesAnt.estado, true)
+        )
+      )
       .returning();
 
     return resolucion;
@@ -106,7 +131,12 @@ export class ResolucionesService {
     const [resolucion] = await db
       .select()
       .from(resolucionesAnt)
-      .where(eq(resolucionesAnt.id, id));
+      .where(
+        and(
+          eq(resolucionesAnt.id, id),
+          eq(resolucionesAnt.estado, true)
+        )
+      );
 
     if (resolucion) {
       // Eliminar archivo de Supabase Storage
@@ -117,9 +147,13 @@ export class ResolucionesService {
           .remove([`resoluciones/${resolucion.cooperativaId}/${path}`]);
       }
 
-      // Eliminar registro de la base de datos
+      // Soft delete en la base de datos
       await db
-        .delete(resolucionesAnt)
+        .update(resolucionesAnt)
+        .set({ 
+          estado: false,
+          deletedAt: new Date() 
+        })
         .where(eq(resolucionesAnt.id, id));
     }
 

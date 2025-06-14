@@ -1,9 +1,9 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseInterceptors, UploadedFile, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseInterceptors, UploadedFile, UseGuards, Query } from '@nestjs/common';
 import { ResolucionesService } from './resoluciones.service';
 import { CreateResolucionDto } from './dto/create-resolucion.dto';
 import { UpdateResolucionDto } from './dto/update-resolucion.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes, ApiBody, ApiQuery } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'auth/guards/roles.guard';
 import { Role } from 'auth/decorators/roles.decorator';
@@ -42,6 +42,10 @@ export class ResolucionesController {
         estado: {
           type: 'boolean',
         },
+        enUso: {
+          type: 'boolean',
+          default: false,
+        },
       },
     },
   })
@@ -52,9 +56,10 @@ export class ResolucionesController {
 
   @Get()
   @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
-  @ApiOperation({ summary: 'Obtener todas las resoluciones' })
-  findAll() {
-    return this.resolucionesService.findAll();
+  @ApiOperation({ summary: 'Obtener todas las resoluciones de una cooperativa' })
+  @ApiQuery({ name: 'cooperativaId', required: true, type: Number })
+  findAll(@Query('cooperativaId') cooperativaId: number) {
+    return this.resolucionesService.findAll(cooperativaId);
   }
 
   @Get(':id')
@@ -88,6 +93,9 @@ export class ResolucionesController {
           format: 'date',
         },
         estado: {
+          type: 'boolean',
+        },
+        enUso: {
           type: 'boolean',
         },
       },
