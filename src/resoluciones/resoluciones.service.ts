@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { CreateResolucionDto } from './dto/create-resolucion.dto';
 import { UpdateResolucionDto } from './dto/update-resolucion.dto';
 import { createClient } from '@supabase/supabase-js';
@@ -12,16 +12,19 @@ export class ResolucionesService {
   private supabase;
 
   constructor() {
-    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
       throw new Error('Supabase credentials are not configured');
     }
     this.supabase = createClient(
       process.env.SUPABASE_URL,
-      process.env.SUPABASE_ANON_KEY,
+      process.env.SUPABASE_SERVICE_ROLE_KEY,
     );
   }
 
-  async create(createResolucionDto: CreateResolucionDto, file: Express.Multer.File) {
+  async create(
+    createResolucionDto: CreateResolucionDto,
+    file: Express.Multer.File,
+  ) {
     const fechaActual = format(new Date(), 'yyyy-MM-dd');
     const path = `resoluciones/${createResolucionDto.cooperativaId}/${fechaActual}/${file.originalname}`;
 
@@ -32,29 +35,38 @@ export class ResolucionesService {
         contentType: file.mimetype,
       });
 
-    if (uploadError) throw uploadError;
-
+    if (uploadError) {
+      throw new HttpException(
+        uploadError.message || 'Error al subir archivo a Supabase',
+        Number(uploadError.statusCode) || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
     // Obtener URL pública del archivo
-    const { data: { publicUrl } } = this.supabase.storage
-      .from('almacenamiento')
-      .getPublicUrl(path);
+    const {
+      data: { publicUrl },
+    } = this.supabase.storage.from('almacenamiento').getPublicUrl(path);
 
     // Crear registro en la base de datos
-    const [resolucion] = await db.insert(resolucionesAnt).values({
-      documentoURL: publicUrl,
-      fechaEmision: createResolucionDto.fechaEmision,
-      fechaVencimiento: createResolucionDto.fechaVencimiento,
-      estado: true, // Siempre se crea como activa
-      cooperativaId: createResolucionDto.cooperativaId,
-      enUso: false, // Siempre se crea como no en uso
-    }).returning();
+    const [resolucion] = await db
+      .insert(resolucionesAnt)
+      .values({
+        documentoURL: publicUrl,
+        fechaEmision: createResolucionDto.fechaEmision,
+        fechaVencimiento: createResolucionDto.fechaVencimiento,
+        estado: true, // Siempre se crea como activa
+        cooperativaId: createResolucionDto.cooperativaId,
+        enUso: false, // Siempre se crea como no en uso
+      })
+      .returning();
 
     return resolucion;
   }
 
   async findAll(cooperativaId: number) {
     if (!cooperativaId) {
-      throw new Error('Se requiere el ID de la cooperativa para listar las resoluciones');
+      throw new Error(
+        'Se requiere el ID de la cooperativa para listar las resoluciones',
+      );
     }
 
     return await db
@@ -63,8 +75,8 @@ export class ResolucionesService {
       .where(
         and(
           eq(resolucionesAnt.cooperativaId, cooperativaId),
-          eq(resolucionesAnt.estado, true)
-        )
+          eq(resolucionesAnt.estado, true),
+        ),
       );
   }
 
@@ -72,16 +84,15 @@ export class ResolucionesService {
     const [resolucion] = await db
       .select()
       .from(resolucionesAnt)
-      .where(
-        and(
-          eq(resolucionesAnt.id, id),
-          eq(resolucionesAnt.estado, true)
-        )
-      );
+      .where(and(eq(resolucionesAnt.id, id), eq(resolucionesAnt.estado, true)));
     return resolucion;
   }
 
-  async update(id: number, updateResolucionDto: UpdateResolucionDto, file?: Express.Multer.File) {
+  async update(
+    id: number,
+    updateResolucionDto: UpdateResolucionDto,
+    file?: Express.Multer.File,
+  ) {
     let documentoURL = updateResolucionDto.documentoURL;
 
     if (file) {
@@ -89,18 +100,19 @@ export class ResolucionesService {
       const path = `resoluciones/${updateResolucionDto.cooperativaId}/${fechaActual}/${file.originalname}`;
 
       // Subir nuevo archivo
-      const { data: uploadData, error: uploadError } = await this.supabase.storage
-        .from('almacenamiento')
-        .upload(path, file.buffer, {
-          contentType: file.mimetype,
-        });
+      const { data: uploadData, error: uploadError } =
+        await this.supabase.storage
+          .from('almacenamiento')
+          .upload(path, file.buffer, {
+            contentType: file.mimetype,
+          });
 
       if (uploadError) throw uploadError;
 
       // Obtener nueva URL pública
-      const { data: { publicUrl } } = this.supabase.storage
-        .from('almacenamiento')
-        .getPublicUrl(path);
+      const {
+        data: { publicUrl },
+      } = this.supabase.storage.from('almacenamiento').getPublicUrl(path);
 
       documentoURL = publicUrl;
     }
@@ -116,12 +128,7 @@ export class ResolucionesService {
         enUso: updateResolucionDto.enUso,
         updatedAt: new Date(),
       })
-      .where(
-        and(
-          eq(resolucionesAnt.id, id),
-          eq(resolucionesAnt.estado, true)
-        )
-      )
+      .where(and(eq(resolucionesAnt.id, id), eq(resolucionesAnt.estado, true)))
       .returning();
 
     return resolucion;
@@ -131,12 +138,7 @@ export class ResolucionesService {
     const [resolucion] = await db
       .select()
       .from(resolucionesAnt)
-      .where(
-        and(
-          eq(resolucionesAnt.id, id),
-          eq(resolucionesAnt.estado, true)
-        )
-      );
+      .where(and(eq(resolucionesAnt.id, id), eq(resolucionesAnt.estado, true)));
 
     if (resolucion) {
       // Eliminar archivo de Supabase Storage
@@ -150,9 +152,9 @@ export class ResolucionesService {
       // Soft delete en la base de datos
       await db
         .update(resolucionesAnt)
-        .set({ 
+        .set({
           estado: false,
-          deletedAt: new Date() 
+          deletedAt: new Date(),
         })
         .where(eq(resolucionesAnt.id, id));
     }
