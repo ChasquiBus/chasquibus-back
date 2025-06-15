@@ -24,7 +24,7 @@ import { RolesGuard } from 'auth/guards/roles.guard';
 @Controller('ciudades')
 @ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard, RolesGuard )
-@Role( RolUsuario.SUPERADMIN, RolUsuario.OFICINISTA)
+@Role( RolUsuario.ADMIN, RolUsuario.OFICINISTA)
 export class CiudadesController {
   constructor(private readonly ciudadesService: CiudadesService) {}
 
@@ -43,7 +43,6 @@ export class CiudadesController {
   }
 
   @Get(':cooperativaId')
-  @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
   @ApiOperation({ summary: 'Obtiene todas las ciudades de una cooperativa específica' })
   @ApiResponse({ status: 200, description: 'Lista de ciudades', type: [Ciudad] })
   findAll(
