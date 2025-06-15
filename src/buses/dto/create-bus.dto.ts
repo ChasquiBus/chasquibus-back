@@ -43,6 +43,12 @@ export class CreateBusDto {
   @IsPositive({ message: 'El total de asientos debe ser un número positivo.' })
   total_asientos: number;
 
+  @ApiPropertyOptional({ description: 'Número total de asientos en el segundo piso (solo si el bus es de dos pisos).', example: 20 })
+  @IsNumber({}, { message: 'El total de asientos del segundo piso debe ser un número.' })
+  @IsPositive({ message: 'El total de asientos del segundo piso debe ser un número positivo.' })
+  @IsOptional()
+  total_asientos_piso2?: number | null;
+
   @ApiPropertyOptional({ description: 'Estado activo del bus.', example: true })
   @IsBoolean({ message: 'El estado activo debe ser booleano.' })
   @IsOptional()
