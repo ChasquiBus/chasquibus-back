@@ -5,7 +5,7 @@ import { db } from '../drizzle/database';
 import { rutas } from '../drizzle/schema/rutas';
 import { paradas } from '../drizzle/schema/paradas';
 import { resolucionesAnt } from '../drizzle/schema/resoluciones-ant';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, isNotNull, sql } from 'drizzle-orm';
 
 @Injectable()
 export class RutasService {
@@ -74,7 +74,7 @@ export class RutasService {
       throw new BadRequestException('Se requiere el ID de la cooperativa para listar las rutas');
     }
 
-    return await db
+    const rutasList = await db
       .select()
       .from(rutas)
       .where(
@@ -83,6 +83,45 @@ export class RutasService {
           eq(rutas.estado, true)
         )
       );
+
+    // Obtener información detallada para cada ruta
+    const rutasConDetalles = await Promise.all(
+      rutasList.map(async (ruta) => {
+        let paradaOrigen: typeof paradas.$inferSelect | undefined = undefined;
+        let paradaDestino: typeof paradas.$inferSelect | undefined = undefined;
+        let resolucion: typeof resolucionesAnt.$inferSelect | undefined = undefined;
+
+        if (ruta.paradaOrigenId) {
+          [paradaOrigen] = await db
+            .select()
+            .from(paradas)
+            .where(eq(paradas.id, ruta.paradaOrigenId));
+        }
+
+        if (ruta.paradaDestinoId) {
+          [paradaDestino] = await db
+            .select()
+            .from(paradas)
+            .where(eq(paradas.id, ruta.paradaDestinoId));
+        }
+
+        if (ruta.resolucionId) {
+          [resolucion] = await db
+            .select()
+            .from(resolucionesAnt)
+            .where(eq(resolucionesAnt.id, ruta.resolucionId));
+        }
+
+        return {
+          ...ruta,
+          paradaOrigen,
+          paradaDestino,
+          resolucion,
+        };
+      })
+    );
+
+    return rutasConDetalles;
   }
 
   async findOne(id: number) {
