@@ -17,6 +17,7 @@ import { CiudadesModule } from './ciudades/ciudades.module';
 import { ParadasModule } from './paradas/paradas.module';
 import { RutasModule } from './rutas/rutas.module';
 import { RutaParadaModule } from 'ruta-parada/ruta-parada.module';
+import { TarifasParadasModule } from './tarifas-paradas/tarifas-paradas.module';
 
 
 
@@ -37,7 +38,8 @@ import { RutaParadaModule } from 'ruta-parada/ruta-parada.module';
     CiudadesModule,
     ParadasModule,
     RutasModule,
-    RutaParadaModule
+    RutaParadaModule,
+    TarifasParadasModule
   ],
   controllers: [AppController],
   providers: [AppService],
