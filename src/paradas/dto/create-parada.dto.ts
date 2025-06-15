@@ -1,33 +1,44 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { IsNotEmpty, IsString, IsNumber, IsBoolean } from 'class-validator';
 
 export class CreateParadaDto {
   @ApiProperty({
+    description: 'ID de la ciudad donde se encuentra la parada',
     example: 1,
-    description: 'ID de la ciudad a la que pertenece la parada. Debe coincidir con una ciudad existente en el sistema.',
   })
+  @IsNumber()
+  @IsNotEmpty()
   ciudadId: number;
 
   @ApiProperty({
-    example: 'Parada Central',
-    description: 'Nombre identificador de la parada. Debe ser único dentro de una misma ciudad si es posible.',
+    description: 'Nombre de la parada',
+    example: 'Terminal Terrestre',
   })
+  @IsString()
+  @IsNotEmpty()
   nombreParada: string;
 
   @ApiProperty({
-    example: 'Av. Bolívar y Quito',
-    description: 'Dirección física donde se encuentra ubicada la parada. Puede incluir calles, avenidas o puntos de referencia.',
+    description: 'Dirección de la parada',
+    example: 'Av. Principal 123',
   })
+  @IsString()
+  @IsNotEmpty()
   direccion: string;
 
   @ApiProperty({
+    description: 'Indica si la parada es una terminal',
     example: true,
-    description: 'Indica si la parada está activa (true) o inactiva (false). Una parada inactiva no se mostrará en las rutas disponibles.',
   })
-  estado: boolean;
+  @IsBoolean()
+  @IsNotEmpty()
+  esTerminal: boolean;
 
   @ApiProperty({
-    example: false,
-    description: 'Especifica si la parada es una terminal principal. Esto puede influir en la lógica de planificación de rutas.',
+    description: 'ID de la cooperativa a la que pertenece la parada',
+    example: 1,
   })
-  esTerminal: boolean;
+  @IsNumber()
+  @IsNotEmpty()
+  cooperativaId: number;
 }

@@ -11,7 +11,9 @@ import type { InferSelectModel } from 'drizzle-orm';
 @Injectable()
 export class ParadasService {
   async create(data: CreateParadaDto): Promise<Parada[]> {
-    return db.insert(paradas).values(data).returning();
+    return db.insert(paradas)
+    .values({...data, estado: true})
+    .returning();
   }
 
   async findAll(cooperativaId: number, includeDeleted: boolean = false): Promise<InferSelectModel<typeof paradas>[]> {
@@ -72,6 +74,9 @@ export class ParadasService {
   }
 
   async remove(id: number): Promise<Parada[]> {
-    return db.delete(paradas).where(eq(paradas.id, id)).returning();
+    return db.update(paradas)
+      .set({ estado: false }) // no se elimina, solo se marca como inactiva
+      .where(eq(paradas.id, id))
+      .returning();
   }
 }

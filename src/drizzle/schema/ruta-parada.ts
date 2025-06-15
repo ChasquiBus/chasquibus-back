@@ -10,6 +10,5 @@ export const rutaParada = pgTable('ruta_parada', {
   orden: integer('orden'),
   distanciaDesdeOrigenKm: integer('distancia_desde_origen_km'),
   tiempoDesdeOrigenMin: integer('tiempo_desde_origen_min'),
-  estado: varchar('estado', { length: 50 }), // Activa, Inactiva, suspendida
-  esTerminal: boolean('es_terminal')
+  estado: varchar('estado', { length: 50 }), // activa, inactiva, suspendida
 });

@@ -10,52 +10,62 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 export class CreateCooperativaDto {
   @ApiProperty({
     description: 'Nombre de la cooperativa',
-    example: 'Cooperativa San José',
+    maxLength: 100
   })
   @IsString()
-  @IsNotEmpty({ message: 'El nombre es obligatorio' })
+  @IsNotEmpty()
   nombre: string;
 
-  @ApiPropertyOptional({
+  @ApiProperty({
     description: 'RUC de la cooperativa (10 a 13 dígitos)',
-    example: '1790012345001',
+    maxLength: 20,
+    example: '1790012345001'
   })
-  @IsOptional()
   @IsString()
+  @IsNotEmpty()
   @Matches(/^\d{10,13}$/, { message: 'El RUC debe tener entre 10 y 13 dígitos' })
-  ruc?: string;
+  ruc: string;
 
   @ApiPropertyOptional({
     description: 'URL del logo de la cooperativa',
-    example: 'https://miapp.com/logos/logo.png',
+    maxLength: 255,
+    example: 'https://miapp.com/logos/logo.png'
   })
+  @IsString()
   @IsOptional()
   logo?: string;
 
   @ApiPropertyOptional({
     description: 'Color primario en formato hexadecimal',
-    example: '#123456',
+    maxLength: 20,
+    example: '#123456'
   })
+  @IsString()
   @IsOptional()
   colorPrimario?: string;
 
   @ApiPropertyOptional({
     description: 'Color secundario en formato hexadecimal',
-    example: '#abcdef',
+    maxLength: 20,
+    example: '#abcdef'
   })
+  @IsString()
   @IsOptional()
   colorSecundario?: string;
 
   @ApiPropertyOptional({
     description: 'Sitio web oficial de la cooperativa',
-    example: 'https://www.cooperativa.com',
+    maxLength: 255,
+    example: 'https://www.cooperativa.com'
   })
+  @IsString()
   @IsOptional()
   sitioWeb?: string;
 
   @ApiPropertyOptional({
     description: 'Correo electrónico de contacto',
-    example: 'info@cooperativa.com',
+    maxLength: 100,
+    example: 'info@cooperativa.com'
   })
   @IsOptional()
   @IsEmail({}, { message: 'El email debe tener un formato válido' })
@@ -63,17 +73,19 @@ export class CreateCooperativaDto {
 
   @ApiPropertyOptional({
     description: 'Número de teléfono de la cooperativa',
-    example: '+593987654321',
+    maxLength: 20,
+    example: '+593987654321'
   })
-  @IsOptional()
   @IsString()
+  @IsOptional()
   telefono?: string;
 
   @ApiPropertyOptional({
     description: 'Dirección física de la cooperativa',
-    example: 'Av. Amazonas y Naciones Unidas, Quito',
+    maxLength: 255,
+    example: 'Av. Amazonas y Naciones Unidas, Quito'
   })
-  @IsOptional()
   @IsString()
+  @IsOptional()
   direccion?: string;
 }

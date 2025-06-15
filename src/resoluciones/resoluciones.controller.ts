@@ -1,9 +1,9 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseInterceptors, UploadedFile, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseInterceptors, UploadedFile, UseGuards, Query } from '@nestjs/common';
 import { ResolucionesService } from './resoluciones.service';
 import { CreateResolucionDto } from './dto/create-resolucion.dto';
 import { UpdateResolucionDto } from './dto/update-resolucion.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes, ApiBody, ApiQuery } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'auth/guards/roles.guard';
 import { Role } from 'auth/decorators/roles.decorator';
@@ -26,21 +26,36 @@ export class ResolucionesController {
       properties: {
         file: {
           type: 'string',
+          description: 'Archivo PDF de la resolución',
           format: 'binary',
         },
         cooperativaId: {
           type: 'number',
+          description: 'ID de la cooperativa a la que pertenece la resolución',
+          example: 1, 
+          nullable: false,
         },
         fechaEmision: {
           type: 'string',
           format: 'date',
+          description: 'Fecha de emisión de la resolución',
+          example: '2024-03-20',
         },
         fechaVencimiento: {
           type: 'string',
           format: 'date',
+          description: 'Fecha de vencimiento de la resolución',
+          example: '2025-03-20',
         },
         estado: {
+          type: 'boolean',  
+          description: 'Estado de la resolución (activa/inactiva)',
+          default: true,
+        },
+        enUso: {
           type: 'boolean',
+          description: 'Indica si la resolución está actualmente en uso',
+          default: false,
         },
       },
     },
@@ -52,9 +67,10 @@ export class ResolucionesController {
 
   @Get()
   @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
-  @ApiOperation({ summary: 'Obtener todas las resoluciones' })
-  findAll() {
-    return this.resolucionesService.findAll();
+  @ApiOperation({ summary: 'Obtener todas las resoluciones de una cooperativa' })
+  @ApiQuery({ name: 'cooperativaId', required: true, type: Number })
+  findAll(@Query('cooperativaId') cooperativaId: number) {
+    return this.resolucionesService.findAll(cooperativaId);
   }
 
   @Get(':id')
@@ -75,23 +91,43 @@ export class ResolucionesController {
         file: {
           type: 'string',
           format: 'binary',
+          description: 'Archivo PDF de la resolución',
+          nullable: true
         },
         cooperativaId: {
           type: 'number',
+          description: 'ID de la cooperativa a la que pertenece la resolución',
+          example: 1,
+          nullable: true
         },
         fechaEmision: {
           type: 'string',
           format: 'date',
+          description: 'Fecha de emisión de la resolución',
+          example: '2024-03-20',
+          nullable: true
         },
         fechaVencimiento: {
           type: 'string',
           format: 'date',
+          description: 'Fecha de vencimiento de la resolución',
+          example: '2025-03-20',
+          nullable: true
         },
         estado: {
           type: 'boolean',
+          description: 'Estado de la resolución (activa/inactiva)',
+          example: true,
+          nullable: true
         },
-      },
-    },
+        enUso: {
+          type: 'boolean',
+          description: 'Indica si la resolución está actualmente en uso',
+          example: false,
+          nullable: true
+        }
+      }
+    }
   })
   @UseInterceptors(FileInterceptor('file'))
   update(
