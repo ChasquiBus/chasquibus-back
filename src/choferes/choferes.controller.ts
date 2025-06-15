@@ -10,6 +10,8 @@ import {
   Request,
   Query,
   ParseIntPipe,
+  UnauthorizedException,
+  Req,
 } from '@nestjs/common';
 import { ChoferesService } from './choferes.service';
 import { CreateChoferDto } from './dto/create-chofer.dto';
@@ -25,6 +27,7 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import { JwtPayload } from 'jsonwebtoken';
 
 @ApiTags('choferes')
 @Controller('choferes')
@@ -41,16 +44,20 @@ export class ChoferesController {
     return this.choferesService.create(createChoferDto, req.user);
   }
 
-  @Get(':cooperativaId')
+  @Get()
   @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
-  @ApiOperation({ summary: 'Obtiene todos los choferes de una cooperativa específica' })
+  @ApiOperation({ summary: 'Obtiene todos los choferes de la cooperativa del usuario' })
   @ApiResponse({ status: 200, description: 'Lista de choferes', type: [Chofer] })
   findAll(
-    @Param('cooperativaId', ParseIntPipe) cooperativaId: number,
+    @Req() req,
     @Query('includeDeleted') includeDeleted?: string
   ) {
+    const user = req.user as JwtPayload;
+    if (!user.cooperativaId) {
+      throw new UnauthorizedException('No tienes una cooperativa asignada');
+    }
     const includeDeletedBool = includeDeleted === 'true';
-    return this.choferesService.findAll(cooperativaId, includeDeletedBool);
+    return this.choferesService.findAll(user.cooperativaId, includeDeletedBool);
   }
 
   @Get(':id')
