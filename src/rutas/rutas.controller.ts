@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, Req, UnauthorizedException } from '@nestjs/common';
 import { RutasService } from './rutas.service';
 import { CreateRutaDto } from './dto/create-ruta.dto';
 import { UpdateRutaDto } from './dto/update-ruta.dto';
@@ -7,6 +7,7 @@ import { Role } from '../auth/decorators/roles.decorator';
 import { RolUsuario } from '../auth/roles.enum';
 import { JwtAuthGuard } from 'auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'auth/guards/roles.guard';
+import { JwtPayload } from 'jsonwebtoken';
 
 @ApiTags('rutas')
 @Controller('rutas')
@@ -26,11 +27,15 @@ export class RutasController {
 
   @Get()
   @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
-  @ApiOperation({ summary: 'Obtener todas las rutas de una cooperativa' })
+  @ApiOperation({ summary: 'Obtener todas las rutas de la cooperativa del usuario' })
   @ApiResponse({ status: 200, description: 'Lista de rutas obtenida exitosamente' })
-  @ApiResponse({ status: 400, description: 'ID de cooperativa no proporcionado' })
-  findAll(@Query('cooperativaTransporteId') cooperativaTransporteId: number) {
-    return this.rutasService.findAll(cooperativaTransporteId);
+  @ApiResponse({ status: 401, description: 'No tienes una cooperativa asignada' })
+  findAll(@Req() req) {
+    const user = req.user as JwtPayload;
+    if (!user.cooperativaId) {
+      throw new UnauthorizedException('No tienes una cooperativa asignada');
+    }
+    return this.rutasService.findAll(user.cooperativaId);
   }
 
   @Get(':id')

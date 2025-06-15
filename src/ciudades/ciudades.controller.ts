@@ -9,6 +9,8 @@ import {
   Query,
   ParseIntPipe,
   UseGuards,
+  Req,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
 import { CiudadesService } from './ciudades.service';
@@ -19,6 +21,7 @@ import { RolUsuario } from '../auth/roles.enum';
 import { Ciudad } from './entities/ciudad.entity';
 import { JwtAuthGuard } from 'auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'auth/guards/roles.guard';
+import { JwtPayload } from 'jsonwebtoken';
 
 @ApiTags('ciudades') 
 @Controller('ciudades')
@@ -42,13 +45,15 @@ export class CiudadesController {
     return this.ciudadesService.create(createCiudadDto);
   }
 
-  @Get(':cooperativaId')
-  @ApiOperation({ summary: 'Obtiene todas las ciudades de una cooperativa específica' })
+  @Get()
+  @ApiOperation({ summary: 'Obtiene todas las ciudades de la cooperativa del usuario' })
   @ApiResponse({ status: 200, description: 'Lista de ciudades', type: [Ciudad] })
-  findAll(
-    @Param('cooperativaId', ParseIntPipe) cooperativaId: number
-  ) {
-    return this.ciudadesService.findAll(cooperativaId);
+  findAll(@Req() req) {
+    const user = req.user as JwtPayload;
+    if (!user.cooperativaId) {
+      throw new UnauthorizedException('No tienes una cooperativa asignada');
+    }
+    return this.ciudadesService.findAll(user.cooperativaId);
   }
 
   @Get(':id')
