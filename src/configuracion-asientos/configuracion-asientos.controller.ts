@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   UseGuards,
+  NotFoundException,
 } from '@nestjs/common';
 import { ConfiguracionAsientosService } from './configuracion-asientos.service';
 import { CreateConfiguracionAsientosDto } from './dto/create-configuracion-asientos.dto';
@@ -29,14 +30,7 @@ export class ConfiguracionAsientosController {
   @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
   @ApiOperation({ 
     summary: 'Crear configuración de asientos',
-    description: `Crea una nueva configuración de asientos para un bus. 
-    Reglas importantes:
-    1. En el primer piso solo se permiten asientos NORMAL
-    2. En el segundo piso pueden ser VIP o NORMAL
-    3. Los precios de asientos VIP deben ser mayores que los asientos NORMAL
-    4. Las filas y columnas deben ser números positivos
-    5. Los precios deben tener máximo 2 decimales
-    6. El número total de asientos no puede exceder el total definido en el bus`
+    description: `Crea una nueva configuración de asientos para un bus.\n\nREGLAS IMPORTANTES:\n\n- El campo 'posiciones' debe ser un array de objetos, cada uno representando un asiento.\n- El número total de asientos no puede exceder el total definido en el bus.\n- Todos los campos de cada posición son obligatorios: fila, columna, piso, tipoAsiento, precio.\n\nPara buses de UN SOLO PISO (piso_doble: false):\n- Todos los asientos deben tener piso: 1 y tipoAsiento: 'NORMAL'.\n\nPara buses de DOS PISOS (piso_doble: true):\n- Piso 1: solo tipoAsiento: 'NORMAL'.\n- Piso 2: tipoAsiento puede ser 'NORMAL' o 'VIP'.\n- Los precios de los asientos VIP deben ser mayores que los de los asientos NORMAL.\n\nEJEMPLO UN PISO:\n{\n  "busId": 1,\n  "posiciones": [\n    { "fila": 1, "columna": 1, "piso": 1, "tipoAsiento": "NORMAL", "precio": "25.50" },\n    { "fila": 1, "columna": 2, "piso": 1, "tipoAsiento": "NORMAL", "precio": "25.50" }\n    // ... hasta completar el total de asientos\n  ]\n}\n\nEJEMPLO DOS PISOS:\n{\n  "busId": 2,\n  "posiciones": [\n    { "fila": 1, "columna": 1, "piso": 1, "tipoAsiento": "NORMAL", "precio": "25.50" },\n    { "fila": 1, "columna": 1, "piso": 2, "tipoAsiento": "VIP", "precio": "35.50" },\n    { "fila": 1, "columna": 2, "piso": 2, "tipoAsiento": "NORMAL", "precio": "30.50" }\n    // ... hasta completar el total de asientos\n  ]\n}`
   })
   @ApiResponse({
     status: 201,
@@ -214,8 +208,10 @@ export class ConfiguracionAsientosController {
       }
     }
   })
-  findOne(@Param('id') id: string) {
-    return this.service.findOne(+id);
+  async findOne(@Param('id') id: string) {
+    const config = await this.service.findOne(+id);
+    if (!config) throw new NotFoundException('Configuración de asientos no encontrada');
+    return config;
   }
 
   @Patch(':id')

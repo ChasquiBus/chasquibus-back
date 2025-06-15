@@ -90,4 +90,30 @@ export class CooperativasService {
       .where(eq(cooperativaTransporte.id, id))
       .returning();
   }
+
+  async findCooperativaByUsuarioCooperativaId(usuarioCooperativaId: number) {
+    const [usuarioCoop] = await db
+      .select()
+      .from(usuarioCooperativa)
+      .where(eq(usuarioCooperativa.id, usuarioCooperativaId));
+    if (!usuarioCoop) return null;
+    const [cooperativa] = await db
+      .select()
+      .from(cooperativaTransporte)
+      .where(eq(cooperativaTransporte.id, usuarioCoop.cooperativaTransporteId));
+    return cooperativa || null;
+  }
+
+  async findCooperativaByUsuarioId(usuarioId: number) {
+    const [usuarioCoop] = await db
+      .select()
+      .from(usuarioCooperativa)
+      .where(eq(usuarioCooperativa.usuarioId, usuarioId));
+    if (!usuarioCoop) return null;
+    const [cooperativa] = await db
+      .select()
+      .from(cooperativaTransporte)
+      .where(eq(cooperativaTransporte.id, usuarioCoop.cooperativaTransporteId));
+    return cooperativa || null;
+  }
 }
