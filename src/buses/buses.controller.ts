@@ -10,6 +10,7 @@ import {
   UploadedFile,
   UseGuards,
   Req,
+  NotFoundException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
@@ -24,13 +25,17 @@ import { JwtAuthGuard } from 'auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'auth/guards/roles.guard';
 import { ApiBearerAuth, ApiTags, ApiOperation, ApiResponse, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { Request } from 'express';
+import { CooperativasService } from '../cooperativas/cooperativas.service';
 
 @ApiTags('Buses')
 @Controller('buses')
 @ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class BusesController {
-  constructor(private readonly busesService: BusesService) {}
+  constructor(
+    private readonly busesService: BusesService,
+    private readonly cooperativasService: CooperativasService,
+  ) {}
 
   @Post()
   @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
@@ -74,7 +79,7 @@ export class BusesController {
       }),
     }),
   )
-  create(
+  async create(
     @UploadedFile() file: Express.Multer.File,
     @Body() createBusDto: CreateBusDto,
     @Req() req: Request,
@@ -84,7 +89,20 @@ export class BusesController {
     }
     const user = req.user as any;
     if (user.rol !== 'SUPERADMIN') {
-      createBusDto.cooperativa_id = user.cooperativaTransporte.id;
+      if (user.cooperativaTransporte && user.cooperativaTransporte.id) {
+        createBusDto.cooperativa_id = user.cooperativaTransporte.id;
+      } else if (user.usuarioCooperativaId) {
+        const cooperativa = await this.cooperativasService.findCooperativaByUsuarioCooperativaId(user.usuarioCooperativaId);
+        if (!cooperativa) throw new Error('No se encontró la cooperativa para este usuario');
+        createBusDto.cooperativa_id = cooperativa.id;
+      } else if (user.sub || user.id) {
+        const usuarioId = user.sub || user.id;
+        const cooperativa = await this.cooperativasService.findCooperativaByUsuarioId(usuarioId);
+        if (!cooperativa) throw new Error('No se encontró la cooperativa para este usuario');
+        createBusDto.cooperativa_id = cooperativa.id;
+      } else {
+        throw new Error('El usuario no tiene cooperativa asignada');
+      }
     }
     return this.busesService.create(createBusDto);
   }
@@ -99,9 +117,29 @@ export class BusesController {
     status: 200, 
     description: 'Lista de buses obtenida exitosamente. Los usuarios ADMIN y OFICINISTA solo verán los buses de su cooperativa.' 
   })
-  findAll(@Req() req: Request) {
+  async findAll(@Req() req: Request) {
     const user = req.user as any;
-    const cooperativaId = user.rol === 'SUPERADMIN' ? undefined : user.cooperativaTransporte.id;
+    let cooperativaId: number | undefined = undefined;
+    if (user.rol !== 'SUPERADMIN') {
+      if (user.cooperativaTransporte && user.cooperativaTransporte.id) {
+        cooperativaId = user.cooperativaTransporte.id;
+      } else if (user.usuarioCooperativaId) {
+        const cooperativa = await this.cooperativasService.findCooperativaByUsuarioCooperativaId(user.usuarioCooperativaId);
+        if (!cooperativa) {
+          throw new Error('No se encontró la cooperativa para este usuario');
+        }
+        cooperativaId = cooperativa.id;
+      } else if (user.sub || user.id) {
+        const usuarioId = user.sub || user.id;
+        const cooperativa = await this.cooperativasService.findCooperativaByUsuarioId(usuarioId);
+        if (!cooperativa) {
+          throw new Error('No se encontró la cooperativa para este usuario');
+        }
+        cooperativaId = cooperativa.id;
+      } else {
+        throw new Error('El usuario no tiene cooperativa asignada');
+      }
+    }
     return this.busesService.findAll(cooperativaId);
   }
 
@@ -114,10 +152,28 @@ export class BusesController {
   @ApiResponse({ status: 200, description: 'Bus encontrado exitosamente' })
   @ApiResponse({ status: 404, description: 'Bus no encontrado' })
   @ApiResponse({ status: 403, description: 'No tiene permiso para ver este bus' })
-  findOne(@Param('id') id: string, @Req() req: Request) {
+  async findOne(@Param('id') id: string, @Req() req: Request) {
     const user = req.user as any;
-    const cooperativaId = user.rol === 'SUPERADMIN' ? undefined : user.cooperativaTransporte.id;
-    return this.busesService.findOne(+id, cooperativaId);
+    let cooperativaId: number | undefined = undefined;
+    if (user.rol !== 'SUPERADMIN') {
+      if (user.cooperativaTransporte && user.cooperativaTransporte.id) {
+        cooperativaId = user.cooperativaTransporte.id;
+      } else if (user.usuarioCooperativaId) {
+        const cooperativa = await this.cooperativasService.findCooperativaByUsuarioCooperativaId(user.usuarioCooperativaId);
+        if (!cooperativa) throw new NotFoundException('No se encontró la cooperativa para este usuario');
+        cooperativaId = cooperativa.id;
+      } else if (user.sub || user.id) {
+        const usuarioId = user.sub || user.id;
+        const cooperativa = await this.cooperativasService.findCooperativaByUsuarioId(usuarioId);
+        if (!cooperativa) throw new NotFoundException('No se encontró la cooperativa para este usuario');
+        cooperativaId = cooperativa.id;
+      } else {
+        throw new NotFoundException('El usuario no tiene cooperativa asignada');
+      }
+    }
+    const bus = await this.busesService.findOne(+id, cooperativaId);
+    if (!bus) throw new NotFoundException('Bus no encontrado');
+    return bus;
   }
 
   @Patch(':id')
@@ -126,12 +182,43 @@ export class BusesController {
     summary: 'Actualizar un bus',
     description: 'Actualiza un bus específico. Los usuarios ADMIN y OFICINISTA solo pueden actualizar buses de su cooperativa. El SUPERADMIN puede actualizar cualquier bus.'
   })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        placa: { type: 'string', description: 'Placa del bus' },
+        numero_bus: { type: 'string', description: 'Número del bus' },
+        marca_chasis: { type: 'string', description: 'Marca del chasis' },
+        marca_carroceria: { type: 'string', description: 'Marca de la carrocería' },
+        imagen: { type: 'string', description: 'Nombre de la imagen del bus' },
+        piso_doble: { type: 'boolean', description: 'Indica si el bus es de dos pisos' },
+        total_asientos: { type: 'number', description: 'Número total de asientos del bus' },
+        activo: { type: 'boolean', description: 'Indica si el bus está activo' }
+      }
+    }
+  })
   @ApiResponse({ status: 200, description: 'Bus actualizado exitosamente' })
   @ApiResponse({ status: 404, description: 'Bus no encontrado' })
   @ApiResponse({ status: 403, description: 'No tiene permiso para actualizar este bus' })
-  update(@Param('id') id: string, @Body() updateBusDto: UpdateBusDto, @Req() req: Request) {
+  async update(@Param('id') id: string, @Body() updateBusDto: UpdateBusDto, @Req() req: Request) {
     const user = req.user as any;
-    const cooperativaId = user.rol === 'SUPERADMIN' ? undefined : user.cooperativaTransporte.id;
+    let cooperativaId: number | undefined = undefined;
+    if (user.rol !== 'SUPERADMIN') {
+      if (user.cooperativaTransporte && user.cooperativaTransporte.id) {
+        cooperativaId = user.cooperativaTransporte.id;
+      } else if (user.usuarioCooperativaId) {
+        const cooperativa = await this.cooperativasService.findCooperativaByUsuarioCooperativaId(user.usuarioCooperativaId);
+        if (!cooperativa) throw new Error('No se encontró la cooperativa para este usuario');
+        cooperativaId = cooperativa.id;
+      } else if (user.sub || user.id) {
+        const usuarioId = user.sub || user.id;
+        const cooperativa = await this.cooperativasService.findCooperativaByUsuarioId(usuarioId);
+        if (!cooperativa) throw new Error('No se encontró la cooperativa para este usuario');
+        cooperativaId = cooperativa.id;
+      } else {
+        throw new Error('El usuario no tiene cooperativa asignada');
+      }
+    }
     return this.busesService.update(+id, updateBusDto, cooperativaId);
   }
 
@@ -144,9 +231,25 @@ export class BusesController {
   @ApiResponse({ status: 200, description: 'Bus eliminado exitosamente' })
   @ApiResponse({ status: 404, description: 'Bus no encontrado' })
   @ApiResponse({ status: 403, description: 'No tiene permiso para eliminar este bus' })
-  remove(@Param('id') id: string, @Req() req: Request) {
+  async remove(@Param('id') id: string, @Req() req: Request) {
     const user = req.user as any;
-    const cooperativaId = user.rol === 'SUPERADMIN' ? undefined : user.cooperativaTransporte.id;
+    let cooperativaId: number | undefined = undefined;
+    if (user.rol !== 'SUPERADMIN') {
+      if (user.cooperativaTransporte && user.cooperativaTransporte.id) {
+        cooperativaId = user.cooperativaTransporte.id;
+      } else if (user.usuarioCooperativaId) {
+        const cooperativa = await this.cooperativasService.findCooperativaByUsuarioCooperativaId(user.usuarioCooperativaId);
+        if (!cooperativa) throw new Error('No se encontró la cooperativa para este usuario');
+        cooperativaId = cooperativa.id;
+      } else if (user.sub || user.id) {
+        const usuarioId = user.sub || user.id;
+        const cooperativa = await this.cooperativasService.findCooperativaByUsuarioId(usuarioId);
+        if (!cooperativa) throw new Error('No se encontró la cooperativa para este usuario');
+        cooperativaId = cooperativa.id;
+      } else {
+        throw new Error('El usuario no tiene cooperativa asignada');
+      }
+    }
     return this.busesService.remove(+id, cooperativaId);
   }
 }
