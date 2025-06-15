@@ -5,6 +5,8 @@ import { clientes } from './clientes';
 import { usuarioCooperativa } from './usuario-cooperativa';
 import { precios } from './precios';
 import { metodosPago } from './metodos-pago';
+import { horarios } from './horarios';
+import { configuracionAsientos } from './configuracion-asientos';
 
 export const ventas = pgTable('ventas', {
   id: serial('id').primaryKey(),
@@ -18,5 +20,8 @@ export const ventas = pgTable('ventas', {
   fechaVenta: timestamp('fechaVenta', { precision: 3 }),
   totalSinDescuento: decimal('totalSinDescuento', { precision: 10, scale: 2 }),
   totalDescuentos: decimal('totalDescuentos', { precision: 10, scale: 2 }),
-  totalFinal: decimal('totalFinal', { precision: 10, scale: 2 })
+  totalFinal: decimal('totalFinal', { precision: 10, scale: 2 }),
+  horarioId: integer('horario_id').references(() => horarios.id),
+  asientoId: integer('asiento_id').references(() => configuracionAsientos.id),
+  codigoQR: varchar('codigoQR', { length: 255 }),
 });

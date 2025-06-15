@@ -42,6 +42,7 @@ export class AuthService {
       sub: cliente.usuario.id,
       email: cliente.usuario.email,
       rol: RolUsuario.CLIENTE,
+      cooperativaId: null
     };
 
     return {
@@ -110,6 +111,10 @@ export class AuthService {
       sub: user.id,
       email: user.email,
       rol: user.rol,
+      cooperativaId: user.rol === RolUsuario.ADMIN || 
+                     user.rol === RolUsuario.OFICINISTA || 
+                     user.rol === RolUsuario.CHOFER ? 
+                     enrichedUser.cooperativaTransporte?.id : null
     };
 
     return {
