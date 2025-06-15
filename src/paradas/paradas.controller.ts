@@ -13,7 +13,7 @@ import { RolesGuard } from 'auth/guards/roles.guard';
 @Controller('paradas')
 @ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard, RolesGuard )
-@Role( RolUsuario.SUPERADMIN, RolUsuario.OFICINISTA)
+@Role( RolUsuario.ADMIN, RolUsuario.OFICINISTA)
 export class ParadasController {
   constructor(private readonly paradasService: ParadasService) {}
 
@@ -25,7 +25,6 @@ export class ParadasController {
   }
 
   @Get(':cooperativaId')
-  @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
   @ApiOperation({ summary: 'Obtiene todas las paradas de una cooperativa específica' })
   @ApiResponse({ status: 200, description: 'Lista de paradas', type: [Parada] })
   findAll(
