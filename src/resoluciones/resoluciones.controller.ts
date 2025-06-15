@@ -26,24 +26,35 @@ export class ResolucionesController {
       properties: {
         file: {
           type: 'string',
+          description: 'Archivo PDF de la resolución',
           format: 'binary',
         },
         cooperativaId: {
           type: 'number',
+          description: 'ID de la cooperativa a la que pertenece la resolución',
+          example: 1, 
+          nullable: false,
         },
         fechaEmision: {
           type: 'string',
           format: 'date',
+          description: 'Fecha de emisión de la resolución',
+          example: '2024-03-20',
         },
         fechaVencimiento: {
           type: 'string',
           format: 'date',
+          description: 'Fecha de vencimiento de la resolución',
+          example: '2025-03-20',
         },
         estado: {
-          type: 'boolean',
+          type: 'boolean',  
+          description: 'Estado de la resolución (activa/inactiva)',
+          default: true,
         },
         enUso: {
           type: 'boolean',
+          description: 'Indica si la resolución está actualmente en uso',
           default: false,
         },
       },
@@ -80,26 +91,43 @@ export class ResolucionesController {
         file: {
           type: 'string',
           format: 'binary',
+          description: 'Archivo PDF de la resolución',
+          nullable: true
         },
         cooperativaId: {
           type: 'number',
+          description: 'ID de la cooperativa a la que pertenece la resolución',
+          example: 1,
+          nullable: true
         },
         fechaEmision: {
           type: 'string',
           format: 'date',
+          description: 'Fecha de emisión de la resolución',
+          example: '2024-03-20',
+          nullable: true
         },
         fechaVencimiento: {
           type: 'string',
           format: 'date',
+          description: 'Fecha de vencimiento de la resolución',
+          example: '2025-03-20',
+          nullable: true
         },
         estado: {
           type: 'boolean',
+          description: 'Estado de la resolución (activa/inactiva)',
+          example: true,
+          nullable: true
         },
         enUso: {
           type: 'boolean',
-        },
-      },
-    },
+          description: 'Indica si la resolución está actualmente en uso',
+          example: false,
+          nullable: true
+        }
+      }
+    }
   })
   @UseInterceptors(FileInterceptor('file'))
   update(

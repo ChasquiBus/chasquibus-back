@@ -25,41 +25,66 @@ export class ResolucionesService {
     createResolucionDto: CreateResolucionDto,
     file: Express.Multer.File,
   ) {
-    const fechaActual = format(new Date(), 'yyyy-MM-dd');
-    const path = `resoluciones/${createResolucionDto.cooperativaId}/${fechaActual}/${file.originalname}`;
+    try {
+      const fechaActual = format(new Date(), 'yyyy-MM-dd');
+      const fileName = `${createResolucionDto.cooperativaId}-${fechaActual}-${file.originalname}`;
+      const path = `resoluciones/${fileName}`;
 
-    // Subir archivo a Supabase Storage
-    const { data: uploadData, error: uploadError } = await this.supabase.storage
-      .from('almacenamiento')
-      .upload(path, file.buffer, {
-        contentType: file.mimetype,
-      });
+      // Asegurarse de que el archivo sea un PDF válido
+      if (file.mimetype !== 'application/pdf') {
+        throw new HttpException('El archivo debe ser un PDF', HttpStatus.BAD_REQUEST);
+      }
 
-    if (uploadError) {
+      // Verificar que el buffer del archivo no esté corrupto
+      if (!file.buffer || file.buffer.length === 0) {
+        throw new HttpException('El archivo está corrupto o vacío', HttpStatus.BAD_REQUEST);
+      }
+
+      // Subir archivo a Supabase Storage
+      const { data: uploadData, error: uploadError } = await this.supabase.storage
+        .from('almacenamiento')
+        .upload(path, file.buffer, {
+          contentType: 'application/pdf',
+          upsert: false,
+        });
+
+      if (uploadError) {
+        throw new HttpException(
+          uploadError.message || 'Error al subir archivo a Supabase',
+          Number(uploadError.statusCode) || HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
+
+      // Obtener URL pública del archivo
+      const { data: { publicUrl } } = this.supabase.storage
+        .from('almacenamiento')
+        .getPublicUrl(path);
+
+      // Crear registro en la base de datos
+      const [resolucion] = await db
+        .insert(resolucionesAnt)
+        .values({
+          documentoURL: publicUrl,
+          fechaEmision: createResolucionDto.fechaEmision,
+          fechaVencimiento: createResolucionDto.fechaVencimiento,
+          estado: true,
+          cooperativaId: createResolucionDto.cooperativaId,
+          enUso: false,
+          nombre: createResolucionDto.nombre,
+          descripcion: createResolucionDto.descripcion,
+        })
+        .returning();
+
+      return resolucion;
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
       throw new HttpException(
-        uploadError.message || 'Error al subir archivo a Supabase',
-        Number(uploadError.statusCode) || HttpStatus.INTERNAL_SERVER_ERROR,
+        'Error al procesar el archivo PDF',
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
-    // Obtener URL pública del archivo
-    const {
-      data: { publicUrl },
-    } = this.supabase.storage.from('almacenamiento').getPublicUrl(path);
-
-    // Crear registro en la base de datos
-    const [resolucion] = await db
-      .insert(resolucionesAnt)
-      .values({
-        documentoURL: publicUrl,
-        fechaEmision: createResolucionDto.fechaEmision,
-        fechaVencimiento: createResolucionDto.fechaVencimiento,
-        estado: true, // Siempre se crea como activa
-        cooperativaId: createResolucionDto.cooperativaId,
-        enUso: false, // Siempre se crea como no en uso
-      })
-      .returning();
-
-    return resolucion;
   }
 
   async findAll(cooperativaId: number) {
@@ -126,6 +151,8 @@ export class ResolucionesService {
         estado: updateResolucionDto.estado,
         cooperativaId: updateResolucionDto.cooperativaId,
         enUso: updateResolucionDto.enUso,
+        nombre: updateResolucionDto.nombre,
+        descripcion: updateResolucionDto.descripcion,
         updatedAt: new Date(),
       })
       .where(and(eq(resolucionesAnt.id, id), eq(resolucionesAnt.estado, true)))
