@@ -23,28 +23,28 @@ export class ResolucionesService {
 
   async create(
     createResolucionDto: CreateResolucionDto,
-    file: Express.Multer.File,
+    file: Express.Multer.File | null | undefined,
   ) {
     try {
       const fechaActual = format(new Date(), 'yyyy-MM-dd');
-      const fileName = `${createResolucionDto.cooperativaId}-${fechaActual}-${file.originalname}`;
+      const fileName = `${createResolucionDto.cooperativaId}-${fechaActual}-${file?.originalname}`;
       const path = `resoluciones/${fileName}`;
 
       // Asegurarse de que el archivo sea un PDF válido
-      if (file.mimetype !== 'application/pdf') {
+      if (file && file.mimetype !== 'application/pdf') {
         throw new HttpException('El archivo debe ser un PDF', HttpStatus.BAD_REQUEST);
       }
 
       // Verificar que el buffer del archivo no esté corrupto
-      if (!file.buffer || file.buffer.length === 0) {
+      if (file && (!file.buffer || file.buffer.length === 0)) {
         throw new HttpException('El archivo está corrupto o vacío', HttpStatus.BAD_REQUEST);
       }
 
       // Subir archivo a Supabase Storage
       const { data: uploadData, error: uploadError } = await this.supabase.storage
         .from('almacenamiento')
-        .upload(path, file.buffer, {
-          contentType: 'application/pdf',
+        .upload(path, file?.buffer, {
+          contentType: file?.mimetype,
           upsert: false,
         });
 

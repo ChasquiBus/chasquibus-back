@@ -26,42 +26,60 @@ export class ResolucionesController {
       properties: {
         file: {
           type: 'string',
-          description: 'Archivo PDF de la resolución',
           format: 'binary',
+          description: 'Archivo PDF de la resolución',
+          nullable: true
+        },
+        nombre: {
+          type: 'string',
+          description: 'Nombre de la resolución',
+          example: 'Resolución 2024-001',
+          maxLength: 150
+        },
+        descripcion: {
+          type: 'string',
+          description: 'Descripción de la resolución',
+          example: 'Resolución para la ruta Quito-Ambato',
+          maxLength: 150,
+          nullable: true
         },
         cooperativaId: {
           type: 'number',
-          description: 'ID de la cooperativa a la que pertenece la resolución',
-          example: 1, 
-          nullable: false,
+          description: 'ID de la cooperativa',
+          example: 1
         },
         fechaEmision: {
           type: 'string',
           format: 'date',
           description: 'Fecha de emisión de la resolución',
-          example: '2024-03-20',
+          example: '2024-03-20'
         },
         fechaVencimiento: {
           type: 'string',
           format: 'date',
           description: 'Fecha de vencimiento de la resolución',
-          example: '2025-03-20',
+          example: '2025-03-20'
         },
         estado: {
-          type: 'boolean',  
-          description: 'Estado de la resolución (activa/inactiva)',
-          default: true,
+          type: 'boolean',
+          description: 'Estado de la resolución',
+          example: true,
+          default: true
         },
         enUso: {
           type: 'boolean',
-          description: 'Indica si la resolución está actualmente en uso',
-          default: false,
-        },
-      },
-    },
+          description: 'Indica si la resolución está en uso',
+          example: true,
+          default: true
+        }
+      }
+    }
   })
   @UseInterceptors(FileInterceptor('file'))
-  create(@Body() createResolucionDto: CreateResolucionDto, @UploadedFile() file: Express.Multer.File) {
+  create(@Body() createResolucionDto: CreateResolucionDto, @UploadedFile() file?: Express.Multer.File) {
+    if (!file) {
+      return this.resolucionesService.create(createResolucionDto, null);
+    }
     return this.resolucionesService.create(createResolucionDto, file);
   }
 
@@ -94,9 +112,23 @@ export class ResolucionesController {
           description: 'Archivo PDF de la resolución',
           nullable: true
         },
+        nombre: {
+          type: 'string',
+          description: 'Nombre de la resolución',
+          example: 'Resolución 2024-001',
+          maxLength: 150,
+          nullable: true
+        },
+        descripcion: {
+          type: 'string',
+          description: 'Descripción de la resolución',
+          example: 'Resolución para la ruta Quito-Ambato',
+          maxLength: 150,
+          nullable: true
+        },
         cooperativaId: {
           type: 'number',
-          description: 'ID de la cooperativa a la que pertenece la resolución',
+          description: 'ID de la cooperativa',
           example: 1,
           nullable: true
         },
@@ -116,14 +148,14 @@ export class ResolucionesController {
         },
         estado: {
           type: 'boolean',
-          description: 'Estado de la resolución (activa/inactiva)',
+          description: 'Estado de la resolución',
           example: true,
           nullable: true
         },
         enUso: {
           type: 'boolean',
-          description: 'Indica si la resolución está actualmente en uso',
-          example: false,
+          description: 'Indica si la resolución está en uso',
+          example: true,
           nullable: true
         }
       }
