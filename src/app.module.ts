@@ -18,6 +18,9 @@ import { ParadasModule } from './paradas/paradas.module';
 import { RutasModule } from './rutas/rutas.module';
 import { RutaParadaModule } from 'ruta-parada/ruta-parada.module';
 import { TarifasParadasModule } from './tarifas-paradas/tarifas-paradas.module';
+import { FrecuenciasModule } from './frecuencias/frecuencias.module';
+import { HojaTrabajoModule } from './hoja-trabajo/hoja-trabajo.module';
+import { HorariosModule } from './horarios/horarios.module';
 
 
 
@@ -39,7 +42,10 @@ import { TarifasParadasModule } from './tarifas-paradas/tarifas-paradas.module';
     ParadasModule,
     RutasModule,
     RutaParadaModule,
-    TarifasParadasModule
+    TarifasParadasModule,
+    FrecuenciasModule,
+    HojaTrabajoModule,
+    HorariosModule
   ],
   controllers: [AppController],
   providers: [AppService],
