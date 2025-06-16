@@ -5,5 +5,6 @@ import { TarifasParadasController } from './tarifas-paradas.controller';
 @Module({
   controllers: [TarifasParadasController],
   providers: [TarifasParadasService],
+  exports: [TarifasParadasService]
 })
 export class TarifasParadasModule {}
