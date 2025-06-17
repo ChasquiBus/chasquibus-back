@@ -8,15 +8,7 @@ import { eq } from 'drizzle-orm';
 @Injectable()
 export class HojaTrabajoService {
   async create(createHojaTrabajoDto: CreateHojaTrabajoDto) {
-    const mapped = {
-      busId: createHojaTrabajoDto.bus_id,
-      choferId: createHojaTrabajoDto.chofer_id,
-      observaciones: createHojaTrabajoDto.observaciones,
-      estado: createHojaTrabajoDto.estado,
-      // Si tienes controlador_id y lo necesitas en la tabla, agrégalo aquí
-    };
-    const [created] = await db.insert(hojaTrabajo).values(mapped).returning();
-    return { message: 'Hoja de trabajo creada', data: created };
+
   }
 
   async findAll() {
