@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, UseGuards, Request, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, UseGuards, Req, Query, UnauthorizedException } from '@nestjs/common';
 import { AdminCooperativasService } from './admin-cooperativas.service';
 import { CreateAdminDto } from './dto/create-admin.dto';
 import { Role } from '../auth/decorators/roles.decorator';
@@ -8,6 +8,7 @@ import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swa
 import { JwtAuthGuard } from 'auth/guards/jwt-auth.guard';
 import { UpdateAdminDto } from './dto/update-admin.dto';
 import { UsuarioCooperativaEntity } from './entities/admin-cooperativa.entity';
+import { JwtPayload } from 'jsonwebtoken';
 
 @Controller('admin-cooperativas')
 @ApiTags('admin-cooperativas')
@@ -41,16 +42,20 @@ export class AdminCooperativasController {
     return this.service.findAll(this.rolAdmin, 0, true);
   }
 
-  @Get("obtener-oficinistas/:cooperativaId")
+  @Get("obtener-oficinistas")
   @Role(RolUsuario.ADMIN)
-  @ApiOperation({ summary: 'Obtiene todos los Oficinista de una cooperativa específica' })
+  @ApiOperation({ summary: 'Obtiene todos los Oficinista de la cooperativa del usuario' })
   @ApiOkResponse({ type: UsuarioCooperativaEntity, isArray: true })
   findAllOficinistas(
-    @Param('cooperativaId', ParseIntPipe) cooperativaId: number,
+    @Req() req,
     @Query('includeDeleted') includeDeleted?: string
   ) {
+    const user = req.user as JwtPayload;
+    if (!user.cooperativaId) {
+      throw new UnauthorizedException('No tienes una cooperativa asignada');
+    }
     const includeDeletedBool = includeDeleted === 'true';
-    return this.service.findAll(this.rolOfinista, cooperativaId, includeDeletedBool);
+    return this.service.findAll(this.rolOfinista, user.cooperativaId, includeDeletedBool);
   }
 
   @Get(':id')

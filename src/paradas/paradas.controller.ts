@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, ParseIntPipe, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, ParseIntPipe, UseGuards, Req, UnauthorizedException } from '@nestjs/common';
 import { ParadasService } from './paradas.service';
 import { CreateParadaDto } from './dto/create-parada.dto';
 import { UpdateParadaDto } from './dto/update-parada.dto';
@@ -8,12 +8,13 @@ import { RolUsuario } from '../auth/roles.enum';
 import { Parada } from './entities/parada.entity';
 import { JwtAuthGuard } from 'auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'auth/guards/roles.guard';
+import { JwtPayload } from 'jsonwebtoken';
 
 @ApiTags('paradas')
 @Controller('paradas')
 @ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard, RolesGuard )
-@Role( RolUsuario.SUPERADMIN, RolUsuario.OFICINISTA)
+@Role( RolUsuario.ADMIN, RolUsuario.OFICINISTA)
 export class ParadasController {
   constructor(private readonly paradasService: ParadasService) {}
 
@@ -24,16 +25,19 @@ export class ParadasController {
     return this.paradasService.create(createParadaDto);
   }
 
-  @Get(':cooperativaId')
-  @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
-  @ApiOperation({ summary: 'Obtiene todas las paradas de una cooperativa específica' })
+  @Get()
+  @ApiOperation({ summary: 'Obtiene todas las paradas de la cooperativa del usuario' })
   @ApiResponse({ status: 200, description: 'Lista de paradas', type: [Parada] })
   findAll(
-    @Param('cooperativaId', ParseIntPipe) cooperativaId: number,
+    @Req() req,
     @Query('includeDeleted') includeDeleted?: string
   ) {
+    const user = req.user as JwtPayload;
+    if (!user.cooperativaId) {
+      throw new UnauthorizedException('No tienes una cooperativa asignada');
+    }
     const includeDeletedBool = includeDeleted === 'true';
-    return this.paradasService.findAll(cooperativaId, includeDeletedBool);
+    return this.paradasService.findAll(user.cooperativaId, includeDeletedBool);
   }
 
   @Get(':id')

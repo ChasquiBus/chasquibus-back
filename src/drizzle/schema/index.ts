@@ -18,7 +18,6 @@ import { horarios } from './horarios';
 import { descuentos } from './descuentos';
 import { metodosPago } from './metodos-pago';
 import { ventas } from './ventas';
-import { boletos } from './boletos';
 import { notificaciones } from './notificaciones';
 
 export const schema = {
@@ -42,6 +41,5 @@ export const schema = {
   descuentos,
   metodosPago,
   ventas,
-  boletos,
   notificaciones,
 };

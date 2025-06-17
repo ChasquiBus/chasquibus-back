@@ -1,5 +1,5 @@
 // horarios.ts
-import { pgTable, serial, integer, date, timestamp } from 'drizzle-orm/pg-core';
+import { pgTable, serial, integer, date, timestamp, varchar } from 'drizzle-orm/pg-core';
 import { frecuencias } from './frecuencias';
 import { hojaTrabajo } from './hoja-trabajo';
 
@@ -12,5 +12,6 @@ export const horarios = pgTable('horarios', {
   horaSalidaProg: timestamp('hora_salida_prog'),
   horaLlegadaProg: timestamp('hora_llegada_prog'),
   horaSalidaReal: timestamp('hora_salida_real'),
-  horaLlegadaReal: timestamp('hora_llegada_real')
+  horaLlegadaReal: timestamp('hora_llegada_real'),
+  estado: varchar('estado', { length: 50 }) // en_curso, creada, finalizada
 });

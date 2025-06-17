@@ -10,6 +10,7 @@ export const buses = pgTable("buses", {
   imagen: varchar("imagen", { length: 255 }),
   piso_doble: boolean("piso_doble").default(false),
   total_asientos: integer("total_asientos").notNull(),
+  total_asientos_piso2: integer("total_asientos_piso2"),
   activo: boolean("activo").default(true),
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
