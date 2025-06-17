@@ -155,6 +155,13 @@
       "when": 1749957587348,
       "tag": "0021_great_white_queen",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1750035873413,
+      "tag": "0022_chunky_boomerang",
+      "breakpoints": true
     }
   ]
 }
