@@ -36,9 +36,6 @@ export class ResolucionesService {
       }
 
       // Verificar que el buffer del archivo no esté corrupto
-      if (!file.buffer || file.buffer.length === 0) {
-        throw new HttpException('El archivo está corrupto o vacío', HttpStatus.BAD_REQUEST);
-      }
 
       // Subir archivo a Supabase Storage
       const { data: uploadData, error: uploadError } = await this.supabase.storage

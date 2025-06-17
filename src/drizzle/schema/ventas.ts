@@ -15,13 +15,13 @@ export const ventas = pgTable('ventas', {
   oficinistaId: integer('oficinista_id').references(() => usuarioCooperativa.id),
   precioId: integer('precio_id').references(() => precios.id),
   metodoPagoId: integer('metodo_pago_id').references(() => metodosPago.id),
-  estadoPago: varchar('estado_pago', { length: 50 }),
+  horarioId: integer('horario_id').references(() => horarios.id),
+  asientoId: integer('asiento_id').references(() => configuracionAsientos.id),
+  estadoPago: varchar('estado_pago', { length: 50 }),//pagado, pendiente, anulado
+  codigoQR: varchar('codigoQR', { length: 255 }),
   comprobanteUrl: varchar('comprobanteUrl', { length: 255 }),
   fechaVenta: timestamp('fechaVenta', { precision: 3 }),
   totalSinDescuento: decimal('totalSinDescuento', { precision: 10, scale: 2 }),
   totalDescuentos: decimal('totalDescuentos', { precision: 10, scale: 2 }),
   totalFinal: decimal('totalFinal', { precision: 10, scale: 2 }),
-  horarioId: integer('horario_id').references(() => horarios.id),
-  asientoId: integer('asiento_id').references(() => configuracionAsientos.id),
-  codigoQR: varchar('codigoQR', { length: 255 }),
 });
