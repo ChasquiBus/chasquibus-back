@@ -13,6 +13,6 @@ export const tarifas = pgTable('tarifas', {
   fechaIniVigencia: date('fecha_ini_vigencia'),
   fechaFinVigencia: date('fecha_fin_vigencia'),
   estado: varchar('estado', { length: 50 }).notNull(),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow()
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow()
 });
