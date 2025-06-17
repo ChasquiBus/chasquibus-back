@@ -28,9 +28,9 @@ export class ParadasService {
         cooperativaId: paradas.cooperativaId,
         ciudad: {
           id: ciudades.id,
-          provincia: ciudades.provincia,
+          provincia_id: ciudades.provincia_id,
           ciudad: ciudades.ciudad,
-          cooperativaId: ciudades.cooperativaId,
+          codigo: ciudades.codigo,
         },
       })
       .from(paradas)
@@ -56,10 +56,12 @@ export class ParadasService {
         direccion: paradas.direccion,
         estado: paradas.estado,
         esTerminal: paradas.esTerminal,
+        cooperativaId: paradas.cooperativaId,
         ciudad: {
           id: ciudades.id,
-          provincia: ciudades.provincia,
+          provincia_id: ciudades.provincia_id,
           ciudad: ciudades.ciudad,
+          codigo: ciudades.codigo,
         },
       })
       .from(paradas)
@@ -68,6 +70,7 @@ export class ParadasService {
 
     return row || null;
   }
+
 
   async update(id: number, data: UpdateParadaDto): Promise<Parada[]> {
     return db.update(paradas).set(data).where(eq(paradas.id, id)).returning();
