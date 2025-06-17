@@ -1,31 +1,63 @@
 import { Injectable } from '@nestjs/common';
 import { CreateHojaTrabajoDto } from './dto/create-hoja-trabajo.dto';
 import { UpdateHojaTrabajoDto } from './dto/update-hoja-trabajo.dto';
+import { db } from '../drizzle/database';
+import { hojaTrabajo } from '../drizzle/schema/hoja-trabajo';
+import { eq } from 'drizzle-orm';
 
 @Injectable()
 export class HojaTrabajoService {
-  create(createHojaTrabajoDto: CreateHojaTrabajoDto) {
-    // Lógica para crear hoja de trabajo
-    return { message: 'Hoja de trabajo creada', data: createHojaTrabajoDto };
+  async create(createHojaTrabajoDto: CreateHojaTrabajoDto) {
+    const mapped = {
+      busId: createHojaTrabajoDto.bus_id,
+      choferId: createHojaTrabajoDto.chofer_id,
+      observaciones: createHojaTrabajoDto.observaciones,
+      estado: createHojaTrabajoDto.estado,
+      // Si tienes controlador_id y lo necesitas en la tabla, agrégalo aquí
+    };
+    const [created] = await db.insert(hojaTrabajo).values(mapped).returning();
+    return { message: 'Hoja de trabajo creada', data: created };
   }
 
-  findAll() {
-    // Lógica para obtener todas las hojas de trabajo
-    return { message: 'Lista de hojas de trabajo' };
+  async findAll() {
+    const all = await db.select().from(hojaTrabajo);
+    return { message: 'Lista de hojas de trabajo', data: all };
   }
 
-  findOne(id: number) {
-    // Lógica para obtener una hoja de trabajo por id
-    return { message: `Hoja de trabajo ${id}` };
+  async findOne(id: number) {
+    const [found] = await db.select().from(hojaTrabajo).where(eq(hojaTrabajo.id, id));
+    if (!found) {
+      return { message: `No se encontró la hoja de trabajo con id ${id}` };
+    }
+    return { message: `Hoja de trabajo ${id}`, data: found };
   }
 
-  update(id: number, updateHojaTrabajoDto: UpdateHojaTrabajoDto) {
-    // Lógica para actualizar hoja de trabajo
-    return { message: `Hoja de trabajo ${id} actualizada`, data: updateHojaTrabajoDto };
+  async update(id: number, updateHojaTrabajoDto: UpdateHojaTrabajoDto) {
+    const mapped: any = {};
+    if (updateHojaTrabajoDto.bus_id !== undefined) mapped.busId = updateHojaTrabajoDto.bus_id;
+    if (updateHojaTrabajoDto.chofer_id !== undefined) mapped.choferId = updateHojaTrabajoDto.chofer_id;
+    if (updateHojaTrabajoDto.observaciones !== undefined) mapped.observaciones = updateHojaTrabajoDto.observaciones;
+    if (updateHojaTrabajoDto.estado !== undefined) mapped.estado = updateHojaTrabajoDto.estado;
+    // Si tienes controlador_id y lo necesitas, agrégalo aquí
+
+    const [updated] = await db.update(hojaTrabajo)
+      .set(mapped)
+      .where(eq(hojaTrabajo.id, id))
+      .returning();
+
+    if (!updated) {
+      return { message: `No se pudo actualizar la hoja de trabajo con id ${id}` };
+    }
+    return { message: `Hoja de trabajo ${id} actualizada`, data: updated };
   }
 
-  remove(id: number) {
-    // Lógica para eliminar hoja de trabajo
-    return { message: `Hoja de trabajo ${id} eliminada` };
+  async remove(id: number) {
+    const [deleted] = await db.delete(hojaTrabajo)
+      .where(eq(hojaTrabajo.id, id))
+      .returning();
+    if (!deleted) {
+      return { message: `No se pudo eliminar la hoja de trabajo con id ${id}` };
+    }
+    return { message: `Hoja de trabajo ${id} eliminada`, data: deleted };
   }
 } 
