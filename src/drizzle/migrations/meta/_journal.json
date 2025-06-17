@@ -162,6 +162,13 @@
       "when": 1750035873413,
       "tag": "0022_chunky_boomerang",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1750203909722,
+      "tag": "0023_far_madrox",
+      "breakpoints": true
     }
   ]
 }
