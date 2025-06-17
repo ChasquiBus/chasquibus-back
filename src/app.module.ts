@@ -12,8 +12,7 @@ import { ClientesModule } from './clientes/clientes.module';
 import { BusesModule } from './buses/buses.module';
 import { ChoferesModule } from './choferes/choferes.module';
 import { UsuariosModule } from 'usuarios/usuario.module';
-import { ResolucionesModule } from './resoluciones/resoluciones.module';
-import { CiudadesModule } from './ciudades/ciudades.module';
+import { CiudadesModule } from './ciudades_provincias/ciudades.module';
 import { ParadasModule } from './paradas/paradas.module';
 import { RutasModule } from './rutas/rutas.module';
 import { RutaParadaModule } from 'ruta-parada/ruta-parada.module';
@@ -37,7 +36,6 @@ import { HorariosModule } from './horarios/horarios.module';
     ClientesModule,
     BusesModule,
     ChoferesModule,
-    ResolucionesModule,
     CiudadesModule,
     ParadasModule,
     RutasModule,
