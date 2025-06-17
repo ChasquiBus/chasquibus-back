@@ -6,9 +6,10 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Role } from '../auth/decorators/roles.decorator';
 import { RolUsuario } from '../auth/roles.enum';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 
 @ApiTags('horarios')
+@ApiBearerAuth('access-token')
 @Controller('horarios')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class HorariosController {
