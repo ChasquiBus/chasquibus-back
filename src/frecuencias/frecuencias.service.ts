@@ -7,18 +7,16 @@ import { eq } from 'drizzle-orm';
 
 @Injectable()
 export class FrecuenciasService {
-  async create(createFrecuenciaDto: CreateFrecuenciaDto) {
-    // Insertar en la base de datos usando Drizzle
-    const [created] = await db.insert(frecuencias).values({
-      rutaId: createFrecuenciaDto.rutaId,
-      diasOperacion: createFrecuenciaDto.diasOperacion,
-      diasParada: createFrecuenciaDto.diasParada,
-      fechaIniVigencia: createFrecuenciaDto.fechaIniVigencia,
-      fechaFinVigencia: createFrecuenciaDto.fechaFinVigencia,
-      estado: createFrecuenciaDto.estado,
-    }).returning();
-    return { message: 'Frecuencia creada', data: created };
-  }
+async create(createFrecuenciaDto: CreateFrecuenciaDto) {
+  const [created] = await db.insert(frecuencias).values({
+    rutaId: createFrecuenciaDto.rutaId,
+    horaSalidaProg: createFrecuenciaDto.horaSalidaProg,
+    horaLlegadaProg: createFrecuenciaDto.horaLlegadaProg,
+    estado: createFrecuenciaDto.estado,
+  }).returning();
+
+  return { message: 'Frecuencia creada', data: created };
+}
 
   async findAll(cooperativaId?: number) {
     // Si quieres filtrar por cooperativaId, deberías hacer join con rutas y cooperativas

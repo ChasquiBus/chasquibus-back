@@ -1,190 +1,66 @@
+// rutas.service.ts
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { CreateRutaDto } from './dto/create-ruta.dto';
-import { UpdateRutaDto } from './dto/update-ruta.dto';
 import { db } from '../drizzle/database';
 import { rutas } from '../drizzle/schema/rutas';
 import { paradas } from '../drizzle/schema/paradas';
-import { resolucionesAnt } from '../drizzle/schema/resoluciones-ant';
-import { eq, and, isNotNull, sql } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
+import { createClient } from '@supabase/supabase-js';
+import { format } from 'date-fns';
 
 @Injectable()
 export class RutasService {
-  async create(createRutaDto: CreateRutaDto) {
-    // Verificar que las paradas sean terminales
-    const [paradaOrigen] = await db
-      .select()
-      .from(paradas)
-      .where(
-        and(
-          eq(paradas.id, createRutaDto.paradaOrigenId),
-          eq(paradas.esTerminal, true)
-        )
-      );
+  private supabase;
 
-    const [paradaDestino] = await db
-      .select()
-      .from(paradas)
-      .where(
-        and(
-          eq(paradas.id, createRutaDto.paradaDestinoId),
-          eq(paradas.esTerminal, true)
-        )
-      );
+  constructor() {
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      throw new Error('Supabase credentials are not configuradas');
+    }
+    this.supabase = createClient(
+      process.env.SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY,
+    );
+  }
 
-    if (!paradaOrigen || !paradaDestino) {
+  async create(createRutaDto: CreateRutaDto, file: Express.Multer.File) {
+    // 1. Validaciones de paradas
+    const [origen] = await db.select().from(paradas).where(
+      and(eq(paradas.id, createRutaDto.paradaOrigenId), eq(paradas.esTerminal, true))
+    );
+    const [destino] = await db.select().from(paradas).where(
+      and(eq(paradas.id, createRutaDto.paradaDestinoId), eq(paradas.esTerminal, true))
+    );
+    if (!origen || !destino) {
       throw new BadRequestException('Las paradas de origen y destino deben ser terminales');
     }
 
-    // Verificar que la resolución no esté en uso
-    const [resolucion] = await db
-      .select()
-      .from(resolucionesAnt)
-      .where(
-        and(
-          eq(resolucionesAnt.id, createRutaDto.resolucionId),
-          eq(resolucionesAnt.estado, true)
-        )
-      );
-
-    if (!resolucion) {
-      throw new BadRequestException('La resolución no existe o no está activa');
+    // 2. Validación de PDF
+    if (!file || file.mimetype !== 'application/pdf' || !file.buffer || file.buffer.length === 0) {
+      throw new BadRequestException('Debes enviar un PDF válido');
     }
 
-    if (resolucion.enUso) {
-      throw new BadRequestException('Esta resolución ya está siendo usada');
+    // 3. Subida a Supabase
+    const fecha = format(new Date(), 'yyyy-MM-dd');
+    const filename = `${createRutaDto.cooperativaId}-${fecha}-${file.originalname}`;
+    const path = `rutas/${filename}`;
+    const { error: uploadError } = await this.supabase
+      .storage.from('almacenamiento')
+      .upload(path, file.buffer, { contentType: 'application/pdf' });
+    if (uploadError) {
+      throw new BadRequestException(`Error al subir PDF: ${uploadError.message}`);
     }
+    const { data: { publicUrl } } = this.supabase
+      .storage.from('almacenamiento')
+      .getPublicUrl(path);
 
-    // Crear la ruta
+    // 4. Crear ruta en DB
     const [ruta] = await db.insert(rutas).values({
       ...createRutaDto,
-      estado: true,
+      resolucionUrl: publicUrl,
+      estado: createRutaDto.estado ?? true,
     }).returning();
 
-    // Actualizar el estado enUso de la resolución
-    await db
-      .update(resolucionesAnt)
-      .set({ enUso: true })
-      .where(eq(resolucionesAnt.id, createRutaDto.resolucionId));
-
     return ruta;
   }
 
-  async findAll(cooperativaTransporteId: number) {
-    if (!cooperativaTransporteId) {
-      throw new BadRequestException('Se requiere el ID de la cooperativa para listar las rutas');
-    }
-
-    const rutasList = await db
-      .select()
-      .from(rutas)
-      .where(
-        and(
-          eq(rutas.cooperativaId, cooperativaTransporteId),
-          eq(rutas.estado, true)
-        )
-      );
-
-    // Obtener información detallada para cada ruta
-    const rutasConDetalles = await Promise.all(
-      rutasList.map(async (ruta) => {
-        let paradaOrigen: typeof paradas.$inferSelect | undefined = undefined;
-        let paradaDestino: typeof paradas.$inferSelect | undefined = undefined;
-        let resolucion: typeof resolucionesAnt.$inferSelect | undefined = undefined;
-
-        if (ruta.paradaOrigenId) {
-          [paradaOrigen] = await db
-            .select()
-            .from(paradas)
-            .where(eq(paradas.id, ruta.paradaOrigenId));
-        }
-
-        if (ruta.paradaDestinoId) {
-          [paradaDestino] = await db
-            .select()
-            .from(paradas)
-            .where(eq(paradas.id, ruta.paradaDestinoId));
-        }
-
-        if (ruta.resolucionId) {
-          [resolucion] = await db
-            .select()
-            .from(resolucionesAnt)
-            .where(eq(resolucionesAnt.id, ruta.resolucionId));
-        }
-
-        return {
-          ...ruta,
-          paradaOrigen,
-          paradaDestino,
-          resolucion,
-        };
-      })
-    );
-
-    return rutasConDetalles;
-  }
-
-  async findOne(id: number) {
-    const [ruta] = await db
-      .select()
-      .from(rutas)
-      .where(
-        and(
-          eq(rutas.id, id),
-          eq(rutas.estado, true)
-        )
-      );
-    return ruta;
-  }
-
-  async update(id: number, updateRutaDto: UpdateRutaDto) {
-    const [ruta] = await db
-      .update(rutas)
-      .set({
-        ...updateRutaDto,
-        updatedAt: new Date(),
-      })
-      .where(
-        and(
-          eq(rutas.id, id),
-          eq(rutas.estado, true)
-        )
-      )
-      .returning();
-
-    return ruta;
-  }
-
-  async remove(id: number) {
-    const [ruta] = await db
-      .select()
-      .from(rutas)
-      .where(
-        and(
-          eq(rutas.id, id),
-          eq(rutas.estado, true)
-        )
-      );
-
-    if (ruta) {
-      // Liberar la resolución
-      if (ruta.resolucionId) {
-        await db
-          .update(resolucionesAnt)
-          .set({ enUso: false })
-          .where(eq(resolucionesAnt.id, ruta.resolucionId));
-      }
-
-      // Soft delete de la ruta
-      await db
-        .update(rutas)
-        .set({ 
-          estado: false,
-          deletedAt: new Date() 
-        })
-        .where(eq(rutas.id, id));
-    }
-
-    return { message: 'Ruta eliminada correctamente' };
-  }
 }
