@@ -1,11 +1,15 @@
 // ciudades.ts
 import { integer, pgTable, serial, varchar } from 'drizzle-orm/pg-core';
-import { cooperativaTransporte } from './cooperativa-transporte';
+
+export const provincias = pgTable('provincias', {
+  id: serial('id').primaryKey(),
+  nombre: varchar('nombre', { length: 255 }).notNull()
+  });
 
 export const ciudades = pgTable('ciudades', {
   id: serial('id').primaryKey(),
-  provincia: varchar('provincia', { length: 255 }).notNull(),
+  provincia_id: integer('provincia_id').notNull().references(() => provincias.id),
   ciudad: varchar('ciudad', { length: 255 }).notNull(),
-  cooperativaId: integer('cooperativa_id').references(() => cooperativaTransporte.id),
-
+  codigoPostal: varchar('codigo', { length: 5 })
+  //cooperativaId: integer('cooperativa_id').references(() => cooperativaTransporte.id),
 });
