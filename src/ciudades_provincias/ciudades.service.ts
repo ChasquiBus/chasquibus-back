@@ -10,11 +10,7 @@ export class CiudadesService {
       .select({
         id: ciudades.id,
         ciudad: ciudades.ciudad,
-        codigo: ciudades.codigo,
-        provincia: {
-          id: provincias.id,
-          nombre: provincias.nombre,
-        },
+        codigo: ciudades.codigo
       })
       .from(ciudades)
       .leftJoin(provincias, eq(ciudades.provincia_id, provincias.id))

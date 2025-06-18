@@ -25,7 +25,7 @@ export class CiudadesController {
   ) {}
 
   @Get()
-  @ApiOperation({ summary: 'Lista todas las ciudades con su provincia' })
+  @ApiOperation({ summary: 'Lista todas las ciudades ' })
   @ApiResponse({ status: 200, description: 'Listado de ciudades', type: [Ciudad] })
   findAll() {
     return this.ciudadesService.findAll();

@@ -12,7 +12,7 @@ import { RolUsuario } from '../auth/roles.enum';
 import { Ciudad } from './entities/ciudad.entity';
 import { JwtAuthGuard } from 'auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'auth/guards/roles.guard';
-import { Provincia } from './entities/provincia.entity';
+import { Provincia, ProvinciaConCiudades } from './entities/provincia.entity';
 import { ProvinciasService } from './provincias.service';
 
 @ApiTags('provincias')
@@ -26,10 +26,14 @@ export class ProvinciasController {
   ) {}
 
   @Get()
-  @ApiOperation({ summary: 'Lista todas las provincias disponibles' })
-  @ApiResponse({ status: 200, description: 'Listado de provincias', type: [Provincia] })
+  @ApiOperation({ summary: 'Lista todas las provincias con sus ciudades' })
+  @ApiResponse({
+    status: 200,
+    description: 'Listado de provincias con su arreglo de ciudades',
+    type: [ProvinciaConCiudades],
+  })
   findAllProvincias() {
-    return this.provinciasService.findAllProvincias();
+    return this.provinciasService.findAllProvinciasConCiudades();
   }
 
     @Get(':id/ciudades')
