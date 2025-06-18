@@ -169,6 +169,13 @@
       "when": 1750203909722,
       "tag": "0023_far_madrox",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1750204880543,
+      "tag": "0024_odd_plazm",
+      "breakpoints": true
     }
   ]
 }
