@@ -25,4 +25,13 @@ export class ProvinciasService {
       .where(eq(ciudades.provincia_id, idProvincia))
       .orderBy(ciudades.ciudad);
   }
+
+  // Nueva función que valida y luego retorna ciudades
+  async findCiudadesByProvinciaConCheck(idProvincia: number) {
+    const provincia = await this.findOne(idProvincia);
+    if (!provincia) {
+      throw new NotFoundException(`Provincia con ID ${idProvincia} no encontrada`);
+    }
+    return this.findCiudadesByProvincia(idProvincia);
+  }
 }
