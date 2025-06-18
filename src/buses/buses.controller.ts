@@ -14,7 +14,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
+import { diskStorage, memoryStorage } from 'multer';
 import { extname } from 'path';
 
 import { BusesService } from './buses.service';
@@ -70,7 +70,7 @@ export class BusesController {
         numero_bus: { type: 'string', description: 'Número del bus' },
         marca_chasis: { type: 'string', description: 'Marca del chasis' },
         marca_carroceria: { type: 'string', description: 'Marca de la carrocería' },
-        imagen: { type: 'string', format: 'binary', description: 'Imagen del bus' },
+        imagen: { type: 'string', format: 'binary', description: 'Imagen del bus (archivo)' },
         piso_doble: { type: 'boolean', description: 'Indica si el bus es de dos pisos' },
         total_asientos: { type: 'number', description: 'Número total de asientos del bus' },
         total_asientos_piso2: { type: 'number', description: 'Número total de asientos en el segundo piso (solo si el bus es de dos pisos)', nullable: true }
@@ -83,15 +83,7 @@ export class BusesController {
   @ApiResponse({ status: 403, description: 'No tiene permiso para crear buses para esta cooperativa' })
   @UseInterceptors(
     FileInterceptor('imagen', {
-      storage: diskStorage({
-        destination: './upload/buses',
-        filename: (req, file, cb) => {
-          const uniqueSuffix =
-            Date.now() + '-' + Math.round(Math.random() * 1e9);
-          const ext = extname(file.originalname);
-          cb(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
-        },
-      }),
+      storage: memoryStorage(),
     }),
   )
   async create(
@@ -99,33 +91,19 @@ export class BusesController {
     @Body() createBusDto: any,
     @Req() req: Request,
   ) {
-    // Conversión robusta de tipos
     if ('piso_doble' in createBusDto) createBusDto.piso_doble = parseBoolean(createBusDto.piso_doble);
     if ('activo' in createBusDto) createBusDto.activo = parseBoolean(createBusDto.activo);
     if ('cooperativa_id' in createBusDto) createBusDto.cooperativa_id = parseNumber(createBusDto.cooperativa_id);
     if ('total_asientos' in createBusDto) createBusDto.total_asientos = parseNumber(createBusDto.total_asientos);
     if ('total_asientos_piso2' in createBusDto) createBusDto.total_asientos_piso2 = parseNumber(createBusDto.total_asientos_piso2);
-    if (file) {
-      createBusDto.imagen = file.filename;
-    }
     const user = req.user as any;
     if (user.rol !== 'SUPERADMIN') {
-      if (user.cooperativaTransporte && user.cooperativaTransporte.id) {
-        createBusDto.cooperativa_id = user.cooperativaTransporte.id;
-      } else if (user.usuarioCooperativaId) {
-        const cooperativa = await this.cooperativasService.findCooperativaByUsuarioCooperativaId(user.usuarioCooperativaId);
-        if (!cooperativa) throw new Error('No se encontró la cooperativa para este usuario');
-        createBusDto.cooperativa_id = cooperativa.id;
-      } else if (user.sub || user.id) {
-        const usuarioId = user.sub || user.id;
-        const cooperativa = await this.cooperativasService.findCooperativaByUsuarioId(usuarioId);
-        if (!cooperativa) throw new Error('No se encontró la cooperativa para este usuario');
-        createBusDto.cooperativa_id = cooperativa.id;
-      } else {
+      if (!user.cooperativaId) {
         throw new Error('El usuario no tiene cooperativa asignada');
       }
+      createBusDto.cooperativa_id = user.cooperativaId;
     }
-    return this.busesService.create(createBusDto);
+    return this.busesService.create(createBusDto, file);
   }
 
   @Get()
@@ -203,6 +181,7 @@ export class BusesController {
     summary: 'Actualizar un bus',
     description: 'Actualiza un bus específico. Los usuarios ADMIN y OFICINISTA solo pueden actualizar buses de su cooperativa. El SUPERADMIN puede actualizar cualquier bus. Se deben proporcionar al menos un campo para actualizar.'
   })
+  @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
       type: 'object',
@@ -211,7 +190,7 @@ export class BusesController {
         numero_bus: { type: 'string', description: 'Número del bus' },
         marca_chasis: { type: 'string', description: 'Marca del chasis' },
         marca_carroceria: { type: 'string', description: 'Marca de la carrocería' },
-        imagen: { type: 'string', description: 'Nombre de la imagen del bus' },
+        imagen: { type: 'string', format: 'binary', description: 'Imagen del bus (archivo)', nullable: true },
         piso_doble: { type: 'boolean', description: 'Indica si el bus es de dos pisos' },
         total_asientos: { type: 'number', description: 'Número total de asientos del bus' },
         activo: { type: 'boolean', description: 'Indica si el bus está activo' },
@@ -224,35 +203,31 @@ export class BusesController {
   @ApiResponse({ status: 400, description: 'No se proporcionaron valores para actualizar' })
   @ApiResponse({ status: 404, description: 'Bus no encontrado' })
   @ApiResponse({ status: 403, description: 'No tiene permiso para actualizar este bus' })
-  async update(@Param('id') id: string, @Body() updateBusDto: any, @Req() req: Request) {
-    // Conversión robusta de tipos
+  @UseInterceptors(
+    FileInterceptor('imagen', {
+      storage: memoryStorage(),
+    }),
+  )
+  async update(
+    @Param('id') id: string,
+    @Body() updateBusDto: any,
+    @Req() req: Request,
+    @UploadedFile() file?: Express.Multer.File,
+  ) {
     if ('piso_doble' in updateBusDto) updateBusDto.piso_doble = parseBoolean(updateBusDto.piso_doble);
     if ('activo' in updateBusDto) updateBusDto.activo = parseBoolean(updateBusDto.activo);
     if ('cooperativa_id' in updateBusDto) updateBusDto.cooperativa_id = parseNumber(updateBusDto.cooperativa_id);
     if ('total_asientos' in updateBusDto) updateBusDto.total_asientos = parseNumber(updateBusDto.total_asientos);
     if ('total_asientos_piso2' in updateBusDto) updateBusDto.total_asientos_piso2 = parseNumber(updateBusDto.total_asientos_piso2);
-    if (Object.keys(updateBusDto).length === 0) {
-      throw new BadRequestException('Se debe proporcionar al menos un campo para actualizar');
-    }
     const user = req.user as any;
     let cooperativaId: number | undefined = undefined;
     if (user.rol !== 'SUPERADMIN') {
-      if (user.cooperativaTransporte && user.cooperativaTransporte.id) {
-        cooperativaId = user.cooperativaTransporte.id;
-      } else if (user.usuarioCooperativaId) {
-        const cooperativa = await this.cooperativasService.findCooperativaByUsuarioCooperativaId(user.usuarioCooperativaId);
-        if (!cooperativa) throw new NotFoundException('No se encontró la cooperativa para este usuario');
-        cooperativaId = cooperativa.id;
-      } else if (user.sub || user.id) {
-        const usuarioId = user.sub || user.id;
-        const cooperativa = await this.cooperativasService.findCooperativaByUsuarioId(usuarioId);
-        if (!cooperativa) throw new NotFoundException('No se encontró la cooperativa para este usuario');
-        cooperativaId = cooperativa.id;
-      } else {
-        throw new NotFoundException('El usuario no tiene cooperativa asignada');
+      if (!user.cooperativaId) {
+        throw new Error('El usuario no tiene cooperativa asignada');
       }
+      cooperativaId = user.cooperativaId;
     }
-    return this.busesService.update(+id, updateBusDto, cooperativaId);
+    return this.busesService.update(+id, updateBusDto, cooperativaId, file);
   }
 
   @Delete(':id')
