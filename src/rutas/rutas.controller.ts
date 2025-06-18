@@ -27,7 +27,6 @@ export class RutasController {
       properties: {
         paradaOrigenId: { type: 'number', example: 1 },
         paradaDestinoId: { type: 'number', example: 2 },
-        cooperativaId: { type: 'number', example: 5 },
         codigo: { type: 'string', example: 'AMB-QUI' },
         prioridad: { type: 'number', example: 1, nullable: true },
         fechaIniVigencia: { type: 'string', format: 'date', example: '2025-06-01', nullable: true },
@@ -35,14 +34,19 @@ export class RutasController {
         estado: { type: 'boolean', example: true, nullable: true },
         file: { type: 'string', format: 'binary', description: 'PDF de la resolución' },
       },
-      required: ['paradaOrigenId','paradaDestinoId','cooperativaId','codigo','file']
+      required: ['paradaOrigenId','paradaDestinoId','codigo','file']
     }
   })
   @UseInterceptors(FileInterceptor('file'))
   async create(
-    @Body() createRutaDto: CreateRutaDto,
-    @UploadedFile() file: Express.Multer.File
+    @Body() createRutaDto: any,
+    @UploadedFile() file: Express.Multer.File,
+    @Req() req: any
   ) {
-    return await this.rutasService.create(createRutaDto, file);
+    const user = req.user;
+    if (!user.cooperativaId) {
+      throw new Error('No tienes una cooperativa asignada');
+    }
+    return await this.rutasService.create(user.cooperativaId, createRutaDto, file);
   }
 }

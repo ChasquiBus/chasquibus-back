@@ -14,7 +14,8 @@ export const rutas = pgTable('rutas', {
   fechaIniVigencia: date('fecha_ini_vigencia'),
   fechaFinVigencia: date('fecha_fin_vigencia'),
   estado: boolean('estado').notNull().default(true),
+  enUso: boolean('en_uso').notNull().default(false),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
-  deletedAt: timestamp('deleted_at').defaultNow()
+  deletedAt: timestamp('deleted_at'),
 });

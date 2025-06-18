@@ -11,10 +11,6 @@ export class CreateRutaDto {
   @IsNumber() @IsNotEmpty() 
   paradaDestinoId: number;
 
-  @ApiProperty({ example: 5, description: 'ID de la cooperativa que opera la ruta' })
-  @IsNumber() @IsNotEmpty() 
-  cooperativaId: number;
-
   @ApiProperty({ example: 'AMB-QUI', description: 'Código identificador de la ruta' })
   @IsString() @IsNotEmpty()
   codigo: string;

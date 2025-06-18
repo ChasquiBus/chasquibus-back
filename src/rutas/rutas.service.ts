@@ -22,7 +22,7 @@ export class RutasService {
     );
   }
 
-  async create(createRutaDto: CreateRutaDto, file: Express.Multer.File) {
+  async create(cooperativaId: number, createRutaDto: CreateRutaDto, file: Express.Multer.File) {
     // 1. Validaciones de paradas
     const [origen] = await db.select().from(paradas).where(
       and(eq(paradas.id, createRutaDto.paradaOrigenId), eq(paradas.esTerminal, true))
@@ -41,7 +41,7 @@ export class RutasService {
 
     // 3. Subida a Supabase
     const fecha = format(new Date(), 'yyyy-MM-dd');
-    const filename = `${createRutaDto.cooperativaId}-${fecha}-${file.originalname}`;
+    const filename = `${cooperativaId}-${fecha}-${file.originalname}`;
     const path = `rutas/${filename}`;
     const { error: uploadError } = await this.supabase
       .storage.from('almacenamiento')
@@ -56,6 +56,7 @@ export class RutasService {
     // 4. Crear ruta en DB
     const [ruta] = await db.insert(rutas).values({
       ...createRutaDto,
+      cooperativaId,
       resolucionUrl: publicUrl,
       estado: createRutaDto.estado ?? true,
     }).returning();
