@@ -10,10 +10,10 @@ import type { InferSelectModel } from 'drizzle-orm';
 
 @Injectable()
 export class ParadasService {
-  async create(data: CreateParadaDto): Promise<Parada[]> {
+  async create(cooperativaId: number, data: CreateParadaDto): Promise<Parada[]> {
     return db.insert(paradas)
-    .values({...data, estado: true})
-    .returning();
+      .values({ ...data, cooperativaId: cooperativaId, estado: true })
+      .returning();
   }
 
   async findAll(cooperativaId: number, includeDeleted: boolean = false): Promise<InferSelectModel<typeof paradas>[]> {

@@ -19,10 +19,15 @@ export class ParadasController {
   constructor(private readonly paradasService: ParadasService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Crear nueva parada' })
+  @ApiOperation({ summary: 'Crear nueva parada para una cooperativa' })
   @ApiResponse({ status: 201, description: 'Parada creada' })
-  create(@Body() createParadaDto: CreateParadaDto) {
-    return this.paradasService.create(createParadaDto);
+
+  create(@Req() req, @Body() createParadaDto: CreateParadaDto) {
+    const user = req.user as JwtPayload;
+    if (!user.cooperativaId) {
+      throw new UnauthorizedException('No tienes una cooperativa asignada');
+    }
+    return this.paradasService.create(user.cooperativaId, createParadaDto);
   }
 
   @Get()
