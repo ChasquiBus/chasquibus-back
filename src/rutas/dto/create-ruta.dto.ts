@@ -1,43 +1,37 @@
-import { IsNumber, IsString, IsOptional, IsNotEmpty } from 'class-validator';
+// dto/create-ruta.dto.ts
+import { IsNumber, IsString, IsOptional, IsNotEmpty, IsBoolean, IsDateString } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateRutaDto {
-
   @ApiProperty({ example: 1, description: 'ID de la parada de origen' })
-  @IsNumber()
-  @IsNotEmpty({ message: 'El ID de la parada de origen no puede estar vacío' })
+  @IsNumber() @IsNotEmpty() 
   paradaOrigenId: number;
-  
+
   @ApiProperty({ example: 2, description: 'ID de la parada de destino' })
-  @IsNumber()
-  @IsNotEmpty({ message: 'El ID de la parada de destino no puede estar vacío' })
+  @IsNumber() @IsNotEmpty() 
   paradaDestinoId: number;
 
-  @ApiProperty({ example: 1001, description: 'ID de la resolución asociada a la ruta' })
-  @IsNumber()
-  @IsNotEmpty({ message: 'El ID de la resolución no puede estar vacío' })
-  resolucionId: number;
-
-  @ApiProperty({ example: 'Ruta Central', description: 'Nombre de la ruta' })
-  @IsString()
-  @IsNotEmpty({ message: 'El nombre de la ruta no puede estar vacío' })
-  nombre: string;
-
-  @ApiProperty({ example: 'AMB-QUI', description: 'Código identificador de la ruta' })
-  @IsString()
-  codigo: string;
-
   @ApiProperty({ example: 5, description: 'ID de la cooperativa que opera la ruta' })
-  @IsNumber()
-  @IsNotEmpty({ message: 'El ID de la cooperativa no puede estar vacío' })
+  @IsNumber() @IsNotEmpty() 
   cooperativaId: number;
 
-  @ApiProperty({ example: 15.3, description: 'Distancia en kilómetros de la ruta' })
-  @IsNumber()
-  distanciaKm: number;
+  @ApiProperty({ example: 'AMB-QUI', description: 'Código identificador de la ruta' })
+  @IsString() @IsNotEmpty()
+  codigo: string;
 
-  @ApiPropertyOptional({ example: '45', description: 'Duración estimada del recorrido en minutos (opcional)' })
-  @IsString()
-  @IsOptional()
-  duracionEstimadaMin?: string;
+  @ApiPropertyOptional({ example: 1, description: 'Nivel de prioridad de la ruta (1 = alta, 3 = baja)' })
+  @IsOptional() @IsNumber()
+  prioridad?: number;
+
+  @ApiPropertyOptional({ example: '2025-06-01', description: 'Fecha de inicio de vigencia (YYYY-MM-DD)' })
+  @IsOptional() @IsDateString()
+  fechaIniVigencia?: string;
+
+  @ApiPropertyOptional({ example: '2025-12-31', description: 'Fecha de fin de vigencia (YYYY-MM-DD)' })
+  @IsOptional() @IsDateString()
+  fechaFinVigencia?: string;
+
+  @ApiPropertyOptional({ example: true, description: 'Estado de la ruta (activa/inactiva)' })
+  @IsOptional() @IsBoolean()
+  estado?: boolean;
 }

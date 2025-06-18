@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   Req,
+  Query,
 } from '@nestjs/common';
 import { FrecuenciasService } from './frecuencias.service';
 import { CreateFrecuenciaDto } from './dto/create-frecuencia.dto';
@@ -38,29 +39,7 @@ export class FrecuenciasController {
 
   @Get()
   @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
-  async findAll(@Req() req: Request) {
-    const user = req.user as any;
-    let cooperativaId: number | undefined = undefined;
-    if (user.rol !== 'SUPERADMIN') {
-      if (user.cooperativaTransporte && user.cooperativaTransporte.id) {
-        cooperativaId = user.cooperativaTransporte.id;
-      } else if (user.usuarioCooperativaId) {
-        const cooperativa = await this.cooperativasService.findCooperativaByUsuarioCooperativaId(user.usuarioCooperativaId);
-        if (!cooperativa) {
-          throw new Error('No se encontró la cooperativa para este usuario');
-        }
-        cooperativaId = cooperativa.id;
-      } else if (user.sub || user.id) {
-        const usuarioId = user.sub || user.id;
-        const cooperativa = await this.cooperativasService.findCooperativaByUsuarioId(usuarioId);
-        if (!cooperativa) {
-          throw new Error('No se encontró la cooperativa para este usuario');
-        }
-        cooperativaId = cooperativa.id;
-      } else {
-        throw new Error('El usuario no tiene cooperativa asignada');
-      }
-    }
+  async findAll(@Req() req: Request, @Query('cooperativaId') cooperativaId?: number) {
     return this.frecuenciasService.findAll(cooperativaId);
   }
 
@@ -72,13 +51,16 @@ export class FrecuenciasController {
 
   @Patch(':id')
   @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
-  update(@Param('id') id: string, @Body() updateFrecuenciaDto: UpdateFrecuenciaDto) {
+  update(
+    @Param('id') id: string,
+    @Body() updateFrecuenciaDto: UpdateFrecuenciaDto,
+  ) {
     return this.frecuenciasService.update(+id, updateFrecuenciaDto);
   }
 
   @Delete(':id')
-  @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
+  @Role(RolUsuario.ADMIN)
   remove(@Param('id') id: string) {
     return this.frecuenciasService.remove(+id);
   }
-} 
+}

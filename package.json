@@ -21,7 +21,8 @@
     "drizzle:migrate:generate": "drizzle-kit generate",
     "drizzle:migrate:push": "drizzle-kit push",
     "drizzle:migrate:status": "drizzle-kit status",
-    "seed:superadmin": "ts-node src/drizzle/seeds/seed-superadmin.ts"
+    "seed:superadmin": "ts-node src/drizzle/seeds/seed-superadmin.ts",
+    "seed:ciudades": "ts-node src/drizzle/seeds/seed-ciudades.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

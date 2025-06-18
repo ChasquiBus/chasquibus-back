@@ -45,9 +45,9 @@ async function bootstrap() {
     .addTag('cooperativas', 'Modulo de Gestion de cooperativas')
     .addTag('admin-cooperativas', 'Modulo de Gestion de Admins Cooperativos')
     .addTag('choferes', "Modulo de gestion de choferes")
-    .addTag('cliente-registro', "Registro de Cliente")
     .addTag('clientes', "Modulo de gestion de clientes")
-    .addTag('ciudades', "Modulo de gestion de ciudades")
+    .addTag('ciudades', "Consultar ciudades")
+    .addTag('provincias', "Consultar provincias")
     .addTag('paradas', "Modulo de gestion de paradas")
     .addTag('configuracion-asientos', "Modulo de gestion de configuración de asientos")
     .build();

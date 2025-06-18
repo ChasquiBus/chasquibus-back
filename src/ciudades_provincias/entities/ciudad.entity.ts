@@ -1,5 +1,6 @@
 export class Ciudad {
   id: number;
-  provincia: string;
   ciudad: string;
+  codigo: string | null;
+  provincia_id: number;
 }
