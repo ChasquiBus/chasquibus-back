@@ -38,7 +38,7 @@ export class ChoferesController {
 
   @Post()
   @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
-  @ApiOperation({ summary: 'Crea un nuevo chofer' })
+  @ApiOperation({ summary: 'Crea un nuevo chofer para la cooperativa del usuario' })
   @ApiResponse({ status: 201, description: 'Chofer creado exitosamente', type: Chofer })
   create(@Body() createChoferDto: CreateChoferDto, @Request() req) {
     return this.choferesService.create(createChoferDto, req.user);
