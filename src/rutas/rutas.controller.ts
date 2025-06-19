@@ -17,36 +17,36 @@ import { FileInterceptor } from '@nestjs/platform-express';
 export class RutasController {
   constructor(private readonly rutasService: RutasService) {}
 
-  @Post()
-  @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
-  @ApiOperation({ summary: 'Crear una nueva ruta con PDF de resolución' })
-  @ApiConsumes('multipart/form-data')
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        paradaOrigenId: { type: 'number', example: 1 },
-        paradaDestinoId: { type: 'number', example: 2 },
-        codigo: { type: 'string', example: 'AMB-QUI' },
-        prioridad: { type: 'number', example: 1, nullable: true },
-        fechaIniVigencia: { type: 'string', format: 'date', example: '2025-06-01', nullable: true },
-        fechaFinVigencia: { type: 'string', format: 'date', example: '2025-12-31', nullable: true },
-        estado: { type: 'boolean', example: true, nullable: true },
-        file: { type: 'string', format: 'binary', description: 'PDF de la resolución' },
-      },
-      required: ['paradaOrigenId','paradaDestinoId','codigo','file']
-    }
-  })
-  @UseInterceptors(FileInterceptor('file'))
-  async create(
-    @Body() createRutaDto: any,
-    @UploadedFile() file: Express.Multer.File,
-    @Req() req: any
-  ) {
-    const user = req.user;
-    if (!user.cooperativaId) {
-      throw new Error('No tienes una cooperativa asignada');
-    }
-    return await this.rutasService.create(user.cooperativaId, createRutaDto, file);
+@Post()
+@Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
+@ApiOperation({ summary: 'Crear una nueva ruta con PDF de resolución' })
+@ApiConsumes('multipart/form-data')
+@ApiBody({
+  schema: {
+    type: 'object',
+    properties: {
+      paradaOrigenId: { type: 'number', example: 1 },
+      paradaDestinoId: { type: 'number', example: 2 },
+      prioridad: { type: 'number', example: 1, nullable: true },
+      fechaIniVigencia: { type: 'string', format: 'date', example: '2025-06-01', nullable: true },
+      fechaFinVigencia: { type: 'string', format: 'date', example: '2025-12-31', nullable: true },
+      estado: { type: 'boolean', example: true, nullable: true },
+      file: { type: 'string', format: 'binary', description: 'PDF de la resolución' },
+    },
+    required: ['paradaOrigenId', 'paradaDestinoId', 'file'],
+  },
+})
+@UseInterceptors(FileInterceptor('file'))
+async create(
+  @Body() createRutaDto: CreateRutaDto,
+  @UploadedFile() file: Express.Multer.File,
+  @Req() req: any,
+) {
+  const user = req.user;
+  if (!user.cooperativaId) {
+    throw new Error('No tienes una cooperativa asignada');
   }
+
+  return await this.rutasService.create(user.cooperativaId, createRutaDto, file);
+}
 }

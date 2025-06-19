@@ -83,3 +83,21 @@ export class ParadasService {
       .returning();
   }
 }
+
+export async function generarCodigoRuta(paradaOrigenId: number, paradaDestinoId: number): Promise<string> {
+  const [origen] = await db.select().from(paradas).where(eq(paradas.id, paradaOrigenId));
+  const [destino] = await db.select().from(paradas).where(eq(paradas.id, paradaDestinoId));
+
+  if (!origen || !destino) {
+    throw new Error('Paradas no encontradas');
+  }
+
+  const [ciudadOrigen] = await db.select().from(ciudades).where(eq(ciudades.id, origen.ciudadId!));
+  const [ciudadDestino] = await db.select().from(ciudades).where(eq(ciudades.id, destino.ciudadId!));
+
+  if (!ciudadOrigen?.codigo || !ciudadDestino?.codigo) {
+    throw new Error('Las ciudades deben tener códigos definidos');
+  }
+
+  return `${ciudadOrigen.codigo}-${ciudadDestino.codigo}`;
+}
