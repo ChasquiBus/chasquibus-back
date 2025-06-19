@@ -19,8 +19,8 @@ import { RutaParadaModule } from 'ruta-parada/ruta-parada.module';
 import { TarifasParadasModule } from './tarifas-paradas/tarifas-paradas.module';
 import { FrecuenciasModule } from './frecuencias/frecuencias.module';
 import { HojaTrabajoModule } from './hoja-trabajo/hoja-trabajo.module';
-
-
+import { VentasModule } from './ventas/ventas.module';
+import { BoletosModule } from './boletos/boletos.module';
 
 @Module({
   imports: [
@@ -42,6 +42,8 @@ import { HojaTrabajoModule } from './hoja-trabajo/hoja-trabajo.module';
     TarifasParadasModule,
     FrecuenciasModule,
     HojaTrabajoModule,
+    VentasModule,
+    BoletosModule,
   ],
   controllers: [AppController],
   providers: [AppService],
