@@ -49,4 +49,69 @@ async create(
 
   return await this.rutasService.create(user.cooperativaId, createRutaDto, file);
 }
+
+@Get()
+@Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
+@ApiOperation({ summary: 'Obtener todas las rutas de la cooperativa del usuario' })
+async getAll(@Req() req: any) {
+  const user = req.user;
+  if (!user.cooperativaId) {
+    throw new Error('No tienes una cooperativa asignada');
+  }
+  return await this.rutasService.getAll(user.cooperativaId);
+}
+
+@Get(':id')
+@Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
+@ApiOperation({ summary: 'Obtener una ruta específica de la cooperativa del usuario' })
+async getOne(@Param('id') id: number, @Req() req: any) {
+  const user = req.user;
+  if (!user.cooperativaId) {
+    throw new Error('No tienes una cooperativa asignada');
+  }
+  return await this.rutasService.getOne(user.cooperativaId, id);
+}
+
+@Delete(':id')
+@Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
+@ApiOperation({ summary: 'Eliminar lógicamente una ruta de la cooperativa del usuario' })
+async delete(@Param('id') id: number, @Req() req: any) {
+  const user = req.user;
+  if (!user.cooperativaId) {
+    throw new Error('No tienes una cooperativa asignada');
+  }
+  return await this.rutasService.delete(user.cooperativaId, id);
+}
+
+@Patch(':id')
+@Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
+@ApiOperation({ summary: 'Actualizar una ruta de la cooperativa del usuario' })
+@ApiConsumes('multipart/form-data')
+@ApiBody({
+  schema: {
+    type: 'object',
+    properties: {
+      paradaOrigenId: { type: 'number', example: 1, nullable: true },
+      paradaDestinoId: { type: 'number', example: 2, nullable: true },
+      prioridad: { type: 'number', example: 1, nullable: true },
+      fechaIniVigencia: { type: 'string', format: 'date', example: '2025-06-01', nullable: true },
+      fechaFinVigencia: { type: 'string', format: 'date', example: '2025-12-31', nullable: true },
+      estado: { type: 'boolean', example: true, nullable: true },
+      file: { type: 'string', format: 'binary', description: 'PDF de la resolución', nullable: true },
+    },
+  },
+})
+@UseInterceptors(FileInterceptor('file'))
+async update(
+  @Param('id') id: number,
+  @Body() updateRutaDto: UpdateRutaDto,
+  @UploadedFile() file: Express.Multer.File,
+  @Req() req: any,
+) {
+  const user = req.user;
+  if (!user.cooperativaId) {
+    throw new Error('No tienes una cooperativa asignada');
+  }
+  return await this.rutasService.update(user.cooperativaId, id, updateRutaDto, file);
+}
 }
