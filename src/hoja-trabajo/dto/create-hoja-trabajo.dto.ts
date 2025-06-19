@@ -1,26 +1,81 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsNumber, IsOptional, IsString, IsDateString, IsEnum } from 'class-validator';
+
+export enum EstadoHojaTrabajo {
+  PROGRAMADO = 'Programado',
+  EN_CURSO = 'En Curso',
+  COMPLETADO = 'Completado',
+  SUSPENDIDO = 'Suspendido',
+  CANCELADO = 'Cancelado'
+}
 
 export class CreateHojaTrabajoDto {
-  @ApiProperty({ example: 1, description: 'ID del bus' })
+  @ApiProperty({ 
+    example: 1, 
+    description: 'ID del bus asignado a la hoja de trabajo',
+    minimum: 1
+  })
   @IsNumber()
-  bus_id: number;
+  busId: number;
 
-  @ApiProperty({ example: 7, description: 'ID del chofer' })
+  @ApiProperty({ 
+    example: 1, 
+    description: 'ID del chofer asignado a la hoja de trabajo',
+    minimum: 1
+  })
   @IsNumber()
-  chofer_id: number;
+  choferId: number;
 
-  @ApiProperty({ example: 0, description: 'ID del controlador', required: false })
-  @IsOptional()
+  @ApiProperty({ 
+    example: 1, 
+    description: 'ID de la frecuencia del día',
+    minimum: 1
+  })
   @IsNumber()
-  controlador_id?: number;
+  frecDiaId: number;
 
-  @ApiProperty({ example: 'Observaciones', required: false })
+  @ApiProperty({ 
+    example: 'Observaciones sobre el viaje o condiciones especiales', 
+    description: 'Observaciones adicionales sobre la hoja de trabajo',
+    required: false,
+    maxLength: 255
+  })
   @IsOptional()
   @IsString()
   observaciones?: string;
 
-  @ApiProperty({ example: 'Activa', description: 'Estado de la hoja de trabajo' })
-  @IsString()
-  estado: string;
+  @ApiProperty({ 
+    example: EstadoHojaTrabajo.PROGRAMADO,
+    description: 'Estado actual de la hoja de trabajo',
+    enum: EstadoHojaTrabajo
+  })
+  @IsEnum(EstadoHojaTrabajo)
+  estado: EstadoHojaTrabajo;
+
+  @ApiProperty({ 
+    example: '2024-01-15T08:00:00Z',
+    description: 'Hora real de salida del bus',
+    required: false
+  })
+  @IsOptional()
+  @IsDateString()
+  horaSalidaReal?: string;
+
+  @ApiProperty({ 
+    example: '2024-01-15T18:00:00Z',
+    description: 'Hora real de llegada del bus',
+    required: false
+  })
+  @IsOptional()
+  @IsDateString()
+  horaLlegadaReal?: string;
+
+  @ApiProperty({ 
+    example: '2024-01-15',
+    description: 'Fecha de salida programada',
+    required: false
+  })
+  @IsOptional()
+  @IsDateString()
+  fechaSalida?: string;
 } 
