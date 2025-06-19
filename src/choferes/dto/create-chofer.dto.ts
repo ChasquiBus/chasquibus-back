@@ -37,10 +37,4 @@ export class CreateChoferDto extends CreateUserDto{
   @IsDateString({}, { message: 'La fecha de nacimiento debe ser una fecha válida.' })
   @IsOptional()
   fechaNacimiento?: string;
-
-    @ApiProperty({example: "2",description:"El Id de la cooperativa a asignarse" })
-    @IsNotEmpty({ message: 'El ID de la cooperativa de transporte es obligatorio.' })
-    @IsNumber({}, { message: 'El ID de la cooperativa de transporte debe ser un número.' })
-    @IsPositive({ message: 'El ID de la cooperativa de transporte debe ser un número positivo.' })
-    cooperativaTransporteId: number;
 }

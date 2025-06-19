@@ -16,5 +16,5 @@ export const rutas = pgTable('rutas', {
   estado: boolean('estado').notNull().default(true),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
-  deletedAt: timestamp('deleted_at').defaultNow()
+  deletedAt: timestamp('deleted_at'),
 });
