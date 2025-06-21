@@ -197,6 +197,20 @@
       "when": 1750301838384,
       "tag": "0027_ambiguous_marauders",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1750481448900,
+      "tag": "0028_orange_shadowcat",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1750481744587,
+      "tag": "0029_nifty_romulus",
+      "breakpoints": true
     }
   ]
 }
