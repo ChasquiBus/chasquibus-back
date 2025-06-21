@@ -43,8 +43,10 @@ export class RutaParadaController {
     return this.rutaParadaService.findOne(+id);
   }
 
-  @Patch(':id')
-  @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
+/* 
+
+@Patch(':id/no-habilites-esta-mija-porfa')
+ @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
   @ApiOperation({ summary: 'Actualizar una parada de una ruta' })
   @ApiResponse({ status: 200, description: 'Parada actualizada exitosamente' })
   @ApiResponse({ status: 400, description: 'Datos inválidos' })
@@ -53,6 +55,7 @@ export class RutaParadaController {
   update(@Param('id') id: string, @Body() updateRutaParadaDto: UpdateRutaParadaDto) {
     return this.rutaParadaService.update(+id, updateRutaParadaDto);
   }
+*/
 
   @Delete(':id')
   @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
