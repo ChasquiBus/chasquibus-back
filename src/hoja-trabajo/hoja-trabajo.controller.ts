@@ -14,7 +14,7 @@ import { RolUsuario } from '../auth/roles.enum';
 import { EstadoHojaTrabajo } from './dto/create-hoja-trabajo.dto';
 
 @ApiTags('Hojas de Trabajo')
-@ApiBearerAuth()
+@ApiBearerAuth('access-token')
 @Controller('hoja-trabajo')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class HojaTrabajoController {
