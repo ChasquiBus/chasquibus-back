@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsString, IsDateString } from 'class-validator';
+import { IsNumber, IsString, IsDateString, Matches } from 'class-validator';
 
 export class CreateFrecuenciaDto {
   @ApiProperty({ example: 1, description: 'ID de la ruta a la que pertenece esta frecuencia' })
