@@ -2,11 +2,11 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber, IsOptional, IsString, IsDateString, IsEnum } from 'class-validator';
 
 export enum EstadoHojaTrabajo {
-  PROGRAMADO = 'Programado',
-  EN_CURSO = 'En Curso',
-  COMPLETADO = 'Completado',
-  SUSPENDIDO = 'Suspendido',
-  CANCELADO = 'Cancelado'
+  PROGRAMADO = 'programado',
+  EN_CURSO = 'en curso',
+  COMPLETADO = 'completado',
+  SUSPENDIDO = 'suspendido',
+  CANCELADO = 'cancelado'
 }
 
 export class CreateHojaTrabajoDto {

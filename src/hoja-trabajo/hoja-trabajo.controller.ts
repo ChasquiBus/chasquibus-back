@@ -1,5 +1,5 @@
 import { 
-  Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, HttpStatus, ParseIntPipe 
+  Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, HttpStatus, ParseIntPipe, Request 
 } from '@nestjs/common';
 import { 
   ApiTags, ApiBearerAuth, ApiOperation, ApiParam, ApiBody 
@@ -12,6 +12,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Role } from '../auth/decorators/roles.decorator';
 import { RolUsuario } from '../auth/roles.enum';
 import { EstadoHojaTrabajo } from './dto/create-hoja-trabajo.dto';
+import { HojaTrabajoDetalladaDto } from './dto/hoja-trabajo-detallada.dto';
 
 @ApiTags('Hojas de Trabajo')
 @ApiBearerAuth('access-token')
@@ -28,19 +29,54 @@ export class HojaTrabajoController {
     return this.hojaTrabajoService.create(dto);
   }
 
-  @Get()
+
+  @Get("viajes")
   @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
-  @ApiOperation({ summary: 'Listar todas las hojas de trabajo' })
-  findAll() {
-    return this.hojaTrabajoService.findAll();
+  @ApiOperation({ summary: 'Listar todas los viajes [programado]  o [en curso] con información detallada para movil' })
+  async getAll(): Promise<{ message: string, data: HojaTrabajoDetalladaDto[], count: number }> {
+    return this.hojaTrabajoService.getAll();
   }
 
-  @Get(':id')
+  @Get('viaje/:id')
   @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
-  @ApiOperation({ summary: 'Obtener hoja de trabajo por ID' })
+  @ApiOperation({ summary: 'Obtener hoja de trabajo detallada por ID' })
   @ApiParam({ name: 'id', type: 'number' })
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.hojaTrabajoService.findOne(id);
+  async getById(@Param('id', ParseIntPipe) id: number) {
+    return this.hojaTrabajoService.getById(id);
+  }
+
+  
+  @Get('estado/:estado')
+  @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
+  @ApiOperation({ summary: 'Buscar por estado' })
+  @ApiParam({ name: 'estado', enum: EstadoHojaTrabajo })
+  findByEstado(@Param('estado') estado: string) {
+    return this.hojaTrabajoService.findByEstado(estado);
+  }
+
+
+  @Get('cooperativa/mis-hojas')
+  @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
+  @ApiOperation({ summary: 'Listar hojas de trabajo de la cooperativa del usuario autenticado' })
+  async findByCooperativaId(@Request() req: any) {
+    // Se asume que el cooperativaId está en req.user.cooperativaId
+    const cooperativaId = req.user?.cooperativaId;
+    if (!cooperativaId) {
+      return { message: 'No se encontró cooperativaId en el token', data: [], count: 0 };
+    }
+    return this.hojaTrabajoService.findByCooperativaId(cooperativaId);
+  }
+
+  @Get('chofer/mis-programadas')
+  @Role(RolUsuario.CHOFER)
+  @ApiOperation({ summary: 'Listar hojas de trabajo programadas para el chofer autenticado' })
+  async findProgramadasByChoferId(@Request() req: any) {
+    // Se asume que el id de usuario está en req.user.sub
+    const userId = req.user?.sub;
+    if (!userId) {
+      return { message: 'No se encontró el id de usuario en el token', data: [], count: 0 };
+    }
+    return this.hojaTrabajoService.findProgramadasByChoferId(userId);
   }
 
   @Patch(':id')
@@ -63,27 +99,4 @@ export class HojaTrabajoController {
     return this.hojaTrabajoService.remove(id);
   }
 
-  @Get('bus/:busId')
-  @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
-  @ApiOperation({ summary: 'Buscar por bus' })
-  @ApiParam({ name: 'busId', type: 'number' })
-  findByBus(@Param('busId', ParseIntPipe) busId: number) {
-    return this.hojaTrabajoService.findByBus(busId);
-  }
-
-  @Get('chofer/:choferId')
-  @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
-  @ApiOperation({ summary: 'Buscar por chofer' })
-  @ApiParam({ name: 'choferId', type: 'number' })
-  findByChofer(@Param('choferId', ParseIntPipe) choferId: number) {
-    return this.hojaTrabajoService.findByChofer(choferId);
-  }
-
-  @Get('estado/:estado')
-  @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
-  @ApiOperation({ summary: 'Buscar por estado' })
-  @ApiParam({ name: 'estado', enum: EstadoHojaTrabajo })
-  findByEstado(@Param('estado') estado: string) {
-    return this.hojaTrabajoService.findByEstado(estado);
-  }
 }
