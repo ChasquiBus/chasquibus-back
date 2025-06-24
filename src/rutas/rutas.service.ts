@@ -4,10 +4,12 @@ import { CreateRutaDto } from './dto/create-ruta.dto';
 import { db } from '../drizzle/database';
 import { rutas } from '../drizzle/schema/rutas';
 import { paradas } from '../drizzle/schema/paradas';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, isNull } from 'drizzle-orm';
 import { createClient } from '@supabase/supabase-js';
 import { format } from 'date-fns';
 import { generarCodigoRuta } from 'paradas/paradas.service';
+import { rutaDias } from '../drizzle/schema/ruta-dia';
+import { dias } from '../drizzle/schema/dias';
 
 @Injectable()
 export class RutasService {
@@ -66,16 +68,45 @@ async create(cooperativaId: number, createRutaDto: CreateRutaDto, file: Express.
     codigo, 
   }).returning();
 
+  // Insertar días de operación en la tabla intermedia
+  if (createRutaDto.diasOperacion && Array.isArray(createRutaDto.diasOperacion)) {
+    const registrosDias = createRutaDto.diasOperacion.map(({ diaId, tipo }) => ({
+      rutaId: ruta.id,
+      diaId,
+      tipo,
+    }));
+    await db.insert(rutaDias).values(registrosDias);
+  }
+
   return ruta;
 }
 
 // Obtener todas las rutas activas de una cooperativa
 async getAll(cooperativaId: number) {
-  return await db.select().from(rutas)
+  const rutasData = await db.select().from(rutas)
     .where(and(
       eq(rutas.cooperativaId, cooperativaId),
       eq(rutas.estado, true)
     ));
+
+  // Para cada ruta, obtener los días de operación con nombre
+  const rutasConDias = await Promise.all(rutasData.map(async (ruta) => {
+    const diasOperacion = await db
+      .select({
+        id: dias.id,
+        nombre: dias.nombre,
+        tipo: rutaDias.tipo
+      })
+      .from(rutaDias)
+      .innerJoin(dias, eq(rutaDias.diaId, dias.id))
+      .where(eq(rutaDias.rutaId, ruta.id));
+    return {
+      ...ruta,
+      diasOperacion
+    };
+  }));
+
+  return rutasConDias;
 }
 
 // Obtener una ruta específica de una cooperativa
@@ -89,7 +120,21 @@ async getOne(cooperativaId: number, id: number) {
   if (!ruta) {
     throw new BadRequestException('Ruta no encontrada o no pertenece a tu cooperativa');
   }
-  return ruta;
+  // Obtener los días de operación con nombre
+  const diasOperacion = await db
+    .select({
+      id: dias.id,
+      nombre: dias.nombre,
+      tipo: rutaDias.tipo
+    })
+    .from(rutaDias)
+    .innerJoin(dias, eq(rutaDias.diaId, dias.id))
+    .where(eq(rutaDias.rutaId, id));
+
+  return {
+    ...ruta,
+    diasOperacion
+  };
 }
 
 // Eliminar lógicamente una ruta (cambiar estado y deletedAt)
@@ -170,7 +215,30 @@ async update(cooperativaId: number, id: number, updateRutaDto: Partial<CreateRut
     .where(eq(rutas.id, id))
     .returning();
 
-  return ruta;
+  // Si se proporcionan días de operación, actualizar solo los días específicos
+  if (updateRutaDto.diasOperacion) {
+    for (const { diaId, tipo } of updateRutaDto.diasOperacion) {
+      await db.update(rutaDias)
+        .set({ tipo })
+        .where(and(eq(rutaDias.rutaId, id), eq(rutaDias.diaId, diaId)));
+    }
+  }
+
+  // Obtener los días de operación actualizados
+  const diasOperacion = await db
+    .select({
+      id: dias.id,
+      nombre: dias.nombre,
+      tipo: rutaDias.tipo
+    })
+    .from(rutaDias)
+    .innerJoin(dias, eq(rutaDias.diaId, dias.id))
+    .where(eq(rutaDias.rutaId, id));
+
+  return {
+    ...ruta,
+    diasOperacion
+  };
 }
 
 }

@@ -81,7 +81,7 @@ export class RutaParadaService {
     }
   }
 
-  async findAll(rutaId: number) {
+  async findAllParadasFromRutas(rutaId: number) {
     if (!rutaId) {
       throw new BadRequestException('Se requiere el ID de la ruta para listar las paradas');
     }
@@ -141,6 +141,73 @@ export class RutaParadaService {
         )
       );
     return rutaParadaItem;
+  }
+
+   async findAllParadasByCooperativa(cooperativaId: number) {
+    const rutaParadasList = await db
+      .select({
+        id: rutaParada.id,
+        rutaId: rutaParada.rutaId,
+        paradaId: rutaParada.paradaId,
+        orden: rutaParada.orden,
+        distanciaDesdeOrigenKm: rutaParada.distanciaDesdeOrigenKm,
+        tiempoDesdeOrigenMin: rutaParada.tiempoDesdeOrigenMin,
+        estado: rutaParada.estado,
+        ruta: {
+            id: rutas.id,
+            codigo: rutas.codigo,
+            prioridad: rutas.prioridad,
+            resolucionUrl: rutas.resolucionUrl,
+            fechaIniVigencia: rutas.fechaIniVigencia,
+            fechaFinVigencia: rutas.fechaFinVigencia,
+            estado: rutas.estado,
+            createdAt: rutas.createdAt,
+            updatedAt: rutas.updatedAt,
+            deletedAt: rutas.deletedAt,
+        }
+      })
+      .from(rutaParada)
+      .innerJoin(rutas, eq(rutaParada.rutaId, rutas.id))
+      .where(
+        and(
+          eq(rutas.cooperativaId, cooperativaId),
+          eq(rutaParada.estado, 'activa'),
+          eq(rutas.estado, true) // Asegurarse de que la ruta también esté activa
+        )
+      )
+      .orderBy(rutaParada.orden);
+
+    // Obtener información detallada para cada ruta-parada (parada y ciudad)
+    const rutaParadasConDetalles = await Promise.all(
+      rutaParadasList.map(async (rutaParadaItem) => {
+        let parada: typeof paradas.$inferSelect | undefined = undefined;
+        let ciudad: typeof ciudades.$inferSelect | undefined = undefined;
+
+        if (rutaParadaItem.paradaId) {
+          [parada] = await db
+            .select()
+            .from(paradas)
+            .where(eq(paradas.id, rutaParadaItem.paradaId));
+
+          if (parada?.ciudadId) {
+            [ciudad] = await db
+              .select()
+              .from(ciudades)
+              .where(eq(ciudades.id, parada.ciudadId));
+          }
+        }
+
+        return {
+          ...rutaParadaItem,
+          parada: parada ? {
+            ...parada,
+            ciudad
+          } : undefined
+        };
+      })
+    );
+
+    return rutaParadasConDetalles;
   }
 
   async update(id: number, updateRutaParadaDto: UpdateRutaParadaDto) {

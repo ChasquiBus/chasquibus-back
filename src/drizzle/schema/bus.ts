@@ -12,6 +12,7 @@ export const buses = pgTable("buses", {
   total_asientos: integer("total_asientos").notNull(),
   total_asientos_piso2: integer("total_asientos_piso2"),
   activo: boolean("activo").default(true),
+  enUso: boolean('en_uso').notNull().default(false),
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
   deleted_at: timestamp("deleted_at"),

@@ -1,7 +1,8 @@
 // dto/create-ruta.dto.ts
-import { IsNumber, IsString, IsOptional, IsNotEmpty, IsBoolean, IsDateString } from 'class-validator';
+import { IsNumber, ValidationArguments, IsOptional, IsNotEmpty, IsBoolean, IsDateString, ValidationOptions, registerDecorator, IsArray, ArrayMinSize, ArrayMaxSize, ValidateNested } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
+import { DiaOperacionItemDto } from './update-ruta.dto';
 
 export class CreateRutaDto {
   
@@ -31,4 +32,50 @@ export class CreateRutaDto {
   @ApiPropertyOptional({ example: true, description: 'Estado de la ruta (activa/inactiva)' })
   @IsOptional() @IsBoolean()
   estado?: boolean;
+
+  @ApiProperty({
+    example: [
+      { diaId: 1, tipo: 'operacion' },
+      { diaId: 2, tipo: 'parada' },
+      { diaId: 3, tipo: 'operacion' },
+      { diaId: 4, tipo: 'parada' },
+      { diaId: 5, tipo: 'operacion' },
+      { diaId: 6, tipo: 'operacion' },
+      { diaId: 7, tipo: 'parada' }
+    ],
+    description: 'Lista de días con su tipo (operacion/parada), del 1 al 7 sin omitir ninguno',
+    required: true
+  })
+  @IsArray()
+  @ArrayMinSize(7, { message: 'Se deben incluir exactamente 7 días.' })
+  @ArrayMaxSize(7, { message: 'Se deben incluir exactamente 7 días.' })
+  @ValidateNested({ each: true })
+  @Type(() => DiaOperacionItemDto)
+  @ContieneDiasDelUnoAlSiete()
+  diasOperacion: DiaOperacionItemDto[];
+}
+
+function ContieneDiasDelUnoAlSiete(validationOptions?: ValidationOptions) {
+  return function (object: Object, propertyName: string) {
+    registerDecorator({
+      name: 'contieneDiasDelUnoAlSiete',
+      target: object.constructor,
+      propertyName: propertyName,
+      options: validationOptions,
+      validator: {
+        validate(value: DiaOperacionItemDto[], args: ValidationArguments) {
+          if (!Array.isArray(value)) return false;
+          const dias = value.map(v => v.diaId);
+          const unicos = new Set(dias);
+          for (let i = 1; i <= 7; i++) {
+            if (!unicos.has(i)) return false;
+          }
+          return true;
+        },
+        defaultMessage(args: ValidationArguments) {
+          return `Debe proporcionar exactamente un elemento para cada día del 1 al 7 sin omisiones.`;
+        }
+      },
+    });
+  };
 }

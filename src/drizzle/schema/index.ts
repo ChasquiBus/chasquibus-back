@@ -18,7 +18,7 @@ import { metodosPago } from './metodos-pago';
 import { ventas } from './ventas';
 import { notificaciones } from './notificaciones';
 import { dias } from './dias';
-import { frecuenciaDias } from './frecuencia-dia';
+import { rutaDias } from './ruta-dia';
 
 export const schema = {
   usuarios,
@@ -43,5 +43,5 @@ export const schema = {
   notificaciones,
 
   dias,
-  frecuenciaDias
+  rutaDias
 };
