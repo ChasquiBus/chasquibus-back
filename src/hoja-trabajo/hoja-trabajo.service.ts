@@ -5,7 +5,6 @@ import { db } from '../drizzle/database';
 import { hojaTrabajo } from '../drizzle/schema/hoja-trabajo';
 import { buses } from '../drizzle/schema/bus';
 import { choferes } from '../drizzle/schema/choferes';
-import { frecuenciaDias } from '../drizzle/schema/frecuencia-dia';
 import { eq, and, desc } from 'drizzle-orm';
 
 @Injectable()
@@ -23,12 +22,12 @@ export class HojaTrabajoService {
       throw new BadRequestException(`El chofer con ID ${createHojaTrabajoDto.choferId} no existe`);
     }
 
-    // Validar que la frecuencia del día existe
+    /*
     const [frecDia] = await db.select().from(frecuenciaDias).where(eq(frecuenciaDias.id, createHojaTrabajoDto.frecDiaId));
     if (!frecDia) {
       throw new BadRequestException(`La frecuencia del día con ID ${createHojaTrabajoDto.frecDiaId} no existe`);
     }
-
+*/
     // Preparar los datos para inserción
     const insertData: any = {
       busId: createHojaTrabajoDto.busId,
@@ -103,12 +102,12 @@ export class HojaTrabajoService {
       }
     }
 
-    if (updateHojaTrabajoDto.frecDiaId !== undefined) {
+ /*   if (updateHojaTrabajoDto.frecDiaId !== undefined) {
       const [frecDia] = await db.select().from(frecuenciaDias).where(eq(frecuenciaDias.id, updateHojaTrabajoDto.frecDiaId));
       if (!frecDia) {
         throw new BadRequestException(`La frecuencia del día con ID ${updateHojaTrabajoDto.frecDiaId} no existe`);
       }
-    }
+    }*/
 
     // Preparar los datos para actualización
     const updateData: any = {};
