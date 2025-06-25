@@ -14,11 +14,11 @@ import { TarifasParada } from './entities/tarifas-parada.entity';
 @Controller('tarifas-paradas')
 @ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
 export class TarifasParadasController {
   constructor(private readonly tarifasParadasService: TarifasParadasService) {}
 
   @Post()
+  @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
   @ApiOperation({ summary: 'Crear nueva tarifa para una parada' })
   @ApiResponse({ status: 201, description: 'Tarifa creada exitosamente', type: TarifasParada })
   @ApiResponse({ status: 400, description: 'Datos inválidos' })
@@ -32,6 +32,7 @@ export class TarifasParadasController {
   }
 
   @Get()
+  @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
   @ApiOperation({ summary: 'Obtener todas las tarifas de la cooperativa del usuario' })
   @ApiResponse({ status: 200, description: 'Lista de tarifas de la cooperativa', type: [TarifasParada] })
   @ApiResponse({ status: 401, description: 'No autorizado' })
@@ -44,6 +45,7 @@ export class TarifasParadasController {
   }
 
   @Get('mejores')
+  @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
   @ApiOperation({ summary: 'Obtener las mejores tarifas de la cooperativa ordenadas por valor descendente' })
   @ApiResponse({ status: 200, description: 'Lista de mejores tarifas ordenadas por valor', type: [TarifasParada] })
   @ApiResponse({ status: 401, description: 'No autorizado' })
@@ -56,6 +58,7 @@ export class TarifasParadasController {
   }
 
   @Get('ruta/:rutaId')
+  @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA, RolUsuario.CHOFER, RolUsuario.CLIENTE)
   @ApiOperation({ summary: 'Obtener tarifas por ID de ruta' })
   @ApiResponse({ status: 200, description: 'Lista de tarifas de la ruta especificada', type: [TarifasParada] })
   @ApiResponse({ status: 404, description: 'No se encontraron tarifas para la ruta' })
@@ -65,6 +68,7 @@ export class TarifasParadasController {
   }
 
   @Get(':id')
+  @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA, RolUsuario.CHOFER, RolUsuario.CLIENTE)
   @ApiOperation({ summary: 'Obtener tarifa por ID' })
   @ApiResponse({ status: 200, description: 'Tarifa encontrada', type: TarifasParada })
   @ApiResponse({ status: 404, description: 'Tarifa no encontrada' })
@@ -74,6 +78,7 @@ export class TarifasParadasController {
   }
 
   @Patch(':id')
+  @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA, RolUsuario.CHOFER)
   @ApiOperation({ summary: 'Actualizar tarifa (solo tipoAsiento, valor y aplicaTarifa)' })
   @ApiResponse({ status: 200, description: 'Tarifa actualizada exitosamente', type: TarifasParada })
   @ApiResponse({ status: 404, description: 'Tarifa no encontrada' })
@@ -84,6 +89,7 @@ export class TarifasParadasController {
   }
 
   @Delete(':id')
+  @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
   @ApiOperation({ summary: 'Eliminar tarifa' })
   @ApiResponse({ status: 200, description: 'Tarifa eliminada exitosamente', type: TarifasParada })
   @ApiResponse({ status: 404, description: 'Tarifa no encontrada' })
