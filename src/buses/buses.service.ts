@@ -22,6 +22,45 @@ export class BusesService {
   }
 
   async create(createBusDto: CreateBusDto, file?: Express.Multer.File) {
+    // Validar placa única
+    const busExistente = await db.select().from(buses)
+      .where(
+        and(
+          eq(buses.placa, createBusDto.placa),
+          eq(buses.cooperativa_id, createBusDto.cooperativa_id),
+          eq(buses.activo, true)
+        )
+      );
+    if (busExistente.length > 0) {
+      throw new BadRequestException('Ya existe un bus con esa placa en la cooperativa.');
+    }
+    // Validar numero_bus único
+    const busNumeroExistente = await db.select().from(buses)
+      .where(
+        and(
+          eq(buses.numero_bus, createBusDto.numero_bus),
+          eq(buses.cooperativa_id, createBusDto.cooperativa_id),
+          eq(buses.activo, true)
+        )
+      );
+    if (busNumeroExistente.length > 0) {
+      throw new BadRequestException('Ya existe un bus con ese número en la cooperativa.');
+    }
+    // Validación de cantidad máxima de asientos
+    if (createBusDto.piso_doble) {
+      // Bus de dos pisos
+      const totalPiso1 = createBusDto.total_asientos - (createBusDto.total_asientos_piso2 || 0);
+      const totalPiso2 = createBusDto.total_asientos_piso2 || 0;
+      const suma = totalPiso1 + totalPiso2;
+      if (suma > 80) {
+        throw new BadRequestException('La suma de asientos de ambos pisos no puede exceder 80 para un bus de dos pisos.');
+      }
+    } else {
+      // Bus de un solo piso
+      if (createBusDto.total_asientos > 50) {
+        throw new BadRequestException('Un bus de un solo piso no puede tener más de 50 asientos.');
+      }
+    }
     let imagenUrl = null;
     if (file) {
       if (!file.mimetype.startsWith('image/')) {

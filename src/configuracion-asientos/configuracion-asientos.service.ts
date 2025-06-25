@@ -23,18 +23,18 @@ export class ConfiguracionAsientosService {
     const isDoubleDecker = bus.piso_doble;
 
     // Validar que el número total de asientos no exceda el límite
-    if (isDoubleDecker) {
-      // Para buses de dos pisos, mantenemos la validación contra el total del bus
-      if (dto.posiciones.length > bus.total_asientos) {
-        throw new BadRequestException(
-          `El número total de asientos (${dto.posiciones.length}) excede el total definido para el bus de dos pisos (${bus.total_asientos})`,
-        );
-      }
-    } else {
+    if (!isDoubleDecker) {
       // Para buses de un piso, el límite es 50
       if (dto.posiciones.length > 50) {
         throw new BadRequestException(
           `El número total de asientos (${dto.posiciones.length}) excede el límite de 50 para un bus de un solo piso.`,
+        );
+      }
+    } else {
+      // Para buses de dos pisos, validar que no exceda 80 asientos
+      if (dto.posiciones.length > 80) {
+        throw new BadRequestException(
+          `El número total de asientos (${dto.posiciones.length}) excede el límite de 80 para un bus de dos pisos.`,
         );
       }
     }
@@ -103,18 +103,18 @@ export class ConfiguracionAsientosService {
       const isDoubleDecker = bus.piso_doble;
 
       // Validar que el número total de asientos no exceda el límite
-      if (isDoubleDecker) {
-        // Para buses de dos pisos, mantenemos la validación contra el total del bus
-        if (dto.posiciones.length > bus.total_asientos) {
-          throw new BadRequestException(
-            `El número total de asientos (${dto.posiciones.length}) excede el total definido para el bus de dos pisos (${bus.total_asientos})`,
-          );
-        }
-      } else {
+      if (!isDoubleDecker) {
         // Para buses de un piso, el límite es 50
         if (dto.posiciones.length > 50) {
           throw new BadRequestException(
             `El número total de asientos (${dto.posiciones.length}) excede el límite de 50 para un bus de un solo piso.`,
+          );
+        }
+      } else {
+        // Para buses de dos pisos, validar que no exceda 80 asientos
+        if (dto.posiciones.length > 80) {
+          throw new BadRequestException(
+            `El número total de asientos (${dto.posiciones.length}) excede el límite de 80 para un bus de dos pisos.`,
           );
         }
       }
