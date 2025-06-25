@@ -1,5 +1,6 @@
 import { 
-  Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, HttpStatus, ParseIntPipe, Request 
+  Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, HttpStatus, ParseIntPipe, Request, 
+  Query
 } from '@nestjs/common';
 import { 
   ApiTags, ApiBearerAuth, ApiOperation, ApiParam, ApiBody 
@@ -12,7 +13,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Role } from '../auth/decorators/roles.decorator';
 import { RolUsuario } from '../auth/roles.enum';
 import { EstadoHojaTrabajo } from './dto/create-hoja-trabajo.dto';
-import { HojaTrabajoDetalladaDto } from './dto/hoja-trabajo-detallada.dto';
+import { FiltroViajeDto, HojaTrabajoDetalladaDto } from './dto/hoja-trabajo-detallada.dto';
 
 @ApiTags('Hojas de Trabajo')
 @ApiBearerAuth('access-token')
@@ -31,14 +32,14 @@ export class HojaTrabajoController {
 
 
   @Get("viajes")
-  @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
-  @ApiOperation({ summary: 'Listar todas los viajes [programado]  o [en curso] con información detallada para movil' })
-  async getAll(): Promise<{ message: string, data: HojaTrabajoDetalladaDto[], count: number }> {
-    return this.hojaTrabajoService.getAll();
+  @Role(RolUsuario.CLIENTE, RolUsuario.OFICINISTA)
+  @ApiOperation({ summary: 'Listar viajes con información detallada, filtrados OPCIONALMENTE por estado, si no envia nada lista ambos' })
+  async getAll(@Query() filtro: FiltroViajeDto) {
+    return this.hojaTrabajoService.getAll(filtro.estado);
   }
 
   @Get('viaje/:id')
-  @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
+  @Role(RolUsuario.CLIENTE, RolUsuario.OFICINISTA)
   @ApiOperation({ summary: 'Obtener hoja de trabajo detallada por ID' })
   @ApiParam({ name: 'id', type: 'number' })
   async getById(@Param('id', ParseIntPipe) id: number) {
@@ -47,7 +48,7 @@ export class HojaTrabajoController {
 
   
   @Get('estado/:estado')
-  @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
+  @Role(RolUsuario.CLIENTE, RolUsuario.OFICINISTA, RolUsuario.CHOFER)
   @ApiOperation({ summary: 'Buscar por estado' })
   @ApiParam({ name: 'estado', enum: EstadoHojaTrabajo })
   findByEstado(@Param('estado') estado: string) {
