@@ -11,9 +11,9 @@ export const boletos = pgTable('boletos', {
 
   ventaId: integer('venta_id').references(() => ventas.id),
   hojaTrabajoId: integer('hoja_trabajo').references(() => hojaTrabajo.id),
-  asientoId: integer('asiento_id').references(() => configuracionAsientos.id),
   tarifaId: integer('tarifa_id').references(() => tarifas.id),
   descuentoId: integer('descuento_id').references(() => descuentos.id),
+  asientoNumero: integer('numero_asiento').notNull(),
   codigoQr: varchar('codigo_qr', { length: 255 }),
   cedula: varchar('cedula', { length: 20 }),
   nombre: varchar('nombre', { length: 255 }),

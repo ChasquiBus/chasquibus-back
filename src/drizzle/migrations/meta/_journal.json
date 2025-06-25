@@ -232,6 +232,20 @@
       "when": 1750823478103,
       "tag": "0032_harsh_silvermane",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1750867612041,
+      "tag": "0033_demonic_wild_child",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1750872102144,
+      "tag": "0034_pretty_morlun",
+      "breakpoints": true
     }
   ]
 }
