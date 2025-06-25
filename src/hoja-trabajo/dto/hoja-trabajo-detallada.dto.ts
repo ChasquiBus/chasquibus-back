@@ -1,4 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsIn, IsOptional } from 'class-validator';
 
 export class HojaTrabajoDetalladaDto {
   @ApiProperty()
@@ -55,3 +56,10 @@ export class HojaTrabajoDetalladaDto {
   @ApiProperty()
   estado: string;
 } 
+
+export class FiltroViajeDto {
+  @ApiPropertyOptional({ enum: ['programado', 'en curso'], description: 'Estado del viaje' })
+  @IsOptional()
+  @IsIn(['programado', 'en curso'])
+  estado?: string;
+}

@@ -242,19 +242,39 @@ export class HojaTrabajoService {
     };
   }
 
-  async getAll(): Promise<{ message: string, data: HojaTrabajoDetalladaDto[], count: number }> {
-    // Solo hojas de trabajo con estado 'Programado' o 'En Curso'
-    const hojas = await db.select().from(hojaTrabajo).where(inArray(hojaTrabajo.estado, ['programado', 'en urso']));
+  async getAll(estado?: string): Promise<{ message: string, data: HojaTrabajoDetalladaDto[], count: number }> {
+    const estadosPermitidos = ['programado', 'en curso'];
+  
+    let hojas;
+  
+    if (estado) {
+      if (!estadosPermitidos.includes(estado)) {
+        throw new Error(`Estado '${estado}' no permitido. Debe ser 'programado' o 'en curso'.`);
+      }
+  
+      hojas = await db
+        .select()
+        .from(hojaTrabajo)
+        .where(eq(hojaTrabajo.estado, estado));
+    } else {
+      hojas = await db
+        .select()
+        .from(hojaTrabajo)
+        .where(inArray(hojaTrabajo.estado, estadosPermitidos));
+    }
+  
     const resultado: HojaTrabajoDetalladaDto[] = [];
     for (const hoja of hojas) {
       resultado.push(await this.mapHojaTrabajoDetalle(hoja));
     }
+  
     return {
       message: 'Lista detallada de hojas de trabajo obtenida exitosamente',
       data: resultado,
-      count: resultado.length
+      count: resultado.length,
     };
   }
+  
 
   async getById(id: number): Promise<{ message: string, data: HojaTrabajoDetalladaDto }> {
     const [hoja] = await db.select().from(hojaTrabajo).where(eq(hojaTrabajo.id, id));
