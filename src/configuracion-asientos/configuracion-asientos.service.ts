@@ -49,17 +49,6 @@ export class ConfiguracionAsientosService {
       );
     }
 
-    // Validar que los asientos del primer piso sean NORMAL
-    const invalidFirstFloorSeats = dto.posiciones.filter(
-      pos => pos.piso === 1 && pos.tipoAsiento !== TipoAsiento.NORMAL
-    );
-    
-    if (invalidFirstFloorSeats.length > 0) {
-      throw new BadRequestException(
-        'Los asientos del primer piso solo pueden ser de tipo NORMAL'
-      );
-    }
-
     // Validar que cada posición tenga todos los campos requeridos
     const missingFieldsPositions = dto.posiciones.filter(
       pos => !pos.fila || !pos.columna || !pos.piso || !pos.tipoAsiento || !pos.numeroAsiento
@@ -139,14 +128,14 @@ export class ConfiguracionAsientosService {
         );
       }
 
-      // Validar que los asientos del primer piso sean NORMAL
-      const invalidFirstFloorSeats = dto.posiciones.filter(
-        pos => pos.piso === 1 && pos.tipoAsiento !== TipoAsiento.NORMAL
+      // Validar que cada posición tenga todos los campos requeridos
+      const missingFieldsPositions = dto.posiciones.filter(
+        pos => !pos.fila || !pos.columna || !pos.piso || !pos.tipoAsiento || !pos.numeroAsiento
       );
-      
-      if (invalidFirstFloorSeats.length > 0) {
+
+      if (missingFieldsPositions.length > 0) {
         throw new BadRequestException(
-          'Los asientos del primer piso solo pueden ser de tipo NORMAL'
+          'Todas las posiciones deben tener fila, columna, piso, tipoAsiento y numeroAsiento'
         );
       }
 
