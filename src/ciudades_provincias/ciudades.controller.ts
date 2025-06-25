@@ -18,7 +18,7 @@ import { ProvinciasService } from './provincias.service';
 @Controller('ciudades')
 @ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
+@Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA, RolUsuario.CHOFER, RolUsuario.CLIENTE)
 export class CiudadesController {
   constructor(private readonly ciudadesService: CiudadesService,
               private readonly provinciasService: ProvinciasService
