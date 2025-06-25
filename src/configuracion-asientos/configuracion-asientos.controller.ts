@@ -77,7 +77,7 @@ export class ConfiguracionAsientosController {
 
   @Get()
   @ApiOperation({ 
-    summary: 'Obtener todas las configuraciones de asientos',
+    summary: 'Obtener todas las configuraciones de asientos actuales',
     description: 'Retorna la lista de todas las configuraciones de asientos en el sistema'
   })
   @ApiResponse({
