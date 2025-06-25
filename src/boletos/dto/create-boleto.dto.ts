@@ -12,7 +12,7 @@ export class CreateBoletoDto {
 
   @ApiProperty({ description: 'ID del asiento' })
   @IsNumber()
-  asientoId: number;
+  asientoNumero: number;
 
   @ApiProperty({ description: 'ID de la tarifa' })
   @IsNumber()
