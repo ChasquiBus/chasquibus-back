@@ -3,7 +3,7 @@ import {
   Query
 } from '@nestjs/common';
 import { 
-  ApiTags, ApiBearerAuth, ApiOperation, ApiParam, ApiBody 
+  ApiTags, ApiBearerAuth, ApiOperation, ApiParam, ApiBody, ApiQuery
 } from '@nestjs/swagger';
 import { HojaTrabajoService } from './hoja-trabajo.service';
 import { CreateHojaTrabajoDto } from './dto/create-hoja-trabajo.dto';
@@ -78,6 +78,26 @@ export class HojaTrabajoController {
       return { message: 'No se encontró el id de usuario en el token', data: [], count: 0 };
     }
     return this.hojaTrabajoService.findProgramadasByChoferId(userId);
+  }
+
+  @Get('buscar-por-ciudades')
+  @Role( RolUsuario.CHOFER, RolUsuario.CLIENTE)
+  @ApiOperation({ summary: 'Buscar hojas de trabajo por ciudades de origen y destino' })
+  @ApiQuery({ name: 'ciudadOrigen', description: 'Código de la ciudad de origen' })
+  @ApiQuery({ name: 'ciudadDestino', description: 'Código de la ciudad de destino' })
+  async findByCiudades(
+    @Query('ciudadOrigen') ciudadOrigen: string,
+    @Query('ciudadDestino') ciudadDestino: string
+  ) {
+    console.log(ciudadOrigen)
+    if (!ciudadOrigen || !ciudadDestino) {
+      return { 
+        message: 'Se requieren los parámetros ciudadOrigen y ciudadDestino', 
+        data: [], 
+        count: 0 
+      };
+    }
+    return this.hojaTrabajoService.findByCiudades(ciudadOrigen, ciudadDestino);
   }
 
   @Patch(':id')

@@ -315,30 +315,82 @@ export class HojaTrabajoService {
   }
 
   async findProgramadasByChoferId(userId: number): Promise<{ message: string, data: HojaTrabajoDetalladaDto[], count: number }> {
-    // 1. Buscar usuario y verificar que es chofer
-    const [usuario] = await db.select().from(usuarios).where(eq(usuarios.id, userId));
-    if (!usuario) {
-      return { message: 'Usuario no encontrado', data: [], count: 0 };
-    }
-    if (usuario.rol !== 3) {
-      return { message: 'El usuario no es chofer', data: [], count: 0 };
-    }
-    // 2. Buscar el id de chofer correspondiente a este usuario
+    // Obtener el chofer asociado al usuario
     const [chofer] = await db.select().from(choferes).where(eq(choferes.usuarioId, userId));
     if (!chofer) {
-      return { message: 'No se encontró chofer asociado a este usuario', data: [], count: 0 };
+      return { message: 'No se encontró un chofer asociado a este usuario', data: [], count: 0 };
     }
-    // 3. Buscar hojas de trabajo programadas para el chofer (chofer.id)
+
+    // Obtener datos del usuario para el nombre
+    const [usuario] = await db.select().from(usuarios).where(eq(usuarios.id, chofer.usuarioId));
+
+    // Obtener hojas de trabajo programadas para este chofer
     const hojas = await db.select().from(hojaTrabajo)
-      .where(and(eq(hojaTrabajo.choferId, chofer.id), eq(hojaTrabajo.estado, 'programado')));
-    const resultado: HojaTrabajoDetalladaDto[] = [];
-    for (const hoja of hojas) {
-      resultado.push(await this.mapHojaTrabajoDetalle(hoja));
-    }
+      .where(and(
+        eq(hojaTrabajo.choferId, chofer.id),
+        eq(hojaTrabajo.estado, 'programado')
+      ));
+
+    // Mapear cada hoja a su versión detallada
+    const hojasDetalladas = await Promise.all(hojas.map(hoja => this.mapHojaTrabajoDetalle(hoja)));
+
     return {
-      message: 'Lista de hojas de trabajo programadas para el chofer obtenida exitosamente',
-      data: resultado,
-      count: resultado.length
+      message: `Hojas de trabajo programadas para el chofer ${usuario?.nombre || ''} ${usuario?.apellido || ''}`,
+      data: hojasDetalladas,
+      count: hojasDetalladas.length
+    };
+  }
+
+  async findByCiudades(ciudadOrigen: string, ciudadDestino: string): Promise<{ message: string, data: HojaTrabajoDetalladaDto[], count: number }> {
+    // Formar el código de la ruta concatenando las ciudades con un guión
+    const codigoRuta = `${ciudadOrigen}-${ciudadDestino}`;
+
+    // Buscar rutas que coincidan con el código formado
+    const rutasEncontradas = await db.select().from(rutas).where(eq(rutas.codigo, codigoRuta));
+
+    if (rutasEncontradas.length === 0) {
+      return { 
+        message: `No se encontraron rutas con código ${codigoRuta}`, 
+        data: [], 
+        count: 0 
+      };
+    }
+
+    // Obtener IDs de las rutas encontradas
+    const rutaIds = rutasEncontradas.map(r => r.id);
+
+    // Buscar frecuencias asociadas a esas rutas
+    const frecuenciasEncontradas = await db.select().from(frecuencias).where(inArray(frecuencias.rutaId, rutaIds));
+
+    if (frecuenciasEncontradas.length === 0) {
+      return { 
+        message: `No se encontraron frecuencias para las rutas con código ${codigoRuta}`, 
+        data: [], 
+        count: 0 
+      };
+    }
+
+    // Obtener IDs de las frecuencias
+    const frecuenciaIds = frecuenciasEncontradas.map(f => f.id);
+
+    // Buscar hojas de trabajo asociadas a esas frecuencias
+    const hojas = await db.select().from(hojaTrabajo).where(inArray(hojaTrabajo.frecDiaId, frecuenciaIds));
+
+    if (hojas.length === 0) {
+      return { 
+        message: `No se encontraron hojas de trabajo para viajes con código ${codigoRuta}`, 
+        data: [], 
+        count: 0 
+      };
+    }
+
+    // Mapear cada hoja a su versión detallada
+    const hojasDetalladas = await Promise.all(hojas.map(hoja => this.mapHojaTrabajoDetalle(hoja)));
+
+    return {
+      message: `Hojas de trabajo encontradas para viajes con código ${codigoRuta}`,
+      data: hojasDetalladas,
+      count: hojasDetalladas.length
     };
   }
 } 
