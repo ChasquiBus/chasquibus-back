@@ -1,0 +1,1 @@
+ALTER TABLE "boletos" ALTER COLUMN "numero_asiento" SET DATA TYPE integer;
