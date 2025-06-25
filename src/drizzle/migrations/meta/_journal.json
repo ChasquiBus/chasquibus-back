@@ -225,6 +225,13 @@
       "when": 1750751812804,
       "tag": "0031_rare_bullseye",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1750823478103,
+      "tag": "0032_harsh_silvermane",
+      "breakpoints": true
     }
   ]
 }

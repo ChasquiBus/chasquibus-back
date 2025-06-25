@@ -9,6 +9,10 @@ export class Cooperativa {
   email?: string | null;
   telefono?: string | null;
   direccion?: string | null;
+  facebook?: string | null;
+  instagram?: string | null;
+  twitter?: string | null;
+  tiktok?: string | null;
   activo?: boolean | null;
   createdAt?:  Date | null;
   updatedAt?:  Date | null;
