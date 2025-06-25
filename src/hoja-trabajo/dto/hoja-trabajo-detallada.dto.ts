@@ -23,9 +23,6 @@ export class HojaTrabajoDetalladaDto {
   total_asientos_piso2?: number;
 
   @ApiProperty()
-  posiciones_asientos: string;
-
-  @ApiProperty()
   horaSalidaProg: string;
 
   @ApiProperty()

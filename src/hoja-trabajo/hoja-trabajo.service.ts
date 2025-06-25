@@ -227,7 +227,6 @@ export class HojaTrabajoService {
       piso_doble: bus?.piso_doble ?? false,
       total_asientos: bus?.total_asientos ?? 0,
       total_asientos_piso2: bus?.total_asientos_piso2 ?? undefined,
-      posiciones_asientos: configAsientos?.posicionesJson ?? '',
       horaSalidaProg: frecuencia?.horaSalidaProg ?? '',
       horaLlegadaProg: frecuencia?.horaLlegadaProg ?? '',
       codigo: ruta?.codigo ?? '',
