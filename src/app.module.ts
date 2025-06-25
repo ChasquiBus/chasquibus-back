@@ -21,7 +21,7 @@ import { FrecuenciasModule } from './frecuencias/frecuencias.module';
 import { HojaTrabajoModule } from './hoja-trabajo/hoja-trabajo.module';
 import { VentasModule } from './ventas/ventas.module';
 import { BoletosModule } from './boletos/boletos.module';
-import { DiscapacidadModule } from './discapacidad/discapacidad.module';
+import { DescuentosModule } from './descuentos/descuentos.module';
 
 @Module({
   imports: [
@@ -45,7 +45,7 @@ import { DiscapacidadModule } from './discapacidad/discapacidad.module';
     HojaTrabajoModule,
     VentasModule,
     BoletosModule,
-    DiscapacidadModule,
+    DescuentosModule,
   ],
   controllers: [AppController],
   providers: [AppService],
