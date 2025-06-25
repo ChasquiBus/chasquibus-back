@@ -11,7 +11,7 @@ export class Boleto {
   hojaTrabajoId: number | null;
 
   @ApiProperty({ description: 'ID del asiento' })
-  asientoId: number | null;
+  asientoNumero: number | null;
 
   @ApiProperty({ description: 'ID de la tarifa' })
   tarifaId: number | null;
