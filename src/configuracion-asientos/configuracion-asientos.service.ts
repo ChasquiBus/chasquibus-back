@@ -20,15 +20,26 @@ export class ConfiguracionAsientosService {
       throw new BadRequestException('El bus no existe');
     }
 
-    // Validar que el número total de asientos no exceda el total definido en el bus
-    if (dto.posiciones.length > bus.total_asientos) {
-      throw new BadRequestException(
-        `El número total de asientos (${dto.posiciones.length}) excede el total definido para el bus (${bus.total_asientos})`
-      );
+    const isDoubleDecker = bus.piso_doble;
+
+    // Validar que el número total de asientos no exceda el límite
+    if (isDoubleDecker) {
+      // Para buses de dos pisos, mantenemos la validación contra el total del bus
+      if (dto.posiciones.length > bus.total_asientos) {
+        throw new BadRequestException(
+          `El número total de asientos (${dto.posiciones.length}) excede el total definido para el bus de dos pisos (${bus.total_asientos})`,
+        );
+      }
+    } else {
+      // Para buses de un piso, el límite es 50
+      if (dto.posiciones.length > 50) {
+        throw new BadRequestException(
+          `El número total de asientos (${dto.posiciones.length}) excede el límite de 50 para un bus de un solo piso.`,
+        );
+      }
     }
 
     // Validar que las posiciones de asientos coincidan con el tipo de bus
-    const isDoubleDecker = bus.piso_doble;
     const invalidPisoPositions = dto.posiciones.filter(pos => pos.piso > (isDoubleDecker ? 2 : 1));
     
     if (invalidPisoPositions.length > 0) {
@@ -49,29 +60,14 @@ export class ConfiguracionAsientosService {
       );
     }
 
-    // Validar que los precios de asientos VIP sean mayores que los normales
-    const normalSeats = dto.posiciones.filter(pos => pos.tipoAsiento === TipoAsiento.NORMAL);
-    const vipSeats = dto.posiciones.filter(pos => pos.tipoAsiento === TipoAsiento.VIP);
-
-    if (vipSeats.length > 0) {
-      const maxNormalPrice = Math.max(...normalSeats.map(pos => parseFloat(pos.precio)));
-      const minVipPrice = Math.min(...vipSeats.map(pos => parseFloat(pos.precio)));
-
-      if (minVipPrice <= maxNormalPrice) {
-        throw new BadRequestException(
-          'Los precios de los asientos VIP deben ser mayores que los asientos normales'
-        );
-      }
-    }
-
     // Validar que cada posición tenga todos los campos requeridos
     const missingFieldsPositions = dto.posiciones.filter(
-      pos => !pos.fila || !pos.columna || !pos.piso || !pos.tipoAsiento || !pos.precio
+      pos => !pos.fila || !pos.columna || !pos.piso || !pos.tipoAsiento || !pos.numeroAsiento
     );
 
     if (missingFieldsPositions.length > 0) {
       throw new BadRequestException(
-        'Todas las posiciones deben tener fila, columna, piso, tipoAsiento y precio'
+        'Todas las posiciones deben tener fila, columna, piso, tipoAsiento y numeroAsiento'
       );
     }
 
@@ -115,14 +111,25 @@ export class ConfiguracionAsientosService {
         throw new BadRequestException('El bus no existe');
       }
 
-      // Validar que el número total de asientos no exceda el total definido en el bus
-      if (dto.posiciones.length > bus.total_asientos) {
-        throw new BadRequestException(
-          `El número total de asientos (${dto.posiciones.length}) excede el total definido para el bus (${bus.total_asientos})`
-        );
+      const isDoubleDecker = bus.piso_doble;
+
+      // Validar que el número total de asientos no exceda el límite
+      if (isDoubleDecker) {
+        // Para buses de dos pisos, mantenemos la validación contra el total del bus
+        if (dto.posiciones.length > bus.total_asientos) {
+          throw new BadRequestException(
+            `El número total de asientos (${dto.posiciones.length}) excede el total definido para el bus de dos pisos (${bus.total_asientos})`,
+          );
+        }
+      } else {
+        // Para buses de un piso, el límite es 50
+        if (dto.posiciones.length > 50) {
+          throw new BadRequestException(
+            `El número total de asientos (${dto.posiciones.length}) excede el límite de 50 para un bus de un solo piso.`,
+          );
+        }
       }
 
-      const isDoubleDecker = bus.piso_doble;
       const invalidPositions = dto.posiciones.filter(pos => pos.piso > (isDoubleDecker ? 2 : 1));
       
       if (invalidPositions.length > 0) {
@@ -141,21 +148,6 @@ export class ConfiguracionAsientosService {
         throw new BadRequestException(
           'Los asientos del primer piso solo pueden ser de tipo NORMAL'
         );
-      }
-
-      // Validar que los precios de asientos VIP sean mayores que los normales
-      const normalSeats = dto.posiciones.filter(pos => pos.tipoAsiento === TipoAsiento.NORMAL);
-      const vipSeats = dto.posiciones.filter(pos => pos.tipoAsiento === TipoAsiento.VIP);
-
-      if (vipSeats.length > 0) {
-        const maxNormalPrice = Math.max(...normalSeats.map(pos => parseFloat(pos.precio)));
-        const minVipPrice = Math.min(...vipSeats.map(pos => parseFloat(pos.precio)));
-
-        if (minVipPrice <= maxNormalPrice) {
-          throw new BadRequestException(
-            'Los precios de los asientos VIP deben ser mayores que los asientos normales'
-          );
-        }
       }
 
       // Convertir las posiciones a JSON para almacenamiento

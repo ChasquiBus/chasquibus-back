@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsString, IsBoolean, ValidateNested, IsArray, IsEnum, Min, Max } from 'class-validator';
+import { IsNumber, IsString, IsBoolean, ValidateNested, IsArray, IsEnum, Min, Max, IsOptional } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export enum TipoAsiento {
@@ -46,13 +46,22 @@ class PosicionAsiento {
   @IsEnum(TipoAsiento)
   tipoAsiento: TipoAsiento;
 
-  @ApiProperty({ 
-    example: '25.50', 
-    description: 'Precio del asiento. Los asientos VIP deben tener un precio mayor que los asientos NORMAL. Máximo 2 decimales',
-    pattern: '^\\d+(\\.\\d{1,2})?$'
+  @ApiProperty({
+    example: 1,
+    description: 'Número único del asiento',
+    minimum: 1
   })
-  @IsString()
-  precio: string;
+  @IsNumber()
+  @Min(1)
+  numeroAsiento: number;
+
+  @ApiProperty({
+    example: false,
+    description: 'Indica si el asiento está ocupado (true) o vacío (false)',
+    default: false
+  })
+  @IsOptional()
+  ocupado?: boolean;
 }
 
 export class CreateConfiguracionAsientosDto {
@@ -72,28 +81,28 @@ export class CreateConfiguracionAsientosDto {
         columna: 1, 
         piso: 1, 
         tipoAsiento: 'NORMAL',
-        precio: '25.50'
+        numeroAsiento: 1
       },
       { 
         fila: 1, 
         columna: 2, 
         piso: 1, 
         tipoAsiento: 'NORMAL',
-        precio: '25.50'
+        numeroAsiento: 2
       },
       { 
         fila: 1, 
         columna: 1, 
         piso: 2, 
         tipoAsiento: 'VIP',
-        precio: '35.50'
+        numeroAsiento: 20
       },
       { 
         fila: 1, 
         columna: 2, 
         piso: 2, 
         tipoAsiento: 'NORMAL',
-        precio: '30.50'
+        numeroAsiento: 21
       }
     ],
     description: `Array de posiciones de asientos. Reglas importantes:
