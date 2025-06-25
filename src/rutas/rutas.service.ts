@@ -241,4 +241,33 @@ async update(cooperativaId: number, id: number, updateRutaDto: Partial<CreateRut
   };
 }
 
+async getAllPublic() {
+  const rutasData = await db
+    .select()
+    .from(rutas)
+    .where(eq(rutas.estado, true));
+
+  const rutasConDias = await Promise.all(
+    rutasData.map(async (ruta) => {
+      const diasOperacion = await db
+        .select({
+          id: dias.id,
+          nombre: dias.nombre,
+          tipo: rutaDias.tipo
+        })
+        .from(rutaDias)
+        .innerJoin(dias, eq(rutaDias.diaId, dias.id))
+        .where(eq(rutaDias.rutaId, ruta.id));
+
+      return {
+        ...ruta,
+        diasOperacion
+      };
+    })
+  );
+
+  return rutasConDias;
+}
+
+
 }
