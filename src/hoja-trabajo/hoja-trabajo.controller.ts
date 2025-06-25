@@ -1,5 +1,6 @@
 import { 
-  Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, HttpStatus, ParseIntPipe, Request 
+  Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, HttpStatus, ParseIntPipe, Request, 
+  Query
 } from '@nestjs/common';
 import { 
   ApiTags, ApiBearerAuth, ApiOperation, ApiParam, ApiBody 
@@ -12,7 +13,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Role } from '../auth/decorators/roles.decorator';
 import { RolUsuario } from '../auth/roles.enum';
 import { EstadoHojaTrabajo } from './dto/create-hoja-trabajo.dto';
-import { HojaTrabajoDetalladaDto } from './dto/hoja-trabajo-detallada.dto';
+import { FiltroViajeDto, HojaTrabajoDetalladaDto } from './dto/hoja-trabajo-detallada.dto';
 
 @ApiTags('Hojas de Trabajo')
 @ApiBearerAuth('access-token')
@@ -32,9 +33,9 @@ export class HojaTrabajoController {
 
   @Get("viajes")
   @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
-  @ApiOperation({ summary: 'Listar todas los viajes [programado]  o [en curso] con información detallada para movil' })
-  async getAll(): Promise<{ message: string, data: HojaTrabajoDetalladaDto[], count: number }> {
-    return this.hojaTrabajoService.getAll();
+  @ApiOperation({ summary: 'Listar viajes con información detallada, filtrados OPCIONALMENTE por estado, si no envia nada lista ambos' })
+  async getAll(@Query() filtro: FiltroViajeDto) {
+    return this.hojaTrabajoService.getAll(filtro.estado);
   }
 
   @Get('viaje/:id')
