@@ -238,6 +238,7 @@ export class HojaTrabajoService {
       idBus: bus?.id ?? 0,
       idCooperativa: cooperativa?.id ?? 0,
       rutaId: ruta?.id ?? 0,
+      idFrecuencia: hoja?.frecDiaId ?? 0,
     };
   }
 

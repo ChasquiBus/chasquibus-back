@@ -8,6 +8,9 @@ export class HojaTrabajoDetalladaDto {
   idBus: number;
 
   @ApiProperty()
+  idFrecuencia: number;
+
+  @ApiProperty()
   placa: string;
 
   @ApiProperty()
