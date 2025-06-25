@@ -1,4 +1,4 @@
-import { pgTable, serial, integer, varchar, decimal } from 'drizzle-orm/pg-core';
+import { pgTable, serial, integer, varchar, decimal, text } from 'drizzle-orm/pg-core';
 
 import { ventas } from './ventas';
 import { configuracionAsientos } from './configuracion-asientos';

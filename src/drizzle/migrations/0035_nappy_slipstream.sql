@@ -1,0 +1,3 @@
+ALTER TABLE "boletos" ADD COLUMN "configuracion_asientos" integer;--> statement-breakpoint
+ALTER TABLE "boletos" ADD COLUMN "posiciones_json" text NOT NULL;--> statement-breakpoint
+ALTER TABLE "boletos" ADD CONSTRAINT "boletos_configuracion_asientos_configuracion_asientos_id_fk" FOREIGN KEY ("configuracion_asientos") REFERENCES "public"."configuracion_asientos"("id") ON DELETE no action ON UPDATE no action;
