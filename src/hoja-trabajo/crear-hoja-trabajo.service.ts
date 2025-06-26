@@ -133,6 +133,15 @@ export class CrearHojaTrabajoService {
       throw new BadRequestException('No hay hojas de trabajo a programar');
     }
     await db.insert(hojaTrabajo).values(hojasAInsertar);
+
+    // Actualizar buses utilizados a enUso=true
+    const busesUsados = Array.from(new Set(hojasAInsertar.map(h => h.busId).filter(id => id !== null)));
+    if (busesUsados.length > 0) {
+      await db.update(buses)
+        .set({ enUso: true })
+        .where(inArray(buses.id, busesUsados));
+    }
+
     return { message: 'Hojas de trabajo creadas automáticamente', count: hojasAInsertar.length };
   }
 }
