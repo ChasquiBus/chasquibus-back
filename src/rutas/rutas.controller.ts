@@ -74,6 +74,10 @@ export class RutasController {
       if (typeof body.diasOperacion === 'string') {
         body.diasOperacion = JSON.parse(body.diasOperacion);
       }
+      // Convertir 'estado' a booleano si viene como string
+      if (typeof body.estado === 'string') {
+        body.estado = body.estado === 'true';
+      }
   
       // Convertir a instancia de DTO y validar
       const createRutaDto = plainToInstance(CreateRutaDto, body);
@@ -182,7 +186,7 @@ async delete(@Param('id') id: number, @Req() req: any) {
     if (body.paradaOrigenId) body.paradaOrigenId = Number(body.paradaOrigenId);
     if (body.paradaDestinoId) body.paradaDestinoId = Number(body.paradaDestinoId);
     if (body.prioridad) body.prioridad = Number(body.prioridad);
-    if (body.estado != null) body.estado = body.estado === 'true' || body.estado === true;
+    if (body.estado != null && typeof body.estado === 'string') body.estado = body.estado === 'true';
 
     // ✅ Convertir a instancia de DTO (para validación y transformación)
     const updateRutaDto = plainToInstance(UpdateRutaDto, body);
