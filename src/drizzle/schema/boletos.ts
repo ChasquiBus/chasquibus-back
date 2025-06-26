@@ -1,4 +1,4 @@
-import { pgTable, serial, integer, varchar, decimal } from 'drizzle-orm/pg-core';
+import { pgTable, serial, integer, varchar, decimal, text } from 'drizzle-orm/pg-core';
 
 import { ventas } from './ventas';
 import { configuracionAsientos } from './configuracion-asientos';
@@ -14,7 +14,7 @@ export const boletos = pgTable('boletos', {
   tarifaId: integer('tarifa_id').references(() => tarifas.id),
   descuentoId: integer('descuento_id').references(() => descuentos.id),
   asientoNumero: integer('numero_asiento').notNull(),
-  codigoQr: varchar('codigo_qr', { length: 255 }),
+  codigoQr: text('codigo_qr'),
   cedula: varchar('cedula', { length: 20 }),
   nombre: varchar('nombre', { length: 255 }),
   totalSinDescPorPers: decimal('total_sin_desc_por_pers', { precision: 10, scale: 2 }),

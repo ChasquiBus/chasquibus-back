@@ -1,0 +1,1 @@
+ALTER TABLE "boletos" ALTER COLUMN "codigo_qr" SET DATA TYPE text;
