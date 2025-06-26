@@ -78,4 +78,37 @@ export class CreateHojaTrabajoDto {
   @IsOptional()
   @IsDateString()
   fechaSalida?: string;
+}
+
+export class CreateHojaTrabajoAutomaticoDto {
+  @ApiProperty({ example: 3, description: 'Número de días a programar' })
+  @IsNumber()
+  numDias: number;
+
+  @ApiProperty({ example: '2025-06-26', description: 'Fecha inicial (YYYY-MM-DD)' })
+  @IsString()
+  fechaInicial: string;
+}
+
+export class CreateHojaTrabajoManualDto {
+  @ApiProperty({ example: 1, description: 'ID del bus asignado', minimum: 1 })
+  @IsNumber()
+  busId: number;
+
+  @ApiProperty({ example: 1, description: 'ID del chofer asignado', minimum: 1 })
+  @IsNumber()
+  choferId: number;
+
+  @ApiProperty({ example: 1, description: 'ID de la frecuencia', minimum: 1 })
+  @IsNumber()
+  frecDiaId: number;
+
+  @ApiProperty({ example: '2024-01-15', description: 'Fecha de salida (YYYY-MM-DD)' })
+  @IsString()
+  fechaSalida: string;
+
+  @ApiProperty({ example: 'Observaciones', required: false })
+  @IsOptional()
+  @IsString()
+  observaciones?: string;
 } 

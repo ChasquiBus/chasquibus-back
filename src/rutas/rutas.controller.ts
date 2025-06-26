@@ -17,7 +17,8 @@ import { validateOrReject } from 'class-validator';
 @ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class RutasController {
-  constructor(private readonly rutasService: RutasService) {}
+  constructor(private readonly rutasService: RutasService,
+  ) {}
 
   @Post()
   @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
@@ -93,6 +94,13 @@ async getAll(@Req() req: any) {
     throw new Error('No tienes una cooperativa asignada');
   }
   return await this.rutasService.getAll(user.cooperativaId);
+}
+
+@Get('todas')
+@Role(RolUsuario.CLIENTE, RolUsuario.OFICINISTA, RolUsuario.CHOFER)
+@ApiOperation({ summary: 'Listar todas las rutas activas (sin cooperativa)' })
+async getAllPublic() {
+  return await this.rutasService.getAllPublic();
 }
 
 @Get(':id')

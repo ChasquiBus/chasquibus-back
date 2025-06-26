@@ -14,57 +14,53 @@ import { configuracionAsientos } from '../drizzle/schema/configuracion-asientos'
 import { cooperativaTransporte } from '../drizzle/schema/cooperativa-transporte';
 import { HojaTrabajoDetalladaDto } from './dto/hoja-trabajo-detallada.dto';
 import { usuarios } from '../drizzle/schema/usuarios';
+import { CreateHojaTrabajoManualDto } from './dto/create-hoja-trabajo.dto';
 
 @Injectable()
 export class HojaTrabajoService {
-  async create(createHojaTrabajoDto: CreateHojaTrabajoDto) {
-    // Validar que el bus existe
-    const [bus] = await db.select().from(buses).where(eq(buses.id, createHojaTrabajoDto.busId));
+  async createManual(createHojaTrabajoDto: CreateHojaTrabajoManualDto, idCooperativa: number) {
+    // Validar que el bus existe y pertenece a la cooperativa y no está en uso
+    const [bus] = await db.select().from(buses).where(and(
+      eq(buses.id, createHojaTrabajoDto.busId),
+      eq(buses.cooperativa_id, idCooperativa),
+      eq(buses.enUso, false)
+    ));
     if (!bus) {
-      throw new BadRequestException(`El bus con ID ${createHojaTrabajoDto.busId} no existe`);
+      throw new BadRequestException(`El bus con ID ${createHojaTrabajoDto.busId} no existe, no pertenece a la cooperativa o está en uso`);
     }
 
-    // Validar que el chofer existe
-    const [chofer] = await db.select().from(choferes).where(eq(choferes.id, createHojaTrabajoDto.choferId));
+    // Validar que el chofer existe y pertenece a la cooperativa
+    const [chofer] = await db.select().from(choferes).where(and(
+      eq(choferes.id, createHojaTrabajoDto.choferId),
+      eq(choferes.cooperativaTransporteId, idCooperativa)
+    ));
     if (!chofer) {
-      throw new BadRequestException(`El chofer con ID ${createHojaTrabajoDto.choferId} no existe`);
+      throw new BadRequestException(`El chofer con ID ${createHojaTrabajoDto.choferId} no existe o no pertenece a la cooperativa`);
     }
 
-    /*
-    const [frecDia] = await db.select().from(frecuenciaDias).where(eq(frecuenciaDias.id, createHojaTrabajoDto.frecDiaId));
-    if (!frecDia) {
-      throw new BadRequestException(`La frecuencia del día con ID ${createHojaTrabajoDto.frecDiaId} no existe`);
+    // Validar que la frecuencia existe
+    const [frecuencia] = await db.select().from(frecuencias).where(eq(frecuencias.id, createHojaTrabajoDto.frecDiaId));
+    if (!frecuencia) {
+      throw new BadRequestException(`La frecuencia con ID ${createHojaTrabajoDto.frecDiaId} no existe`);
     }
-*/
+
     // Preparar los datos para inserción
-    const insertData: any = {
+    const insertData: typeof hojaTrabajo.$inferInsert = {
       busId: createHojaTrabajoDto.busId,
       choferId: createHojaTrabajoDto.choferId,
       frecDiaId: createHojaTrabajoDto.frecDiaId,
-      estado: createHojaTrabajoDto.estado,
+      fechaSalida: createHojaTrabajoDto.fechaSalida,
+      observaciones: createHojaTrabajoDto.observaciones ?? null,
+      estado: 'programado',
+      horaSalidaReal: null,
+      horaLlegadaReal: null,
     };
-
-    if (createHojaTrabajoDto.observaciones) {
-      insertData.observaciones = createHojaTrabajoDto.observaciones;
-    }
-
-    if (createHojaTrabajoDto.horaSalidaReal) {
-      insertData.horaSalidaReal = new Date(createHojaTrabajoDto.horaSalidaReal);
-    }
-
-    if (createHojaTrabajoDto.horaLlegadaReal) {
-      insertData.horaLlegadaReal = new Date(createHojaTrabajoDto.horaLlegadaReal);
-    }
-
-    if (createHojaTrabajoDto.fechaSalida) {
-      insertData.fechaSalida = new Date(createHojaTrabajoDto.fechaSalida);
-    }
 
     const [created] = await db.insert(hojaTrabajo).values(insertData).returning();
 
-    return { 
-      message: 'Hoja de trabajo creada exitosamente', 
-      data: created 
+    return {
+      message: 'Hoja de trabajo creada exitosamente',
+      data: created
     };
   }
 
@@ -315,30 +311,82 @@ export class HojaTrabajoService {
   }
 
   async findProgramadasByChoferId(userId: number): Promise<{ message: string, data: HojaTrabajoDetalladaDto[], count: number }> {
-    // 1. Buscar usuario y verificar que es chofer
-    const [usuario] = await db.select().from(usuarios).where(eq(usuarios.id, userId));
-    if (!usuario) {
-      return { message: 'Usuario no encontrado', data: [], count: 0 };
-    }
-    if (usuario.rol !== 3) {
-      return { message: 'El usuario no es chofer', data: [], count: 0 };
-    }
-    // 2. Buscar el id de chofer correspondiente a este usuario
+    // Obtener el chofer asociado al usuario
     const [chofer] = await db.select().from(choferes).where(eq(choferes.usuarioId, userId));
     if (!chofer) {
-      return { message: 'No se encontró chofer asociado a este usuario', data: [], count: 0 };
+      return { message: 'No se encontró un chofer asociado a este usuario', data: [], count: 0 };
     }
-    // 3. Buscar hojas de trabajo programadas para el chofer (chofer.id)
+
+    // Obtener datos del usuario para el nombre
+    const [usuario] = await db.select().from(usuarios).where(eq(usuarios.id, chofer.usuarioId));
+
+    // Obtener hojas de trabajo programadas para este chofer
     const hojas = await db.select().from(hojaTrabajo)
-      .where(and(eq(hojaTrabajo.choferId, chofer.id), eq(hojaTrabajo.estado, 'programado')));
-    const resultado: HojaTrabajoDetalladaDto[] = [];
-    for (const hoja of hojas) {
-      resultado.push(await this.mapHojaTrabajoDetalle(hoja));
-    }
+      .where(and(
+        eq(hojaTrabajo.choferId, chofer.id),
+        eq(hojaTrabajo.estado, 'programado')
+      ));
+
+    // Mapear cada hoja a su versión detallada
+    const hojasDetalladas = await Promise.all(hojas.map(hoja => this.mapHojaTrabajoDetalle(hoja)));
+
     return {
-      message: 'Lista de hojas de trabajo programadas para el chofer obtenida exitosamente',
-      data: resultado,
-      count: resultado.length
+      message: `Hojas de trabajo programadas para el chofer ${usuario?.nombre || ''} ${usuario?.apellido || ''}`,
+      data: hojasDetalladas,
+      count: hojasDetalladas.length
+    };
+  }
+
+  async findByCiudades(ciudadOrigen: string, ciudadDestino: string): Promise<{ message: string, data: HojaTrabajoDetalladaDto[], count: number }> {
+    // Formar el código de la ruta concatenando las ciudades con un guión
+    const codigoRuta = `${ciudadOrigen}-${ciudadDestino}`;
+
+    // Buscar rutas que coincidan con el código formado
+    const rutasEncontradas = await db.select().from(rutas).where(eq(rutas.codigo, codigoRuta));
+
+    if (rutasEncontradas.length === 0) {
+      return { 
+        message: `No se encontraron rutas con código ${codigoRuta}`, 
+        data: [], 
+        count: 0 
+      };
+    }
+
+    // Obtener IDs de las rutas encontradas
+    const rutaIds = rutasEncontradas.map(r => r.id);
+
+    // Buscar frecuencias asociadas a esas rutas
+    const frecuenciasEncontradas = await db.select().from(frecuencias).where(inArray(frecuencias.rutaId, rutaIds));
+
+    if (frecuenciasEncontradas.length === 0) {
+      return { 
+        message: `No se encontraron frecuencias para las rutas con código ${codigoRuta}`, 
+        data: [], 
+        count: 0 
+      };
+    }
+
+    // Obtener IDs de las frecuencias
+    const frecuenciaIds = frecuenciasEncontradas.map(f => f.id);
+
+    // Buscar hojas de trabajo asociadas a esas frecuencias
+    const hojas = await db.select().from(hojaTrabajo).where(inArray(hojaTrabajo.frecDiaId, frecuenciaIds));
+
+    if (hojas.length === 0) {
+      return { 
+        message: `No se encontraron hojas de trabajo para viajes con código ${codigoRuta}`, 
+        data: [], 
+        count: 0 
+      };
+    }
+
+    // Mapear cada hoja a su versión detallada
+    const hojasDetalladas = await Promise.all(hojas.map(hoja => this.mapHojaTrabajoDetalle(hoja)));
+
+    return {
+      message: `Hojas de trabajo encontradas para viajes con código ${codigoRuta}`,
+      data: hojasDetalladas,
+      count: hojasDetalladas.length
     };
   }
 } 
