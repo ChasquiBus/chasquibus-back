@@ -17,7 +17,7 @@ import { usuarios } from '../drizzle/schema/usuarios';
 
 @Injectable()
 export class HojaTrabajoService {
-  async create(createHojaTrabajoDto: CreateHojaTrabajoDto) {
+  async createManual(createHojaTrabajoDto: CreateHojaTrabajoDto) {
     // Validar que el bus existe
     const [bus] = await db.select().from(buses).where(eq(buses.id, createHojaTrabajoDto.busId));
     if (!bus) {

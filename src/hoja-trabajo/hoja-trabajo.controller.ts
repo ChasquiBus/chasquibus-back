@@ -14,20 +14,31 @@ import { Role } from '../auth/decorators/roles.decorator';
 import { RolUsuario } from '../auth/roles.enum';
 import { EstadoHojaTrabajo } from './dto/create-hoja-trabajo.dto';
 import { FiltroViajeDto, HojaTrabajoDetalladaDto } from './dto/hoja-trabajo-detallada.dto';
+import { CrearHojaTrabajoService } from './crear-hoja-trabajo.service';
 
 @ApiTags('Hojas de Trabajo')
 @ApiBearerAuth('access-token')
 @Controller('hoja-trabajo')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class HojaTrabajoController {
-  constructor(private readonly hojaTrabajoService: HojaTrabajoService) {}
+  constructor(private readonly hojaTrabajoService: HojaTrabajoService,
+              private readonly crearHojaTrabajoService: CrearHojaTrabajoService
+  ) {}
 
-  @Post()
+  @Post('crear/automaticamente')
   @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
   @ApiOperation({ summary: 'Crear una hoja de trabajo' })
   @ApiBody({ type: CreateHojaTrabajoDto })
-  create(@Body() dto: CreateHojaTrabajoDto) {
-    return this.hojaTrabajoService.create(dto);
+  createAutomatically(@Body() dto: CreateHojaTrabajoDto) {
+    return this.crearHojaTrabajoService.createAutomatically(dto);
+  }
+
+    @Post('crear/manualmente')
+  @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
+  @ApiOperation({ summary: 'Crear una hoja de trabajo' })
+  @ApiBody({ type: CreateHojaTrabajoDto })
+  createManual(@Body() dto: CreateHojaTrabajoDto) {
+    return this.hojaTrabajoService.createManual(dto);
   }
 
 
