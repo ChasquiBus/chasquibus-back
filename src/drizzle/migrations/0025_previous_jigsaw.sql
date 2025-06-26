@@ -1,0 +1,1 @@
+ALTER TABLE "rutas" ALTER COLUMN "deleted_at" DROP DEFAULT;

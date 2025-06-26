@@ -1,0 +1,1 @@
+ALTER TABLE "rutas" ADD COLUMN "en_uso" boolean DEFAULT false NOT NULL;

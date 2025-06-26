@@ -10,10 +10,10 @@ import type { InferSelectModel } from 'drizzle-orm';
 
 @Injectable()
 export class ParadasService {
-  async create(data: CreateParadaDto): Promise<Parada[]> {
+  async create(cooperativaId: number, data: CreateParadaDto): Promise<Parada[]> {
     return db.insert(paradas)
-    .values({...data, estado: true})
-    .returning();
+      .values({ ...data, cooperativaId: cooperativaId, estado: true })
+      .returning();
   }
 
   async findAll(cooperativaId: number, includeDeleted: boolean = false): Promise<InferSelectModel<typeof paradas>[]> {
@@ -28,9 +28,9 @@ export class ParadasService {
         cooperativaId: paradas.cooperativaId,
         ciudad: {
           id: ciudades.id,
-          provincia: ciudades.provincia,
+          provincia_id: ciudades.provincia_id,
           ciudad: ciudades.ciudad,
-          cooperativaId: ciudades.cooperativaId,
+          codigo: ciudades.codigo,
         },
       })
       .from(paradas)
@@ -56,10 +56,12 @@ export class ParadasService {
         direccion: paradas.direccion,
         estado: paradas.estado,
         esTerminal: paradas.esTerminal,
+        cooperativaId: paradas.cooperativaId,
         ciudad: {
           id: ciudades.id,
-          provincia: ciudades.provincia,
+          provincia_id: ciudades.provincia_id,
           ciudad: ciudades.ciudad,
+          codigo: ciudades.codigo,
         },
       })
       .from(paradas)
@@ -68,6 +70,7 @@ export class ParadasService {
 
     return row || null;
   }
+
 
   async update(id: number, data: UpdateParadaDto): Promise<Parada[]> {
     return db.update(paradas).set(data).where(eq(paradas.id, id)).returning();
@@ -79,4 +82,22 @@ export class ParadasService {
       .where(eq(paradas.id, id))
       .returning();
   }
+}
+
+export async function generarCodigoRuta(paradaOrigenId: number, paradaDestinoId: number): Promise<string> {
+  const [origen] = await db.select().from(paradas).where(eq(paradas.id, paradaOrigenId));
+  const [destino] = await db.select().from(paradas).where(eq(paradas.id, paradaDestinoId));
+
+  if (!origen || !destino) {
+    throw new Error('Paradas no encontradas');
+  }
+
+  const [ciudadOrigen] = await db.select().from(ciudades).where(eq(ciudades.id, origen.ciudadId!));
+  const [ciudadDestino] = await db.select().from(ciudades).where(eq(ciudades.id, destino.ciudadId!));
+
+  if (!ciudadOrigen?.codigo || !ciudadDestino?.codigo) {
+    throw new Error('Las ciudades deben tener códigos definidos');
+  }
+
+  return `${ciudadOrigen.codigo}-${ciudadDestino.codigo}`;
 }

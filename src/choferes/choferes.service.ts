@@ -26,9 +26,6 @@ export class ChoferesService {
 
   async create(createChoferDto: CreateChoferDto, user: any) {
     const { cooperativaTransporteId } = await this.validateUserAccess(user);
-    if (createChoferDto.cooperativaTransporteId !== cooperativaTransporteId) {
-      throw new ForbiddenException('No puedes crear choferes para otra cooperativa.');
-    }
 
     const [existingUser] = await db
       .select()
@@ -66,7 +63,7 @@ export class ChoferesService {
       tipoLicencia: createChoferDto.tipoLicencia,
       tipoSangre: createChoferDto.tipoSangre || null,
       fechaNacimiento: createChoferDto.fechaNacimiento || null,
-      cooperativaTransporteId: createChoferDto.cooperativaTransporteId,
+      cooperativaTransporteId: cooperativaTransporteId,
     };
 
     const [newChofer] = await db
@@ -105,16 +102,6 @@ export class ChoferesService {
           nombre: cooperativaTransporte.nombre,
           ruc: cooperativaTransporte.ruc,
           logo: cooperativaTransporte.logo,
-          colorPrimario: cooperativaTransporte.colorPrimario,
-          colorSecundario: cooperativaTransporte.colorSecundario,
-          sitioWeb: cooperativaTransporte.sitioWeb,
-          email: cooperativaTransporte.email,
-          telefono: cooperativaTransporte.telefono,
-          direccion: cooperativaTransporte.direccion,
-          activo: cooperativaTransporte.activo,
-          createdAt: cooperativaTransporte.createdAt,
-          updatedAt: cooperativaTransporte.updatedAt,
-          deletedAt: cooperativaTransporte.deletedAt,
         },
       })
       .from(choferes)
@@ -194,32 +181,55 @@ export class ChoferesService {
       throw new NotFoundException(`Chofer con ID ${id} no encontrado.`);
     }
 
-    const updateData: Partial<typeof choferes.$inferInsert> = {};
-
+    // Actualizar datos de chofer
+    const updateChoferData: Partial<typeof choferes.$inferInsert> = {};
     if (updateChoferDto.numeroLicencia !== undefined) {
-      updateData.numeroLicencia = updateChoferDto.numeroLicencia;
+      updateChoferData.numeroLicencia = updateChoferDto.numeroLicencia;
     }
     if (updateChoferDto.tipoLicencia !== undefined) {
-      updateData.tipoLicencia = updateChoferDto.tipoLicencia;
+      updateChoferData.tipoLicencia = updateChoferDto.tipoLicencia;
     }
     if (updateChoferDto.tipoSangre !== undefined) {
-      updateData.tipoSangre = updateChoferDto.tipoSangre;
+      updateChoferData.tipoSangre = updateChoferDto.tipoSangre;
     }
     if (updateChoferDto.fechaNacimiento !== undefined) {
-      updateData.fechaNacimiento = updateChoferDto.fechaNacimiento;
+      updateChoferData.fechaNacimiento = updateChoferDto.fechaNacimiento;
     }
 
-    if (Object.keys(updateData).length === 0) {
+    // Actualizar datos de usuario
+    const updateUsuarioData: Partial<typeof usuarios.$inferInsert> = {};
+    if (updateChoferDto.nombre !== undefined) updateUsuarioData.nombre = updateChoferDto.nombre;
+    if (updateChoferDto.apellido !== undefined) updateUsuarioData.apellido = updateChoferDto.apellido;
+    if (updateChoferDto.cedula !== undefined) updateUsuarioData.cedula = updateChoferDto.cedula;
+    if (updateChoferDto.telefono !== undefined) updateUsuarioData.telefono = updateChoferDto.telefono;
+    if (updateChoferDto.email !== undefined) updateUsuarioData.email = updateChoferDto.email;
+    if (updateChoferDto.activo !== undefined) updateUsuarioData.activo = updateChoferDto.activo;
+    updateUsuarioData.updatedAt = new Date();
+
+    // Si no hay ningún campo para actualizar, lanzar error
+    if (Object.keys(updateChoferData).length === 0 && Object.keys(updateUsuarioData).length === 1) {
+      // updatedAt siempre está
       throw new Error('No se proporcionaron datos para actualizar.');
     }
 
-    const [updatedChofer] = await db
-      .update(choferes)
-      .set(updateData)
-      .where(eq(choferes.id, id))
-      .returning();
+    // Actualizar usuario si corresponde
+    if (Object.keys(updateUsuarioData).length > 1) {
+      await db
+        .update(usuarios)
+        .set(updateUsuarioData)
+        .where(eq(usuarios.id, existingChofer.usuarioId));
+    }
 
-    return updatedChofer;
+    // Actualizar chofer si corresponde
+    if (Object.keys(updateChoferData).length > 0) {
+      await db
+        .update(choferes)
+        .set(updateChoferData)
+        .where(eq(choferes.id, id));
+    }
+
+    // Devolver el chofer actualizado
+    return this.findOne(id, user);
   }
 
   async remove(id: number, user: any) {

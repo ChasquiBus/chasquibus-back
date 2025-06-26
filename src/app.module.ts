@@ -12,17 +12,16 @@ import { ClientesModule } from './clientes/clientes.module';
 import { BusesModule } from './buses/buses.module';
 import { ChoferesModule } from './choferes/choferes.module';
 import { UsuariosModule } from 'usuarios/usuario.module';
-import { ResolucionesModule } from './resoluciones/resoluciones.module';
-import { CiudadesModule } from './ciudades/ciudades.module';
+import { CiudadesModule } from './ciudades_provincias/ciudades.module';
 import { ParadasModule } from './paradas/paradas.module';
 import { RutasModule } from './rutas/rutas.module';
 import { RutaParadaModule } from 'ruta-parada/ruta-parada.module';
 import { TarifasParadasModule } from './tarifas-paradas/tarifas-paradas.module';
 import { FrecuenciasModule } from './frecuencias/frecuencias.module';
 import { HojaTrabajoModule } from './hoja-trabajo/hoja-trabajo.module';
-import { HorariosModule } from './horarios/horarios.module';
-
-
+import { VentasModule } from './ventas/ventas.module';
+import { BoletosModule } from './boletos/boletos.module';
+import { DescuentosModule } from './descuentos/descuentos.module';
 
 @Module({
   imports: [
@@ -37,7 +36,6 @@ import { HorariosModule } from './horarios/horarios.module';
     ClientesModule,
     BusesModule,
     ChoferesModule,
-    ResolucionesModule,
     CiudadesModule,
     ParadasModule,
     RutasModule,
@@ -45,7 +43,9 @@ import { HorariosModule } from './horarios/horarios.module';
     TarifasParadasModule,
     FrecuenciasModule,
     HojaTrabajoModule,
-    HorariosModule
+    VentasModule,
+    BoletosModule,
+    DescuentosModule,
   ],
   controllers: [AppController],
   providers: [AppService],

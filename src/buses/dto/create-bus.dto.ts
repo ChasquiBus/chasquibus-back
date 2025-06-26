@@ -27,11 +27,6 @@ export class CreateBusDto {
   @IsOptional()
   marca_carroceria?: string;
 
-  @ApiPropertyOptional({ description: 'Nombre de archivo de la imagen del bus.' })
-  @IsString({ message: 'La imagen debe ser una cadena de texto.' })
-  @IsOptional()
-  imagen?: string;
-
   @ApiPropertyOptional({ description: 'Indica si el bus es de dos pisos.', example: false })
   @IsBoolean({ message: 'El valor de piso_doble debe ser booleano.' })
   @IsOptional()

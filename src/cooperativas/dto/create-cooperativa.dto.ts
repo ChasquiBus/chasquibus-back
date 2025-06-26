@@ -88,4 +88,40 @@ export class CreateCooperativaDto {
   @IsString()
   @IsOptional()
   direccion?: string;
+
+  @ApiPropertyOptional({
+    description: 'Enlace a la página de Facebook de la cooperativa',
+    maxLength: 255,
+    example: 'https://facebook.com/mi-cooperativa'
+  })
+  @IsString()
+  @IsOptional()
+  facebook?: string;
+
+  @ApiPropertyOptional({
+    description: 'Enlace a la página de Instagram de la cooperativa',
+    maxLength: 255,
+    example: 'https://instagram.com/mi-cooperativa'
+  })
+  @IsString()
+  @IsOptional()
+  instagram?: string;
+
+  @ApiPropertyOptional({
+    description: 'Enlace a la página de Twitter de la cooperativa',
+    maxLength: 255,
+    example: 'https://twitter.com/mi-cooperativa'
+  })
+  @IsString()
+  @IsOptional()
+  twitter?: string;
+
+  @ApiPropertyOptional({
+    description: 'Enlace a la página de TikTok de la cooperativa',
+    maxLength: 255,
+    example: 'https://tiktok.com/@mi-cooperativa'
+  })
+  @IsString()
+  @IsOptional()
+  tiktok?: string;
 }

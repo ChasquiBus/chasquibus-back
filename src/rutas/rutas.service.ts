@@ -1,190 +1,273 @@
+// rutas.service.ts
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { CreateRutaDto } from './dto/create-ruta.dto';
-import { UpdateRutaDto } from './dto/update-ruta.dto';
 import { db } from '../drizzle/database';
 import { rutas } from '../drizzle/schema/rutas';
 import { paradas } from '../drizzle/schema/paradas';
-import { resolucionesAnt } from '../drizzle/schema/resoluciones-ant';
-import { eq, and, isNotNull, sql } from 'drizzle-orm';
+import { eq, and, isNull } from 'drizzle-orm';
+import { createClient } from '@supabase/supabase-js';
+import { format } from 'date-fns';
+import { generarCodigoRuta } from 'paradas/paradas.service';
+import { rutaDias } from '../drizzle/schema/ruta-dia';
+import { dias } from '../drizzle/schema/dias';
 
 @Injectable()
 export class RutasService {
-  async create(createRutaDto: CreateRutaDto) {
-    // Verificar que las paradas sean terminales
-    const [paradaOrigen] = await db
-      .select()
-      .from(paradas)
-      .where(
-        and(
-          eq(paradas.id, createRutaDto.paradaOrigenId),
-          eq(paradas.esTerminal, true)
-        )
-      );
+  private supabase;
 
-    const [paradaDestino] = await db
-      .select()
-      .from(paradas)
-      .where(
-        and(
-          eq(paradas.id, createRutaDto.paradaDestinoId),
-          eq(paradas.esTerminal, true)
-        )
-      );
+  constructor() {
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      throw new Error('Supabase credentials are not configuradas');
+    }
+    this.supabase = createClient(
+      process.env.SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY,
+    );
+  }
 
-    if (!paradaOrigen || !paradaDestino) {
+async create(cooperativaId: number, createRutaDto: CreateRutaDto, file: Express.Multer.File) {
+  const { paradaOrigenId, paradaDestinoId } = createRutaDto;
+
+  const [origen] = await db.select().from(paradas).where(
+    and(eq(paradas.id, paradaOrigenId), eq(paradas.esTerminal, true))
+  );
+  const [destino] = await db.select().from(paradas).where(
+    and(eq(paradas.id, paradaDestinoId), eq(paradas.esTerminal, true))
+  );
+
+  if (!origen || !destino) {
+    throw new BadRequestException('Las paradas de origen y destino deben ser terminales');
+  }
+
+  const codigo = await generarCodigoRuta(paradaOrigenId, paradaDestinoId);
+
+  if (!file || file.mimetype !== 'application/pdf') {
+    throw new BadRequestException('Debes enviar un PDF válido');
+  }
+
+  const fecha = format(new Date(), 'yyyy-MM-dd');
+  const filename = `${cooperativaId}-${fecha}-${file.originalname}`;
+  const path = `rutas/${filename}`;
+  const { error: uploadError } = await this.supabase
+    .storage.from('almacenamiento')
+    .upload(path, file.buffer, { contentType: 'application/pdf' });
+
+  if (uploadError) {
+    throw new BadRequestException(`Error al subir PDF: ${uploadError.message}`);
+  }
+
+  const { data: { publicUrl } } = this.supabase
+    .storage.from('almacenamiento')
+    .getPublicUrl(path);
+
+  const [ruta] = await db.insert(rutas).values({
+    ...createRutaDto,
+    cooperativaId,
+    resolucionUrl: publicUrl,
+    estado: createRutaDto.estado ?? true,
+    codigo, 
+  }).returning();
+
+  // Insertar días de operación en la tabla intermedia
+  if (createRutaDto.diasOperacion && Array.isArray(createRutaDto.diasOperacion)) {
+    const registrosDias = createRutaDto.diasOperacion.map(({ diaId, tipo }) => ({
+      rutaId: ruta.id,
+      diaId,
+      tipo,
+    }));
+    await db.insert(rutaDias).values(registrosDias);
+  }
+
+  return ruta;
+}
+
+// Obtener todas las rutas activas de una cooperativa
+async getAll(cooperativaId: number) {
+  const rutasData = await db.select().from(rutas)
+    .where(and(
+      eq(rutas.cooperativaId, cooperativaId),
+      eq(rutas.estado, true)
+    ));
+
+  // Para cada ruta, obtener los días de operación con nombre
+  const rutasConDias = await Promise.all(rutasData.map(async (ruta) => {
+    const diasOperacion = await db
+      .select({
+        id: dias.id,
+        nombre: dias.nombre,
+        tipo: rutaDias.tipo
+      })
+      .from(rutaDias)
+      .innerJoin(dias, eq(rutaDias.diaId, dias.id))
+      .where(eq(rutaDias.rutaId, ruta.id));
+    return {
+      ...ruta,
+      diasOperacion
+    };
+  }));
+
+  return rutasConDias;
+}
+
+// Obtener una ruta específica de una cooperativa
+async getOne(cooperativaId: number, id: number) {
+  const [ruta] = await db.select().from(rutas)
+    .where(and(
+      eq(rutas.id, id),
+      eq(rutas.cooperativaId, cooperativaId),
+      eq(rutas.estado, true)
+    ));
+  if (!ruta) {
+    throw new BadRequestException('Ruta no encontrada o no pertenece a tu cooperativa');
+  }
+  // Obtener los días de operación con nombre
+  const diasOperacion = await db
+    .select({
+      id: dias.id,
+      nombre: dias.nombre,
+      tipo: rutaDias.tipo
+    })
+    .from(rutaDias)
+    .innerJoin(dias, eq(rutaDias.diaId, dias.id))
+    .where(eq(rutaDias.rutaId, id));
+
+  return {
+    ...ruta,
+    diasOperacion
+  };
+}
+
+// Eliminar lógicamente una ruta (cambiar estado y deletedAt)
+async delete(cooperativaId: number, id: number) {
+  const [ruta] = await db.select().from(rutas)
+    .where(and(
+      eq(rutas.id, id),
+      eq(rutas.cooperativaId, cooperativaId),
+      eq(rutas.estado, true)
+    ));
+  if (!ruta) {
+    throw new BadRequestException('Ruta no encontrada o no pertenece a tu cooperativa');
+  }
+  const deletedAt = new Date();
+  await db.update(rutas)
+    .set({ estado: false, deletedAt })
+    .where(eq(rutas.id, id));
+  return { message: 'Ruta eliminada correctamente' };
+}
+
+// Actualizar una ruta existente
+async update(cooperativaId: number, id: number, updateRutaDto: Partial<CreateRutaDto>, file?: Express.Multer.File) {
+  // Buscar la ruta existente y validar que pertenezca a la cooperativa
+  const [rutaExistente] = await db.select().from(rutas)
+    .where(and(
+      eq(rutas.id, id),
+      eq(rutas.cooperativaId, cooperativaId),
+      eq(rutas.estado, true)
+    ));
+  if (!rutaExistente) {
+    throw new BadRequestException('Ruta no encontrada o no pertenece a tu cooperativa');
+  }
+
+  // Validar paradas si se actualizan
+  let codigo = rutaExistente.codigo;
+  if (updateRutaDto.paradaOrigenId && updateRutaDto.paradaDestinoId) {
+    const [origen] = await db.select().from(paradas).where(
+      and(eq(paradas.id, updateRutaDto.paradaOrigenId), eq(paradas.esTerminal, true))
+    );
+    const [destino] = await db.select().from(paradas).where(
+      and(eq(paradas.id, updateRutaDto.paradaDestinoId), eq(paradas.esTerminal, true))
+    );
+    if (!origen || !destino) {
       throw new BadRequestException('Las paradas de origen y destino deben ser terminales');
     }
+    codigo = await generarCodigoRuta(updateRutaDto.paradaOrigenId, updateRutaDto.paradaDestinoId);
+  }
 
-    // Verificar que la resolución no esté en uso
-    const [resolucion] = await db
-      .select()
-      .from(resolucionesAnt)
-      .where(
-        and(
-          eq(resolucionesAnt.id, createRutaDto.resolucionId),
-          eq(resolucionesAnt.estado, true)
-        )
-      );
-
-    if (!resolucion) {
-      throw new BadRequestException('La resolución no existe o no está activa');
+  // Manejar el archivo PDF si se envía uno nuevo
+  let resolucionUrl = rutaExistente.resolucionUrl;
+  if (file) {
+    if (file.mimetype !== 'application/pdf') {
+      throw new BadRequestException('Debes enviar un PDF válido');
     }
-
-    if (resolucion.enUso) {
-      throw new BadRequestException('Esta resolución ya está siendo usada');
+    const fecha = format(new Date(), 'yyyy-MM-dd');
+    const filename = `${cooperativaId}-${fecha}-${file.originalname}`;
+    const path = `rutas/${filename}`;
+    const { error: uploadError } = await this.supabase
+      .storage.from('almacenamiento')
+      .upload(path, file.buffer, { contentType: 'application/pdf' });
+    if (uploadError) {
+      throw new BadRequestException(`Error al subir PDF: ${uploadError.message}`);
     }
-
-    // Crear la ruta
-    const [ruta] = await db.insert(rutas).values({
-      ...createRutaDto,
-      estado: true,
-    }).returning();
-
-    // Actualizar el estado enUso de la resolución
-    await db
-      .update(resolucionesAnt)
-      .set({ enUso: true })
-      .where(eq(resolucionesAnt.id, createRutaDto.resolucionId));
-
-    return ruta;
+    const { data: { publicUrl } } = this.supabase
+      .storage.from('almacenamiento')
+      .getPublicUrl(path);
+    resolucionUrl = publicUrl;
   }
 
-  async findAll(cooperativaTransporteId: number) {
-    if (!cooperativaTransporteId) {
-      throw new BadRequestException('Se requiere el ID de la cooperativa para listar las rutas');
+  // Actualizar la ruta
+  const [ruta] = await db.update(rutas)
+    .set({
+      ...updateRutaDto,
+      codigo,
+      resolucionUrl,
+      updatedAt: new Date(),
+    })
+    .where(eq(rutas.id, id))
+    .returning();
+
+  // Si se proporcionan días de operación, actualizar solo los días específicos
+  if (updateRutaDto.diasOperacion) {
+    for (const { diaId, tipo } of updateRutaDto.diasOperacion) {
+      await db.update(rutaDias)
+        .set({ tipo })
+        .where(and(eq(rutaDias.rutaId, id), eq(rutaDias.diaId, diaId)));
     }
-
-    const rutasList = await db
-      .select()
-      .from(rutas)
-      .where(
-        and(
-          eq(rutas.cooperativaId, cooperativaTransporteId),
-          eq(rutas.estado, true)
-        )
-      );
-
-    // Obtener información detallada para cada ruta
-    const rutasConDetalles = await Promise.all(
-      rutasList.map(async (ruta) => {
-        let paradaOrigen: typeof paradas.$inferSelect | undefined = undefined;
-        let paradaDestino: typeof paradas.$inferSelect | undefined = undefined;
-        let resolucion: typeof resolucionesAnt.$inferSelect | undefined = undefined;
-
-        if (ruta.paradaOrigenId) {
-          [paradaOrigen] = await db
-            .select()
-            .from(paradas)
-            .where(eq(paradas.id, ruta.paradaOrigenId));
-        }
-
-        if (ruta.paradaDestinoId) {
-          [paradaDestino] = await db
-            .select()
-            .from(paradas)
-            .where(eq(paradas.id, ruta.paradaDestinoId));
-        }
-
-        if (ruta.resolucionId) {
-          [resolucion] = await db
-            .select()
-            .from(resolucionesAnt)
-            .where(eq(resolucionesAnt.id, ruta.resolucionId));
-        }
-
-        return {
-          ...ruta,
-          paradaOrigen,
-          paradaDestino,
-          resolucion,
-        };
-      })
-    );
-
-    return rutasConDetalles;
   }
 
-  async findOne(id: number) {
-    const [ruta] = await db
-      .select()
-      .from(rutas)
-      .where(
-        and(
-          eq(rutas.id, id),
-          eq(rutas.estado, true)
-        )
-      );
-    return ruta;
-  }
+  // Obtener los días de operación actualizados
+  const diasOperacion = await db
+    .select({
+      id: dias.id,
+      nombre: dias.nombre,
+      tipo: rutaDias.tipo
+    })
+    .from(rutaDias)
+    .innerJoin(dias, eq(rutaDias.diaId, dias.id))
+    .where(eq(rutaDias.rutaId, id));
 
-  async update(id: number, updateRutaDto: UpdateRutaDto) {
-    const [ruta] = await db
-      .update(rutas)
-      .set({
-        ...updateRutaDto,
-        updatedAt: new Date(),
-      })
-      .where(
-        and(
-          eq(rutas.id, id),
-          eq(rutas.estado, true)
-        )
-      )
-      .returning();
+  return {
+    ...ruta,
+    diasOperacion
+  };
+}
 
-    return ruta;
-  }
+async getAllPublic() {
+  const rutasData = await db
+    .select()
+    .from(rutas)
+    .where(eq(rutas.estado, true));
 
-  async remove(id: number) {
-    const [ruta] = await db
-      .select()
-      .from(rutas)
-      .where(
-        and(
-          eq(rutas.id, id),
-          eq(rutas.estado, true)
-        )
-      );
-
-    if (ruta) {
-      // Liberar la resolución
-      if (ruta.resolucionId) {
-        await db
-          .update(resolucionesAnt)
-          .set({ enUso: false })
-          .where(eq(resolucionesAnt.id, ruta.resolucionId));
-      }
-
-      // Soft delete de la ruta
-      await db
-        .update(rutas)
-        .set({ 
-          estado: false,
-          deletedAt: new Date() 
+  const rutasConDias = await Promise.all(
+    rutasData.map(async (ruta) => {
+      const diasOperacion = await db
+        .select({
+          id: dias.id,
+          nombre: dias.nombre,
+          tipo: rutaDias.tipo
         })
-        .where(eq(rutas.id, id));
-    }
+        .from(rutaDias)
+        .innerJoin(dias, eq(rutaDias.diaId, dias.id))
+        .where(eq(rutaDias.rutaId, ruta.id));
 
-    return { message: 'Ruta eliminada correctamente' };
-  }
+      return {
+        ...ruta,
+        diasOperacion
+      };
+    })
+  );
+
+  return rutasConDias;
+}
+
+
 }

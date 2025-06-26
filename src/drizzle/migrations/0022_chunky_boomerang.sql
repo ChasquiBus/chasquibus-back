@@ -1,0 +1,1 @@
+ALTER TABLE "buses" ADD COLUMN "total_asientos_piso2" integer;

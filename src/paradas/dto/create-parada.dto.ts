@@ -34,11 +34,4 @@ export class CreateParadaDto {
   @IsNotEmpty()
   esTerminal: boolean;
 
-  @ApiProperty({
-    description: 'ID de la cooperativa a la que pertenece la parada',
-    example: 1,
-  })
-  @IsNumber()
-  @IsNotEmpty()
-  cooperativaId: number;
 }

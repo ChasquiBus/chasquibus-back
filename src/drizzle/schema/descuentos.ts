@@ -3,7 +3,6 @@ import { pgTable, serial, integer, varchar, boolean, decimal } from 'drizzle-orm
 
 export const descuentos = pgTable('descuentos', {
   id: serial('id').primaryKey(),
-  cooperativaId: integer('cooperativa_id'),
   tipoDescuento: varchar('tipo_descuento', { length: 100 }),
   requiereValidacion: boolean('requiere_validacion'),
   porcentaje: decimal('porcentaje', { precision: 5, scale: 2 }),

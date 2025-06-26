@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, Req, BadRequestException } from '@nestjs/common';
 import { RutaParadaService } from './ruta-parada.service';
 import { CreateRutaParadaDto } from './dto/create-ruta-parada.dto';
 import { UpdateRutaParadaDto } from './dto/update-ruta-parada.dto';
@@ -25,26 +25,41 @@ export class RutaParadaController {
     return this.rutaParadaService.create(createRutaParadaDto);
   }
 
+    @Get('by-cooperativa')
+  @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
+  @ApiOperation({ summary: 'Obtener todas las rutas paradas de la cooperativa del usuario' })
+  @ApiResponse({ status: 200, description: 'Lista de rutas paradas obtenida exitosamente' })
+  @ApiResponse({ status: 400, description: 'No tienes una cooperativa asignada' })
+  async findAllByCooperativa(@Req() req: any) {
+    const user = req.user;
+    if (!user.cooperativaId) {
+      throw new BadRequestException('No tienes una cooperativa asignada');
+    }
+    return this.rutaParadaService.findAllParadasByCooperativa(user.cooperativaId);
+  }
+
   @Get()
   @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
   @ApiOperation({ summary: 'Obtener todas las paradas de una ruta' })
   @ApiResponse({ status: 200, description: 'Lista de paradas obtenida exitosamente' })
   @ApiResponse({ status: 400, description: 'ID de ruta no proporcionado' })
   findAll(@Query('rutaId') rutaId: number) {
-    return this.rutaParadaService.findAll(rutaId);
+    return this.rutaParadaService.findAllParadasFromRutas(rutaId);
   }
 
   @Get(':id')
   @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
-  @ApiOperation({ summary: 'Obtener una parada específica de una ruta' })
+  @ApiOperation({ summary: 'Obtener una parada específica ' })
   @ApiResponse({ status: 200, description: 'Parada encontrada exitosamente' })
   @ApiResponse({ status: 404, description: 'Parada no encontrada' })
   findOne(@Param('id') id: string) {
     return this.rutaParadaService.findOne(+id);
   }
 
-  @Patch(':id')
-  @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
+/* 
+
+@Patch(':id/no-habilites-esta-mija-porfa')
+ @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
   @ApiOperation({ summary: 'Actualizar una parada de una ruta' })
   @ApiResponse({ status: 200, description: 'Parada actualizada exitosamente' })
   @ApiResponse({ status: 400, description: 'Datos inválidos' })
@@ -53,6 +68,7 @@ export class RutaParadaController {
   update(@Param('id') id: string, @Body() updateRutaParadaDto: UpdateRutaParadaDto) {
     return this.rutaParadaService.update(+id, updateRutaParadaDto);
   }
+*/
 
   @Delete(':id')
   @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
