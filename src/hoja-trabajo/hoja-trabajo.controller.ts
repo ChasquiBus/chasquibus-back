@@ -6,7 +6,7 @@ import {
   ApiTags, ApiBearerAuth, ApiOperation, ApiParam, ApiBody, ApiQuery
 } from '@nestjs/swagger';
 import { HojaTrabajoService } from './hoja-trabajo.service';
-import { CreateHojaTrabajoDto } from './dto/create-hoja-trabajo.dto';
+import { CreateHojaTrabajoDto, CreateHojaTrabajoAutomaticoDto, CreateHojaTrabajoManualDto } from './dto/create-hoja-trabajo.dto';
 import { UpdateHojaTrabajoDto } from './dto/update-hoja-trabajo.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -27,23 +27,30 @@ export class HojaTrabajoController {
 
   @Post('crear/automaticamente')
   @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
-  @ApiOperation({ summary: 'Crear una hoja de trabajo' })
-  @ApiBody({ type: CreateHojaTrabajoDto })
-  createAutomatically(@Body() dto: CreateHojaTrabajoDto) {
-    return this.crearHojaTrabajoService.createAutomatically(dto);
+  @ApiOperation({ summary: 'Crear una hoja de trabajo automáticamente' })
+  @ApiBody({ type: CreateHojaTrabajoAutomaticoDto })
+  createAutomatically(@Body() dto: CreateHojaTrabajoAutomaticoDto, @Request() req: any) {
+    const idCooperativa = req.user?.cooperativaId;
+    if (!idCooperativa) {
+      return { message: 'No se encontró cooperativaId en el token', data: [], count: 0 };
+    }
+    return this.crearHojaTrabajoService.createAutomatically(dto, idCooperativa);
   }
 
-    @Post('crear/manualmente')
+  @Post('crear/manualmente')
   @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
-  @ApiOperation({ summary: 'Crear una hoja de trabajo' })
-  @ApiBody({ type: CreateHojaTrabajoDto })
-  createManual(@Body() dto: CreateHojaTrabajoDto) {
-    return this.hojaTrabajoService.createManual(dto);
+  @ApiOperation({ summary: 'Crear una hoja de trabajo manualmente' })
+  @ApiBody({ type: CreateHojaTrabajoManualDto })
+  createManual(@Body() dto: CreateHojaTrabajoManualDto, @Request() req: any) {
+    const idCooperativa = req.user?.cooperativaId;
+    if (!idCooperativa) {
+      return { message: 'No se encontró cooperativaId en el token', data: [], count: 0 };
+    }
+    return this.hojaTrabajoService.createManual(dto, idCooperativa);
   }
-
 
   @Get("viajes")
-  @Role(RolUsuario.CLIENTE, RolUsuario.OFICINISTA)
+  @Role(RolUsuario.CLIENTE)
   @ApiOperation({ summary: 'Listar viajes con información detallada, filtrados OPCIONALMENTE por estado, si no envia nada lista ambos' })
   async getAll(@Query() filtro: FiltroViajeDto) {
     return this.hojaTrabajoService.getAll(filtro.estado);

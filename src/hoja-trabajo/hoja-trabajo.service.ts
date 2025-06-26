@@ -14,57 +14,53 @@ import { configuracionAsientos } from '../drizzle/schema/configuracion-asientos'
 import { cooperativaTransporte } from '../drizzle/schema/cooperativa-transporte';
 import { HojaTrabajoDetalladaDto } from './dto/hoja-trabajo-detallada.dto';
 import { usuarios } from '../drizzle/schema/usuarios';
+import { CreateHojaTrabajoManualDto } from './dto/create-hoja-trabajo.dto';
 
 @Injectable()
 export class HojaTrabajoService {
-  async createManual(createHojaTrabajoDto: CreateHojaTrabajoDto) {
-    // Validar que el bus existe
-    const [bus] = await db.select().from(buses).where(eq(buses.id, createHojaTrabajoDto.busId));
+  async createManual(createHojaTrabajoDto: CreateHojaTrabajoManualDto, idCooperativa: number) {
+    // Validar que el bus existe y pertenece a la cooperativa y no está en uso
+    const [bus] = await db.select().from(buses).where(and(
+      eq(buses.id, createHojaTrabajoDto.busId),
+      eq(buses.cooperativa_id, idCooperativa),
+      eq(buses.enUso, false)
+    ));
     if (!bus) {
-      throw new BadRequestException(`El bus con ID ${createHojaTrabajoDto.busId} no existe`);
+      throw new BadRequestException(`El bus con ID ${createHojaTrabajoDto.busId} no existe, no pertenece a la cooperativa o está en uso`);
     }
 
-    // Validar que el chofer existe
-    const [chofer] = await db.select().from(choferes).where(eq(choferes.id, createHojaTrabajoDto.choferId));
+    // Validar que el chofer existe y pertenece a la cooperativa
+    const [chofer] = await db.select().from(choferes).where(and(
+      eq(choferes.id, createHojaTrabajoDto.choferId),
+      eq(choferes.cooperativaTransporteId, idCooperativa)
+    ));
     if (!chofer) {
-      throw new BadRequestException(`El chofer con ID ${createHojaTrabajoDto.choferId} no existe`);
+      throw new BadRequestException(`El chofer con ID ${createHojaTrabajoDto.choferId} no existe o no pertenece a la cooperativa`);
     }
 
-    /*
-    const [frecDia] = await db.select().from(frecuenciaDias).where(eq(frecuenciaDias.id, createHojaTrabajoDto.frecDiaId));
-    if (!frecDia) {
-      throw new BadRequestException(`La frecuencia del día con ID ${createHojaTrabajoDto.frecDiaId} no existe`);
+    // Validar que la frecuencia existe
+    const [frecuencia] = await db.select().from(frecuencias).where(eq(frecuencias.id, createHojaTrabajoDto.frecDiaId));
+    if (!frecuencia) {
+      throw new BadRequestException(`La frecuencia con ID ${createHojaTrabajoDto.frecDiaId} no existe`);
     }
-*/
+
     // Preparar los datos para inserción
-    const insertData: any = {
+    const insertData: typeof hojaTrabajo.$inferInsert = {
       busId: createHojaTrabajoDto.busId,
       choferId: createHojaTrabajoDto.choferId,
       frecDiaId: createHojaTrabajoDto.frecDiaId,
-      estado: createHojaTrabajoDto.estado,
+      fechaSalida: createHojaTrabajoDto.fechaSalida,
+      observaciones: createHojaTrabajoDto.observaciones ?? null,
+      estado: 'programado',
+      horaSalidaReal: null,
+      horaLlegadaReal: null,
     };
-
-    if (createHojaTrabajoDto.observaciones) {
-      insertData.observaciones = createHojaTrabajoDto.observaciones;
-    }
-
-    if (createHojaTrabajoDto.horaSalidaReal) {
-      insertData.horaSalidaReal = new Date(createHojaTrabajoDto.horaSalidaReal);
-    }
-
-    if (createHojaTrabajoDto.horaLlegadaReal) {
-      insertData.horaLlegadaReal = new Date(createHojaTrabajoDto.horaLlegadaReal);
-    }
-
-    if (createHojaTrabajoDto.fechaSalida) {
-      insertData.fechaSalida = new Date(createHojaTrabajoDto.fechaSalida);
-    }
 
     const [created] = await db.insert(hojaTrabajo).values(insertData).returning();
 
-    return { 
-      message: 'Hoja de trabajo creada exitosamente', 
-      data: created 
+    return {
+      message: 'Hoja de trabajo creada exitosamente',
+      data: created
     };
   }
 
