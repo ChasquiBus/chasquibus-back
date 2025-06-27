@@ -72,13 +72,7 @@ export class BoletosController {
     return this.boletosService.findByVentaId(ventaId);
   }
 
-  @Get('hoja-trabajo/:hojaTrabajoId')
-  @ApiOperation({ summary: 'Obtener boletos por ID de hoja de trabajo' })
-  @ApiParam({ name: 'hojaTrabajoId', description: 'ID de la hoja de trabajo' })
-  @ApiResponse({ status: 200, description: 'Boletos de la hoja de trabajo', type: [Boleto] })
-  findByHojaTrabajoId(@Param('hojaTrabajoId', ParseIntPipe) hojaTrabajoId: number): Promise<Boleto[]> {
-    return this.boletosService.findByHojaTrabajoId(hojaTrabajoId);
-  }
+
 
   @Get('cedula/:cedula')
   @ApiOperation({ summary: 'Obtener boletos por cédula del pasajero' })

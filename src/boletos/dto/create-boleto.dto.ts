@@ -6,10 +6,6 @@ export class CreateBoletoDto {
   @IsNumber()
   ventaId: number;
 
-  @ApiProperty({ description: 'ID de la hoja de trabajo' })
-  @IsNumber()
-  hojaTrabajoId: number;
-
   @ApiProperty({ description: 'Numero de asiento' })
   @IsNumber()
   asientoNumero: number;
