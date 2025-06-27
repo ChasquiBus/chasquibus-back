@@ -260,6 +260,20 @@
       "when": 1750886622863,
       "tag": "0036_lucky_the_hand",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1750931513999,
+      "tag": "0037_fancy_molten_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1751051317091,
+      "tag": "0038_deep_boomer",
+      "breakpoints": true
     }
   ]
 }

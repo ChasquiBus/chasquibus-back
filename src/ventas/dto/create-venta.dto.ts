@@ -17,6 +17,10 @@ export class CreateVentaDto {
   @IsString()
   estadoPago: string;
 
+  @ApiProperty({ description: 'ID del bus' })
+  @IsNumber()
+  busId: number;
+
 //  @ApiProperty({ description: 'URL del comprobante', required: false })
 //  @IsOptional()
 //  @IsString()
