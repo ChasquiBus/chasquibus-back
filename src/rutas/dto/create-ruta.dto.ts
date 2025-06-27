@@ -21,6 +21,10 @@ export class CreateRutaDto {
   @IsOptional() @IsNumber()
   prioridad?: number;
 
+  @ApiPropertyOptional({ example: true, description: 'Indica si es ruta directa o no' })
+  @IsOptional() @IsBoolean()
+  esDirecto?: boolean;
+
   @ApiPropertyOptional({ example: '2025-06-01', description: 'Fecha de inicio de vigencia (YYYY-MM-DD)' })
   @IsOptional() @IsDateString()
   fechaIniVigencia?: string;
