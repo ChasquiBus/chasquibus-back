@@ -1,0 +1,1 @@
+ALTER TABLE "rutas" ADD COLUMN "es_directo" boolean DEFAULT false NOT NULL;

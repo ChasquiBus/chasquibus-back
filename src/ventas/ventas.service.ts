@@ -12,26 +12,7 @@ import type { Database } from '../drizzle/database';
 export class VentasService {
   constructor(@Inject(DRIZZLE) private readonly db: Database) {}
 
-  async create(createVentaDto: CreateVentaDto): Promise<Venta> {
-    const [newVenta] = await this.db
-      .insert(ventas)
-      .values({
-        cooperativaId: createVentaDto.cooperativaId,
-        clienteId: createVentaDto.clienteId,
-        oficinistaId: createVentaDto.oficinistaId,
-        metodoPagoId: createVentaDto.metodoPagoId,
-        estadoPago: createVentaDto.estadoPago,
-        comprobanteUrl: createVentaDto.comprobanteUrl,
-        fechaVenta: new Date(createVentaDto.fechaVenta),
-        tipoVenta: createVentaDto.tipoVenta,
-        totalSinDescuento: createVentaDto.totalSinDescuento,
-        totalDescuentos: createVentaDto.totalDescuentos,
-        totalFinal: createVentaDto.totalFinal,
-      } as any)
-      .returning();
 
-    return newVenta;
-  }
 
   async findAll(): Promise<Venta[]> {
     return await this.db.select().from(ventas);

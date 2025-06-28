@@ -1,41 +1,40 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber, IsString, IsOptional, IsDateString, IsDecimal, Min } from 'class-validator';
+import { CreateBoletoDto } from '../../boletos/dto/create-boleto.dto';
+import { Type } from 'class-transformer';
+import { ValidateNested, ArrayMinSize } from 'class-validator';
 
 export class CreateVentaDto {
   @ApiProperty({ description: 'ID de la cooperativa' })
   @IsNumber()
   cooperativaId: number;
 
-  @ApiProperty({ description: 'ID del cliente' })
-  @IsNumber()
-  clienteId: number;
-
-  @ApiProperty({ description: 'ID del oficinista' })
-  @IsNumber()
-  oficinistaId: number;
-
   @ApiProperty({ description: 'ID del método de pago' })
   @IsNumber()
   metodoPagoId: number;
 
-  @ApiProperty({ description: 'Estado del pago', example: 'PENDIENTE' })
+  @ApiProperty({ description: 'Estado del pago', example: 'pagado' })
   @IsString()
   estadoPago: string;
 
-  @ApiProperty({ description: 'URL del comprobante', required: false })
-  @IsOptional()
-  @IsString()
-  comprobanteUrl?: string;
+  @ApiProperty({ description: 'ID del bus' })
+  @IsNumber()
+  busId: number;
 
-  @ApiProperty({ description: 'Fecha de la venta' })
-  @IsDateString()
-  fechaVenta: string;
+//  @ApiProperty({ description: 'URL del comprobante', required: false })
+//  @IsOptional()
+//  @IsString()
+//  comprobanteUrl?: string;
 
-  @ApiProperty({ description: 'Tipo de venta', example: 'BOLETO' })
+//  @ApiProperty({ description: 'Fecha de la venta' })
+//  @IsDateString()
+//  fechaVenta: string;
+
+  @ApiProperty({ description: 'Tipo de venta', example: 'online' })
   @IsString()
   tipoVenta: string;
 
-  @ApiProperty({ description: 'Total sin descuento' })
+/*  @ApiProperty({ description: 'Total sin descuento' })
   @IsDecimal()
   @Min(0)
   totalSinDescuento: number;
@@ -49,4 +48,11 @@ export class CreateVentaDto {
   @IsDecimal()
   @Min(0)
   totalFinal: number;
+*/
+
+  @ApiProperty({ type: [CreateBoletoDto], description: 'Lista de boletos a crear' })
+  @ValidateNested({ each: true })
+  @Type(() => CreateBoletoDto)
+  @ArrayMinSize(1)
+  boletos: Omit<CreateBoletoDto, 'ventaId'>[];
 } 

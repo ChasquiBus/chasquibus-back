@@ -69,12 +69,7 @@ export class BoletosService {
       .where(eq(boletos.ventaId, ventaId));
   }
 
-  async findByHojaTrabajoId(hojaTrabajoId: number): Promise<Boleto[]> {
-    return await this.db
-      .select()
-      .from(boletos)
-      .where(eq(boletos.hojaTrabajoId, hojaTrabajoId));
-  }
+
 
   async findByCedula(cedula: string): Promise<Boleto[]> {
     return await this.db

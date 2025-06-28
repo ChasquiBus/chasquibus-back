@@ -7,9 +7,6 @@ export class Boleto {
   @ApiProperty({ description: 'ID de la venta asociada' })
   ventaId: number | null;
 
-  @ApiProperty({ description: 'ID de la hoja de trabajo' })
-  hojaTrabajoId: number | null;
-
   @ApiProperty({ description: 'ID del asiento' })
   asientoNumero: number | null;
 
