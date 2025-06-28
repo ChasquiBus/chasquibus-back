@@ -11,13 +11,13 @@ import type { Database } from '../drizzle/database';
 export class BoletosService {
   constructor(@Inject(DRIZZLE) private readonly db: Database) {}
 
-  async create(createBoletoDto: CreateBoletoDto): Promise<Boleto> {
-    const [newBoleto] = await this.db
+  async crearBoletos(createBoletoDto: CreateBoletoDto[]): Promise<Boleto[]> {
+    const nuevosboletos = await this.db
       .insert(boletos)
       .values(createBoletoDto)
       .returning();
 
-    return newBoleto;
+    return nuevosboletos;
   }
 
   async findAll(): Promise<Boleto[]> {
