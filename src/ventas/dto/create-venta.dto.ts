@@ -1,8 +1,17 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsString, IsOptional, IsDateString, IsDecimal, Min } from 'class-validator';
+import {
+  IsNumber,
+  IsString,
+  IsOptional,
+  IsDateString,
+  IsDecimal,
+  Min,
+  IsArray,
+} from 'class-validator';
 import { CreateBoletoDto } from '../../boletos/dto/create-boleto.dto';
 import { Type } from 'class-transformer';
 import { ValidateNested, ArrayMinSize } from 'class-validator';
+import { PosicionAsiento } from 'configuracion-asientos/dto/create-configuracion-asientos.dto';
 
 export class CreateVentaDto {
   @ApiProperty({ description: 'ID de la cooperativa' })
@@ -21,20 +30,20 @@ export class CreateVentaDto {
   @IsNumber()
   busId: number;
 
-//  @ApiProperty({ description: 'URL del comprobante', required: false })
-//  @IsOptional()
-//  @IsString()
-//  comprobanteUrl?: string;
+  //  @ApiProperty({ description: 'URL del comprobante', required: false })
+  //  @IsOptional()
+  //  @IsString()
+  //  comprobanteUrl?: string;
 
-//  @ApiProperty({ description: 'Fecha de la venta' })
-//  @IsDateString()
-//  fechaVenta: string;
+  //  @ApiProperty({ description: 'Fecha de la venta' })
+  //  @IsDateString()
+  //  fechaVenta: string;
 
   @ApiProperty({ description: 'Tipo de venta', example: 'online' })
   @IsString()
   tipoVenta: string;
 
-/*  @ApiProperty({ description: 'Total sin descuento' })
+  /*  @ApiProperty({ description: 'Total sin descuento' })
   @IsDecimal()
   @Min(0)
   totalSinDescuento: number;
@@ -50,9 +59,17 @@ export class CreateVentaDto {
   totalFinal: number;
 */
 
-  @ApiProperty({ type: [CreateBoletoDto], description: 'Lista de boletos a crear' })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PosicionAsiento)
+  posiciones: PosicionAsiento[];
+
+  @ApiProperty({
+    type: [CreateBoletoDto],
+    description: 'Lista de boletos a crear',
+  })
   @ValidateNested({ each: true })
   @Type(() => CreateBoletoDto)
   @ArrayMinSize(1)
   boletos: Omit<CreateBoletoDto, 'ventaId'>[];
-} 
+}
