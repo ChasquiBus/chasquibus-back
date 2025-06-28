@@ -274,6 +274,13 @@
       "when": 1751051317091,
       "tag": "0038_deep_boomer",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1751056650754,
+      "tag": "0039_lovely_exiles",
+      "breakpoints": true
     }
   ]
 }

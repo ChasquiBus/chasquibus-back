@@ -10,6 +10,7 @@ export const rutas = pgTable('rutas', {
   cooperativaId: integer('cooperativa_id').notNull().references(() => cooperativaTransporte.id),
   codigo: varchar('codigo', { length: 50 }).notNull(), //Ejemplo: [AMB-QUI]
   prioridad: integer('prioridad'), //Del 1 al 3 siendo 1 la más alta
+  esDirecto: boolean('es_directo').notNull().default(false),
   resolucionUrl: varchar('resolucion_url', { length: 255 }).notNull().default(''),
   fechaIniVigencia: date('fecha_ini_vigencia'),
   fechaFinVigencia: date('fecha_fin_vigencia'),
