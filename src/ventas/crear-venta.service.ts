@@ -2,6 +2,7 @@ import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { DRIZZLE } from '../drizzle/drizzle.module';
 import { Database } from '../drizzle/database';
 import { clientes } from '../drizzle/schema/clientes';
+import { usuarioCooperativa } from '../drizzle/schema/usuario-cooperativa';
 import { ventas } from '../drizzle/schema/ventas';
 import { eq } from 'drizzle-orm';
 import { CreateVentaDto } from './dto/create-venta.dto';
@@ -82,6 +83,61 @@ export class CrearVentaService {
       venta: nuevaVenta,
       boletos: boletosToInsert,
       pago: resultadoPago
+    };
+  }
+
+  async crearVentaPresencial(createVentaDto: CreateVentaDto, usuarioId: number) {
+    // 1. Obtener oficinistaId y cooperativaId desde usuario_cooperativa
+    const [oficinista] = await this.db
+      .select()
+      .from(usuarioCooperativa)
+      .where(eq(usuarioCooperativa.usuarioId, usuarioId))
+      .limit(1);
+
+    if (!oficinista) throw new NotFoundException('No se encontró un oficinista asociado a este usuario');
+
+    // 2. Separar datos
+    const { boletos: boletosData, ...ventaData } = createVentaDto;
+
+    // 3. Calcular totales
+    const totalSinDescuento = boletosData.reduce((sum, b) => sum + parseFloat(b.totalSinDescPorPers), 0);
+    const totalDescuentos = boletosData.reduce((sum, b) => sum + parseFloat(b.totalDescPorPers), 0);
+    const totalFinal = boletosData.reduce((sum, b) => sum + parseFloat(b.totalPorPer), 0);
+
+    // 4. Actualizar asientos
+    await this.asientosService.updateByBusId(createVentaDto.busId, {
+      posiciones: createVentaDto.posiciones,
+    });
+
+    // 5. Insertar venta
+    const [nuevaVenta] = await this.db.insert(ventas).values({
+      cooperativaId: oficinista.cooperativaTransporteId,
+      clienteId: null,
+      oficinistaId: oficinista.id,
+      metodoPagoId: null,
+      hojaTrabajoId: ventaData.hojaTrabajoId,
+      estadoPago: EstadoPago.APROBADO, // pagado
+      comprobanteUrl: null,
+      fechaVenta: new Date(),
+      tipoVenta: 'presencial',
+      totalSinDescuento: totalSinDescuento.toString(),
+      totalDescuentos: totalDescuentos.toString(),
+      totalFinal: totalFinal.toString(),
+    }).returning();
+
+    // 6. Crear boletos
+    const boletosToInsert: CreateBoletoDto[] = boletosData.map(boleto => ({
+      ...boleto,
+      ventaId: nuevaVenta.id,
+      codigoQr: 'null',
+    }));
+
+    await this.boletosService.crearBoletos(boletosToInsert);
+
+    // 7. Retornar venta y boletos
+    return {
+      venta: nuevaVenta,
+      boletos: boletosToInsert,
     };
   }
 }

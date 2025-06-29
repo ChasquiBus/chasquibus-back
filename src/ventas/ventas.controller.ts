@@ -32,8 +32,8 @@ export class VentasController {
   ) {}
 
 
-  @Post('con-pago')
-  @Role(RolUsuario.OFICINISTA, RolUsuario.ADMIN, RolUsuario.CLIENTE)
+  @Post('app-cliente')
+  @Role( RolUsuario.CLIENTE)
   @ApiOperation({ 
     summary: 'Crear una nueva venta con información completa de pago',
     description: 'Crea una venta y retorna información completa incluyendo boletos y datos de pago'
@@ -55,6 +55,30 @@ export class VentasController {
   createConPago(@Body() createVentaDto: CreateVentaDto, @Req() req: Request) {
     const usuarioId = (req.user as any).sub;
     return this.crearVentaService.createVentaConPago(createVentaDto, usuarioId);
+  }
+
+  @Post('presencial')
+  @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
+  @ApiOperation({ 
+    summary: 'Crear una nueva venta presencial (efectivo)',
+    description: 'Crea una venta presencial y retorna la venta y los boletos'
+  })
+  @ApiResponse({ 
+    status: 201, 
+    description: 'Venta presencial creada exitosamente',
+    schema: {
+      type: 'object',
+      properties: {
+        venta: { type: 'object' },
+        boletos: { type: 'array' }
+      }
+    }
+  })
+  @ApiResponse({ status: 400, description: 'Datos inválidos' })
+  @ApiResponse({ status: 401, description: 'No autorizado' })
+  crearVentaPresencial(@Body() createVentaDto: CreateVentaDto, @Req() req: Request) {
+    const usuarioId = (req.user as any).sub;
+    return this.crearVentaService.crearVentaPresencial(createVentaDto, usuarioId);
   }
 
   @Get()
