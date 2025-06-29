@@ -19,14 +19,14 @@ import { RolUsuario } from '../auth/roles.enum';
 export class DescuentosController {
   constructor(private readonly descuentosService: DescuentosService) {}
 
-  @Post('/superadmin')
+/*  @Post('/superadmin')
   @Role(RolUsuario.SUPERADMIN)
   @ApiOperation({ summary: 'Crear un nuevo descuento' })
   @ApiResponse({ status: 201, description: 'Descuento creado exitosamente' })
   create(@Body() createDescuentoDto: CreateDescuentoDto) {
     return this.descuentosService.create(createDescuentoDto);
   }
-
+*/
   @Get()
   @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA, RolUsuario.CHOFER , RolUsuario.CLIENTE)
   @ApiOperation({ summary: 'Listar todos los descuentos' })
