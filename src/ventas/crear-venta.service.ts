@@ -5,7 +5,7 @@ import { clientes } from '../drizzle/schema/clientes';
 import { usuarioCooperativa } from '../drizzle/schema/usuario-cooperativa';
 import { ventas } from '../drizzle/schema/ventas';
 import { eq } from 'drizzle-orm';
-import { CreateVentaDto } from './dto/create-venta.dto';
+import { CreateVentaDto, CreateVentaPresencialDto } from './dto/create-venta.dto';
 import { CreateBoletoDto } from '../boletos/dto/create-boleto.dto';
 import { EstadoPago } from './dto/ventas.enum';
 import { BoletosService } from '../boletos/boletos.service';
@@ -36,10 +36,26 @@ export class CrearVentaService {
     // Separar datos
     const { boletos: boletosData, ...ventaData } = createVentaDto;
 
-    // Calcular totales
-    const totalSinDescuento = boletosData.reduce((sum, b) => sum + parseFloat(b.totalSinDescPorPers), 0);
-    const totalDescuentos = boletosData.reduce((sum, b) => sum + parseFloat(b.totalDescPorPers), 0);
-    const totalFinal = boletosData.reduce((sum, b) => sum + parseFloat(b.totalPorPer), 0);
+    // Calcular totales usando función robusta para manejar decimales
+    const toNumber = (value: string) => {
+      const num = parseFloat(value);
+      return isNaN(num) ? 0 : num;
+    };
+    
+    const totalSinDescuento = boletosData.reduce(
+      (sum, b) => sum + toNumber(b.totalSinDescPorPers),
+      0
+    );
+    
+    const totalDescuentos = boletosData.reduce(
+      (sum, b) => sum + toNumber(b.totalDescPorPers),
+      0
+    );
+    
+    const totalFinal = boletosData.reduce(
+      (sum, b) => sum + toNumber(b.totalPorPer),
+      0
+    );
 
     // Actualizar asientos
     await this.asientosService.updateByBusId(createVentaDto.busId, {
@@ -86,7 +102,7 @@ export class CrearVentaService {
     };
   }
 
-  async crearVentaPresencial(createVentaDto: CreateVentaDto, usuarioId: number) {
+  async crearVentaPresencial(createVentaPresencialDto: CreateVentaPresencialDto, usuarioId: number) {
     // 1. Obtener oficinistaId y cooperativaId desde usuario_cooperativa
     const [oficinista] = await this.db
       .select()
@@ -97,16 +113,32 @@ export class CrearVentaService {
     if (!oficinista) throw new NotFoundException('No se encontró un oficinista asociado a este usuario');
 
     // 2. Separar datos
-    const { boletos: boletosData, ...ventaData } = createVentaDto;
+    const { boletos: boletosData, ...ventaData } = createVentaPresencialDto;
 
     // 3. Calcular totales
-    const totalSinDescuento = boletosData.reduce((sum, b) => sum + parseFloat(b.totalSinDescPorPers), 0);
-    const totalDescuentos = boletosData.reduce((sum, b) => sum + parseFloat(b.totalDescPorPers), 0);
-    const totalFinal = boletosData.reduce((sum, b) => sum + parseFloat(b.totalPorPer), 0);
+    const toNumber = (value: string) => {
+      const num = parseFloat(value);
+      return isNaN(num) ? 0 : num;
+    };
+    
+    const totalSinDescuento = boletosData.reduce(
+      (sum, b) => sum + toNumber(b.totalSinDescPorPers),
+      0
+    );
+    
+    const totalDescuentos = boletosData.reduce(
+      (sum, b) => sum + toNumber(b.totalDescPorPers),
+      0
+    );
+    
+    const totalFinal = boletosData.reduce(
+      (sum, b) => sum + toNumber(b.totalPorPer),
+      0
+    );
 
     // 4. Actualizar asientos
-    await this.asientosService.updateByBusId(createVentaDto.busId, {
-      posiciones: createVentaDto.posiciones,
+    await this.asientosService.updateByBusId(createVentaPresencialDto.busId, {
+      posiciones: createVentaPresencialDto.posiciones,
     });
 
     // 5. Insertar venta
