@@ -23,6 +23,8 @@ import { VentasModule } from './ventas/ventas.module';
 import { BoletosModule } from './boletos/boletos.module';
 import { DescuentosModule } from './descuentos/descuentos.module';
 import { HojaTrabajoService } from './hoja-trabajo/hoja-trabajo.service';
+import { PagosModule } from './pagos/pagos.module';
+
 
 @Module({
   imports: [
@@ -47,6 +49,7 @@ import { HojaTrabajoService } from './hoja-trabajo/hoja-trabajo.service';
     VentasModule,
     BoletosModule,
     DescuentosModule,
+    PagosModule,
   ],
   controllers: [AppController],
   providers: [AppService, HojaTrabajoService],

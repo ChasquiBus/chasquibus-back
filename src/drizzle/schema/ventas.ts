@@ -3,6 +3,7 @@ import { cooperativaTransporte } from './cooperativa-transporte';
 import { clientes } from './clientes';
 import { usuarioCooperativa } from './usuario-cooperativa';
 import { metodosPago } from './metodos-pago';
+import { hojaTrabajo } from './hoja-trabajo';
 
 export const ventas = pgTable('ventas', {
   id: serial('id').primaryKey(),
@@ -11,6 +12,7 @@ export const ventas = pgTable('ventas', {
   clienteId: integer('cliente_id').references(() => clientes.id),
   oficinistaId: integer('oficinista_id').references(() => usuarioCooperativa.id),
   metodoPagoId: integer('metodo_pago_id').references(() => metodosPago.id),
+  hojaTrabajoId: integer('hoja_trabajo').references(() => hojaTrabajo.id),
 
   estadoPago: varchar('estado_pago', { length: 50 }),
   comprobanteUrl: varchar('comprobanteurl', { length: 255 }),
