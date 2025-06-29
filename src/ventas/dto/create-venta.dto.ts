@@ -22,6 +22,10 @@ export class CreateVentaDto {
   @IsNumber()
   metodoPagoId: number;
 
+  @ApiProperty({ description: 'Hoja de trabajo Id' })
+  @IsNumber()
+  hojaTrabajoId: number;
+
   @ApiProperty({ description: 'Estado del pago', example: 'pagado' })
   @IsString()
   estadoPago: string;
