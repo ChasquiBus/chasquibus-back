@@ -1,23 +1,28 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { Inject } from '@nestjs/common';
+import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { DRIZZLE } from '../drizzle/drizzle.module';
-import { ventas } from '../drizzle/schema/ventas';
-import { CreateVentaDto } from './dto/create-venta.dto';
-import type { Database } from '../drizzle/database';
-import { CreateBoletoDto } from '../boletos/dto/create-boleto.dto';
+import { Database } from '../drizzle/database';
 import { clientes } from '../drizzle/schema/clientes';
+import { ventas } from '../drizzle/schema/ventas';
 import { eq } from 'drizzle-orm';
-import { BoletosService } from 'boletos/boletos.service';
+import { CreateVentaDto } from './dto/create-venta.dto';
+import { CreateBoletoDto } from '../boletos/dto/create-boleto.dto';
 import { EstadoPago } from './dto/ventas.enum';
-import { ConfiguracionAsientosService } from 'configuracion-asientos/configuracion-asientos.service';
+import { BoletosService } from '../boletos/boletos.service';
+import { ConfiguracionAsientosService } from '../configuracion-asientos/configuracion-asientos.service';
+import { PagosService } from '../pagos/pagos.service';
 
 @Injectable()
 export class CrearVentaService {
-  constructor(@Inject(DRIZZLE) private readonly db: Database,
-  private readonly boletosService: BoletosService,
-  private readonly asientosService: ConfiguracionAsientosService) {}
-
-  async createVenta(createVentaDto: CreateVentaDto, usuarioId: number) {
+  constructor(
+    @Inject(DRIZZLE) private readonly db: Database,
+    private readonly boletosService: BoletosService,
+    private readonly asientosService: ConfiguracionAsientosService,
+    private readonly pagosService: PagosService,
+  ) {}
+  /**
+   * Método adicional para obtener información completa de la venta con pago
+   */
+  async createVentaConPago(createVentaDto: CreateVentaDto, usuarioId: number) {
     // Validar cliente
     const [cliente] = await this.db
       .select()
@@ -63,6 +68,20 @@ export class CrearVentaService {
 
     await this.boletosService.crearBoletos(boletosToInsert);
 
-    return nuevaVenta;
+    // Procesar pago después de crear la venta
+    let resultadoPago;
+    try {
+      resultadoPago = await this.pagosService.procesarPago(nuevaVenta.id, ventaData.metodoPagoId);
+    } catch (error) {
+      // Si falla el procesamiento del pago, no afectamos la creación de la venta
+      console.error('Error al procesar pago:', error);
+      resultadoPago = { error: 'Error al procesar pago', mensaje: error.message };
+    }
+
+    return {
+      venta: nuevaVenta,
+      boletos: boletosToInsert,
+      pago: resultadoPago
+    };
   }
 }
