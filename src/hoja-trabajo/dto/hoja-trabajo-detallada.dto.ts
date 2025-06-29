@@ -32,6 +32,9 @@ export class HojaTrabajoDetalladaDto {
   @ApiProperty()
   horaLlegadaProg: string;
 
+  @ApiProperty({ required: false })
+  fechaSalida?: string;
+
   @ApiProperty()
   rutaId: number;
 
