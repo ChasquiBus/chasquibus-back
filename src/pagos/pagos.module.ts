@@ -1,11 +1,15 @@
 import { Module } from '@nestjs/common';
-import { PagosService } from './pagos.service';
 import { PagosController } from './pagos.controller';
-import { DepositoService } from './pagos.deposito.service';
+import { PagosService } from './pagos.service';
 import { PaypalService } from './pagos.paypal.service';
+import { DepositoService } from './pagos.deposito.service';
+import { DrizzleModule } from '../drizzle/drizzle.module';
+import { MetodosPagoModule } from '../metodos-pago/metodos-pago.module';
 
 @Module({
+  imports: [DrizzleModule, MetodosPagoModule],
   controllers: [PagosController],
   providers: [PagosService, PaypalService, DepositoService],
+  exports: [PagosService, PaypalService, DepositoService],
 })
 export class PagosModule {}

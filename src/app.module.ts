@@ -23,6 +23,7 @@ import { VentasModule } from './ventas/ventas.module';
 import { BoletosModule } from './boletos/boletos.module';
 import { DescuentosModule } from './descuentos/descuentos.module';
 import { PagosModule } from './pagos/pagos.module';
+import { MetodosPagoModule } from './metodos-pago/metodos-pago.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { PagosModule } from './pagos/pagos.module';
     BoletosModule,
     DescuentosModule,
     PagosModule,
+    MetodosPagoModule,
   ],
   controllers: [AppController],
   providers: [AppService],
