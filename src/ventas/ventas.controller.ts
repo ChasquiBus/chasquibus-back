@@ -12,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { VentasService } from './ventas.service';
-import { CreateVentaDto } from './dto/create-venta.dto';
+import { CreateVentaDto, CreateVentaPresencialDto } from './dto/create-venta.dto';
 import { UpdateVentaDto } from './dto/update-venta.dto';
 import { Venta } from './entities/venta.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -22,10 +22,11 @@ import { RolUsuario } from '../auth/roles.enum';
 import { CrearVentaService } from './crear-venta.service';
 import { Request } from 'express';
 
-@ApiTags('ventas')
-@ApiBearerAuth()
-@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('ventas')
+@ApiTags('ventas')
+@ApiBearerAuth('access-token')
+@UseGuards(JwtAuthGuard, RolesGuard)
+
 export class VentasController {
   constructor(private readonly ventasService: VentasService,
     private readonly crearVentaService: CrearVentaService
@@ -76,9 +77,9 @@ export class VentasController {
   })
   @ApiResponse({ status: 400, description: 'Datos inválidos' })
   @ApiResponse({ status: 401, description: 'No autorizado' })
-  crearVentaPresencial(@Body() createVentaDto: CreateVentaDto, @Req() req: Request) {
+  crearVentaPresencial(@Body() createVentaPresencialDto: CreateVentaPresencialDto, @Req() req: Request) {
     const usuarioId = (req.user as any).sub;
-    return this.crearVentaService.crearVentaPresencial(createVentaDto, usuarioId);
+    return this.crearVentaService.crearVentaPresencial(createVentaPresencialDto, usuarioId);
   }
 
   @Get()

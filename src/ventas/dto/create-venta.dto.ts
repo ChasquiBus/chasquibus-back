@@ -77,3 +77,29 @@ export class CreateVentaDto {
   @ArrayMinSize(1)
   boletos: Omit<CreateBoletoDto, 'ventaId'>[];
 }
+
+export class CreateVentaPresencialDto {
+
+  @ApiProperty({ description: 'Hoja de trabajo Id' })
+  @IsNumber()
+  hojaTrabajoId: number;
+
+  @ApiProperty({ description: 'ID del bus' })
+  @IsNumber()
+  busId: number;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PosicionAsiento)
+  posiciones: PosicionAsiento[];
+
+  @ApiProperty({
+    type: [CreateBoletoDto],
+    description: 'Lista de boletos a crear',
+  })
+  @ValidateNested({ each: true })
+  @Type(() => CreateBoletoDto)
+  @ArrayMinSize(1)
+  boletos: Omit<CreateBoletoDto, 'ventaId'>[];
+}
+
