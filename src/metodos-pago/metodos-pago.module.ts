@@ -7,5 +7,6 @@ import { DrizzleModule } from 'drizzle/drizzle.module';
   imports: [DrizzleModule],
   controllers: [MetodosPagoController],
   providers: [MetodosPagoService],
+  exports: [MetodosPagoService]
 })
 export class MetodosPagoModule {}
