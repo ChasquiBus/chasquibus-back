@@ -281,6 +281,13 @@
       "when": 1751056650754,
       "tag": "0039_lovely_exiles",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1751073307040,
+      "tag": "0040_modern_skrulls",
+      "breakpoints": true
     }
   ]
 }
