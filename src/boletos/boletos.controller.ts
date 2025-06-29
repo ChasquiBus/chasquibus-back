@@ -19,13 +19,6 @@ import { Boleto } from './entities/boleto.entity';
 export class BoletosController {
   constructor(private readonly boletosService: BoletosService) {}
 
-  @Post()
-  @ApiOperation({ summary: 'Crear un nuevo boleto' })
-  @ApiResponse({ status: 201, description: 'Boleto creado exitosamente', type: Boleto })
-  @ApiResponse({ status: 400, description: 'Datos inválidos' })
-  create(@Body() createBoletoDto: CreateBoletoDto): Promise<Boleto> {
-    return this.boletosService.create(createBoletoDto);
-  }
 
   @Get()
   @ApiOperation({ summary: 'Obtener todos los boletos' })

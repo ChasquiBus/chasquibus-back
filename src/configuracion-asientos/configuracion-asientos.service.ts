@@ -164,4 +164,19 @@ export class ConfiguracionAsientosService {
       .from(configuracionAsientos)
       .where(eq(configuracionAsientos.busId, busId));
   }
+
+  async updateByBusId(busId: number, dto: UpdateConfiguracionAsientosDto) {
+    const config = await db
+      .select()
+      .from(configuracionAsientos)
+      .where(eq(configuracionAsientos.busId, busId))
+      .then(rows => rows[0]);
+  
+    if (!config) {
+      throw new BadRequestException('Configuración de asientos no encontrada para este bus');
+    }
+  
+    // ✅ Reutilizas tu método original
+    return this.update(config.id, dto);
+  }
 }

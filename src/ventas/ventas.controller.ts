@@ -31,15 +31,30 @@ export class VentasController {
     private readonly crearVentaService: CrearVentaService
   ) {}
 
-  @Post()
+
+  @Post('con-pago')
   @Role(RolUsuario.OFICINISTA, RolUsuario.ADMIN, RolUsuario.CLIENTE)
-  @ApiOperation({ summary: 'Crear una nueva venta' })
-  @ApiResponse({ status: 201, description: 'Venta creada exitosamente', type: Venta })
+  @ApiOperation({ 
+    summary: 'Crear una nueva venta con información completa de pago',
+    description: 'Crea una venta y retorna información completa incluyendo boletos y datos de pago'
+  })
+  @ApiResponse({ 
+    status: 201, 
+    description: 'Venta creada exitosamente con información de pago',
+    schema: {
+      type: 'object',
+      properties: {
+        venta: { type: 'object' },
+        boletos: { type: 'array' },
+        pago: { type: 'object' }
+      }
+    }
+  })
   @ApiResponse({ status: 400, description: 'Datos inválidos' })
   @ApiResponse({ status: 401, description: 'No autorizado' })
-  create(@Body() createVentaDto: CreateVentaDto, @Req() req: Request): Promise<Venta> {
+  createConPago(@Body() createVentaDto: CreateVentaDto, @Req() req: Request) {
     const usuarioId = (req.user as any).sub;
-    return this.crearVentaService.create(createVentaDto, usuarioId, createVentaDto.posicionesJson);
+    return this.crearVentaService.createVentaConPago(createVentaDto, usuarioId);
   }
 
   @Get()
