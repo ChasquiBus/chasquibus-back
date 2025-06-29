@@ -21,6 +21,10 @@ export class CreateVentaDto {
   @IsNumber()
   busId: number;
 
+  @ApiProperty({ description: 'JSON con las posiciones de asientos del bus' })
+  @IsString()
+  posicionesJson: string;
+
 //  @ApiProperty({ description: 'URL del comprobante', required: false })
 //  @IsOptional()
 //  @IsString()

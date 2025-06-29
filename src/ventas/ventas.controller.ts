@@ -39,7 +39,7 @@ export class VentasController {
   @ApiResponse({ status: 401, description: 'No autorizado' })
   create(@Body() createVentaDto: CreateVentaDto, @Req() req: Request): Promise<Venta> {
     const usuarioId = (req.user as any).sub;
-    return this.crearVentaService.create(createVentaDto, usuarioId);
+    return this.crearVentaService.create(createVentaDto, usuarioId, createVentaDto.posicionesJson);
   }
 
   @Get()
