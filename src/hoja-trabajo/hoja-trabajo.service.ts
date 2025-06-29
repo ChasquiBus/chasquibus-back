@@ -225,6 +225,7 @@ export class HojaTrabajoService {
       total_asientos_piso2: bus?.total_asientos_piso2 ?? undefined,
       horaSalidaProg: frecuencia?.horaSalidaProg ?? '',
       horaLlegadaProg: frecuencia?.horaLlegadaProg ?? '',
+      fechaSalida: hoja.fechaSalida ?? undefined,
       codigo: ruta?.codigo ?? '',
       ciudad_origen: ciudadOrigen?.ciudad ?? '',
       ciudad_destino: ciudadDestino?.ciudad ?? '',
