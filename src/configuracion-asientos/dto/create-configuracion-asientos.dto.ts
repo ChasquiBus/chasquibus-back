@@ -7,7 +7,7 @@ export enum TipoAsiento {
   VIP = 'VIP'
 }
 
-class PosicionAsiento {
+export class PosicionAsiento {
   @ApiProperty({ 
     example: 1, 
     description: 'Número de fila del asiento',

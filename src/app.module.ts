@@ -24,6 +24,7 @@ import { BoletosModule } from './boletos/boletos.module';
 import { DescuentosModule } from './descuentos/descuentos.module';
 import { HojaTrabajoService } from './hoja-trabajo/hoja-trabajo.service';
 import { PagosModule } from './pagos/pagos.module';
+import { MetodosPagoModule } from './metodos-pago/metodos-pago.module';
 
 
 @Module({
@@ -50,6 +51,7 @@ import { PagosModule } from './pagos/pagos.module';
     BoletosModule,
     DescuentosModule,
     PagosModule,
+    MetodosPagoModule,
   ],
   controllers: [AppController],
   providers: [AppService, HojaTrabajoService],
