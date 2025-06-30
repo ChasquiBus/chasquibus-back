@@ -5,3 +5,8 @@ export enum EstadoPago {
     RECHAZADO = 'rechazado',
     CANCELADO = 'cancelado'
 }
+
+export enum TipoVenta{
+        PRESENCIAL= 'presencial',
+        ONLINE = 'online'
+}
