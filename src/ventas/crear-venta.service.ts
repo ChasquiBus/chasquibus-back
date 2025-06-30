@@ -7,7 +7,7 @@ import { ventas } from '../drizzle/schema/ventas';
 import { eq } from 'drizzle-orm';
 import { CreateVentaDto, CreateVentaPresencialDto } from './dto/create-venta.dto';
 import { CreateBoletoDto } from '../boletos/dto/create-boleto.dto';
-import { EstadoPago } from './dto/ventas.enum';
+import { EstadoPago, TipoVenta } from './dto/ventas.enum';
 import { BoletosService } from '../boletos/boletos.service';
 import { ConfiguracionAsientosService } from '../configuracion-asientos/configuracion-asientos.service';
 import { PagosService } from '../pagos/pagos.service';
@@ -69,7 +69,7 @@ export class CrearVentaService {
       oficinistaId: null,
       metodoPagoId: ventaData.metodoPagoId,
       estadoPago: EstadoPago.PENDIENTE,
-      tipoVenta: ventaData.tipoVenta,
+      tipoVenta: TipoVenta.ONLINE,
       totalSinDescuento: totalSinDescuento.toString(),
       totalDescuentos: totalDescuentos.toString(),
       totalFinal: totalFinal.toString(),
@@ -151,7 +151,7 @@ export class CrearVentaService {
       estadoPago: EstadoPago.APROBADO, // pagado
       comprobanteUrl: null,
       fechaVenta: new Date(),
-      tipoVenta: 'presencial',
+      tipoVenta: TipoVenta.PRESENCIAL,
       totalSinDescuento: totalSinDescuento.toString(),
       totalDescuentos: totalDescuentos.toString(),
       totalFinal: totalFinal.toString(),
