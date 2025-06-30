@@ -15,7 +15,6 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
 import { BoletosService } from './boletos.service';
-import { CreateBoletoDto } from './dto/create-boleto.dto';
 import { UpdateBoletoDto } from './dto/update-boleto.dto';
 import { Boleto } from './entities/boleto.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -29,6 +28,7 @@ import * as Tesseract from 'tesseract.js';
 
 @ApiTags('boletos')
 @Controller('boletos')
+@ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 export class BoletosController {
