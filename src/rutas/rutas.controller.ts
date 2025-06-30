@@ -79,6 +79,10 @@ export class RutasController {
       if (typeof body.estado === 'string') {
         body.estado = body.estado === 'true';
       }
+      // Convertir 'esDirecto' a booleano si viene como string
+      if (typeof body.esDirecto === 'string') {
+        body.esDirecto = body.esDirecto === 'true';
+      }
   
       // Convertir a instancia de DTO y validar
       const createRutaDto = plainToInstance(CreateRutaDto, body);
