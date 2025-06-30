@@ -10,6 +10,8 @@ import {
   Query,
   UseGuards,
   BadRequestException,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
 import { BoletosService } from './boletos.service';
@@ -22,6 +24,8 @@ import { Role } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
 import { RolUsuario } from '../auth/roles.enum';
+import { FileInterceptor } from '@nestjs/platform-express';
+import * as Tesseract from 'tesseract.js';
 
 @ApiTags('boletos')
 @Controller('boletos')
@@ -102,5 +106,38 @@ export class BoletosController {
   @ApiResponse({ status: 200, description: 'Boletos del pasajero', type: [Boleto] })
   findByCedula(@Param('cedula') cedula: string): Promise<Boleto[]> {
     return this.boletosService.findByCedula(cedula);
+  }
+
+  @Post('cedula-ocr')
+  @Role(RolUsuario.CLIENTE)
+  @UseInterceptors(FileInterceptor('file'))
+  async ocrCedula(@UploadedFile() file: Express.Multer.File) {
+    // Procesar la imagen con Tesseract
+    const { data } = await Tesseract.recognize(file.buffer, 'spa'); // 'spa' para español
+    const texto = data.text;
+
+    // Buscar cédula (10 dígitos)
+    const cedulaMatch = texto.match(/\d{10}/);
+    const cedula = cedulaMatch ? cedulaMatch[0] : null;
+
+    // Buscar nombre (ajusta según el formato de la cédula)
+    // Ejemplo: busca la palabra NOMBRES o NOMBRE y toma la línea siguiente
+    let nombre: string | null = null;
+    const nombreRegex = /NOMBRES?\s*[:\-]?\s*([A-ZÁÉÍÓÚÑ ]+)/i;
+    const nombreMatch = texto.match(nombreRegex);
+    if (nombreMatch) {
+      nombre = nombreMatch[1].trim();
+    } else {
+      // Alternativa: tomar la primera línea en mayúsculas que no sea la cédula
+      const lineas = texto.split('\n').map(l => l.trim()).filter(Boolean);
+      for (const linea of lineas) {
+        if (/^[A-ZÁÉÍÓÚÑ ]{5,}$/.test(linea) && !/\d{10}/.test(linea)) {
+          nombre = linea;
+          break;
+        }
+      }
+    }
+
+    return { nombre, cedula, textoCompleto: texto };
   }
 } 
