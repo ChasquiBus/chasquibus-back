@@ -18,12 +18,55 @@ export class BoletosService {
   constructor(@Inject(DRIZZLE) private readonly db: Database) {}
 
   async crearBoletos(createBoletoDto: CreateBoletoDto[]): Promise<Boleto[]> {
+    // Insertar boletos y obtener los nuevos registros
     const nuevosboletos = await this.db
       .insert(boletos)
       .values(createBoletoDto)
       .returning();
 
-    return nuevosboletos;
+    // Para cada boleto, actualizar el codigoQr con la info relevante
+    for (const boleto of nuevosboletos) {
+      let venta: any = null;
+      let cooperativa: any = null;
+      try {
+        if (boleto.ventaId != null) {
+          const ventasRes = await this.db
+            .select({ id: ventas.id, fechaVenta: ventas.fechaVenta, cooperativaId: ventas.cooperativaId })
+            .from(ventas)
+            .where(eq(ventas.id, boleto.ventaId));
+          venta = ventasRes[0];
+          if (venta && venta.cooperativaId) {
+            const coopRes = await this.db
+              .select({ nombre: require('../drizzle/schema/cooperativa-transporte').cooperativaTransporte.nombre })
+              .from(require('../drizzle/schema/cooperativa-transporte').cooperativaTransporte)
+              .where(eq(require('../drizzle/schema/cooperativa-transporte').cooperativaTransporte.id, venta.cooperativaId));
+            cooperativa = coopRes[0];
+          }
+        }
+      } catch (e) {
+        // Si falla, solo ponemos los datos básicos
+      }
+      const qrData = {
+        boletoId: boleto.id,
+        nombre: boleto.nombre,
+        cedula: boleto.cedula,
+        asientoNumero: boleto.asientoNumero,
+        fecha: venta?.fechaVenta ? venta.fechaVenta.toISOString() : undefined,
+        cooperativa: cooperativa?.nombre || undefined
+      };
+      await this.db
+        .update(boletos)
+        .set({ codigoQr: JSON.stringify(qrData) })
+        .where(eq(boletos.id, boleto.id));
+    }
+
+    // Devolver los boletos ya con el QR actualizado
+    return await this.db
+      .select()
+      .from(boletos)
+      .where(
+        eq(boletos.id, nuevosboletos[0].id)
+      );
   }
 
   async findAll(): Promise<Boleto[]> {
