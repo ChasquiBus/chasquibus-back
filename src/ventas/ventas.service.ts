@@ -2,21 +2,18 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Inject } from '@nestjs/common';
 import { DRIZZLE } from '../drizzle/drizzle.module';
 import { ventas } from '../drizzle/schema/ventas';
-import { eq } from 'drizzle-orm';
+import { usuarioCooperativa } from '../drizzle/schema/usuario-cooperativa';
+import { clientes } from '../drizzle/schema/clientes';
+import { eq, and } from 'drizzle-orm';
 import { CreateVentaDto } from './dto/create-venta.dto';
 import { UpdateVentaDto } from './dto/update-venta.dto';
 import { Venta } from './entities/venta.entity';
 import type { Database } from '../drizzle/database';
+import { EstadoPago, TipoVenta } from './dto/ventas.enum';
 
 @Injectable()
 export class VentasService {
   constructor(@Inject(DRIZZLE) private readonly db: Database) {}
-
-
-
-  async findAll(): Promise<Venta[]> {
-    return await this.db.select().from(ventas);
-  }
 
   async findOne(id: number): Promise<Venta> {
     const [venta] = await this.db
@@ -38,13 +35,6 @@ export class VentasService {
       .where(eq(ventas.clienteId, clienteId));
   }
 
-  async findByCooperativa(cooperativaId: number): Promise<Venta[]> {
-    return await this.db
-      .select()
-      .from(ventas)
-      .where(eq(ventas.cooperativaId, cooperativaId));
-  }
-
   async findByEstadoPago(estadoPago: string): Promise<Venta[]> {
     return await this.db
       .select()
@@ -52,48 +42,53 @@ export class VentasService {
       .where(eq(ventas.estadoPago, estadoPago));
   }
 
-  async update(id: number, updateVentaDto: UpdateVentaDto): Promise<Venta> {
-    const updateData: any = {};
+  // Para admins - obtener todas las ventas de un oficinista
+  async findByOficinista(oficinistaId: number): Promise<Venta[]> {
+    return await this.db
+      .select()
+      .from(ventas)
+      .where(eq(ventas.oficinistaId, oficinistaId));
+  }
 
-    if (updateVentaDto.cooperativaId !== undefined) {
-      updateData.cooperativaId = updateVentaDto.cooperativaId;
-    }
-    if (updateVentaDto.clienteId !== undefined) {
-      updateData.clienteId = updateVentaDto.clienteId;
-    }
-    if (updateVentaDto.oficinistaId !== undefined) {
-      updateData.oficinistaId = updateVentaDto.oficinistaId;
-    }
-    if (updateVentaDto.metodoPagoId !== undefined) {
-      updateData.metodoPagoId = updateVentaDto.metodoPagoId;
-    }
-    if (updateVentaDto.estadoPago !== undefined) {
-      updateData.estadoPago = updateVentaDto.estadoPago;
-    }
-    if (updateVentaDto.comprobanteUrl !== undefined) {
-      updateData.comprobanteUrl = updateVentaDto.comprobanteUrl;
-    }
-    if (updateVentaDto.fechaVenta !== undefined) {
-      updateData.fechaVenta = new Date(updateVentaDto.fechaVenta);
-    }
-    if (updateVentaDto.tipoVenta !== undefined) {
-      updateData.tipoVenta = updateVentaDto.tipoVenta;
-    }
-    if (updateVentaDto.totalSinDescuento !== undefined) {
-      updateData.totalSinDescuento = updateVentaDto.totalSinDescuento;
-    }
-    if (updateVentaDto.totalDescuentos !== undefined) {
-      updateData.totalDescuentos = updateVentaDto.totalDescuentos;
-    }
-    if (updateVentaDto.totalFinal !== undefined) {
-      updateData.totalFinal = updateVentaDto.totalFinal;
-    }
+  // Para oficinistas/admins - obtener todas las ventas de la cooperativa
+  async findByCooperativa(cooperativaId: number): Promise<Venta[]> {
+    return await this.db
+      .select()
+      .from(ventas)
+      .where(eq(ventas.cooperativaId, cooperativaId));
+  }
 
-    updateData.updatedAt = new Date();
+  // Para oficinistas/admins - obtener ventas por estado de pago de la cooperativa
+  async findByCooperativaAndEstadoPago(cooperativaId: number, estadoPago: EstadoPago): Promise<Venta[]> {
+    return await this.db
+      .select()
+      .from(ventas)
+      .where(
+        and(
+          eq(ventas.cooperativaId, cooperativaId),
+          eq(ventas.estadoPago, estadoPago)
+        )
+      );
+  }
 
+  // Para oficinistas/admins - obtener ventas por tipo de venta de la cooperativa
+  async findByCooperativaAndTipoVenta(cooperativaId: number, tipoVenta: TipoVenta): Promise<Venta[]> {
+    return await this.db
+      .select()
+      .from(ventas)
+      .where(
+        and(
+          eq(ventas.cooperativaId, cooperativaId),
+          eq(ventas.tipoVenta, tipoVenta)
+        )
+      );
+  }
+
+  // Para oficinistas - modificar estado de pago de una venta
+  async updateEstadoPago(id: number, estadoPago: EstadoPago): Promise<Venta> {
     const [updatedVenta] = await this.db
       .update(ventas)
-      .set(updateData)
+      .set({ estadoPago })
       .where(eq(ventas.id, id))
       .returning();
 
@@ -104,35 +99,33 @@ export class VentasService {
     return updatedVenta;
   }
 
-  async remove(id: number): Promise<void> {
-    const [deletedVenta] = await this.db
-      .delete(ventas)
-      .where(eq(ventas.id, id))
-      .returning();
-
-    if (!deletedVenta) {
-      throw new NotFoundException(`Venta con ID ${id} no encontrada`);
-    }
-  }
-
-  async getVentasStats(): Promise<{
-    totalVentas: number;
-    totalIngresos: number;
-    ventasPendientes: number;
-    ventasCompletadas: number;
-  }> {
-    const allVentas = await this.findAll();
-    
-    const totalVentas = allVentas.length;
-    const totalIngresos = allVentas.reduce((sum, venta) => sum + Number(venta.totalFinal), 0);
-    const ventasPendientes = allVentas.filter(venta => venta.estadoPago === 'PENDIENTE').length;
-    const ventasCompletadas = allVentas.filter(venta => venta.estadoPago === 'COMPLETADO').length;
-
-    return {
-      totalVentas,
-      totalIngresos,
-      ventasPendientes,
-      ventasCompletadas,
-    };
+  // Para clientes - obtener ventas del cliente con estado pagado
+  async findByClientePagadas(usuarioId: number): Promise<Venta[]> {
+    return await this.db
+      .select({
+        id: ventas.id,
+        cooperativaId: ventas.cooperativaId,
+        clienteId: ventas.clienteId,
+        oficinistaId: ventas.oficinistaId,
+        metodoPagoId: ventas.metodoPagoId,
+        hojaTrabajoId: ventas.hojaTrabajoId,
+        estadoPago: ventas.estadoPago,
+        comprobanteUrl: ventas.comprobanteUrl,
+        fechaVenta: ventas.fechaVenta,
+        tipoVenta: ventas.tipoVenta,
+        totalSinDescuento: ventas.totalSinDescuento,
+        totalDescuentos: ventas.totalDescuentos,
+        totalFinal: ventas.totalFinal,
+        createdAt: ventas.createdAt,
+        updatedAt: ventas.updatedAt,
+      })
+      .from(ventas)
+      .innerJoin(clientes, eq(ventas.clienteId, clientes.id))
+      .where(
+        and(
+          eq(clientes.usuarioId, usuarioId),
+          eq(ventas.estadoPago, EstadoPago.APROBADO)
+        )
+      );
   }
 } 
