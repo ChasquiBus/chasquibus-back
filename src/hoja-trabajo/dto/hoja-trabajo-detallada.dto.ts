@@ -16,7 +16,7 @@ export class HojaTrabajoDetalladaDto {
 
   @ApiProperty()
   imagen: string;
-
+/*
   @ApiProperty()
   piso_doble: boolean;
 
@@ -25,12 +25,15 @@ export class HojaTrabajoDetalladaDto {
 
   @ApiProperty({ required: false })
   total_asientos_piso2?: number;
-
+*/
   @ApiProperty()
   horaSalidaProg: string;
 
   @ApiProperty()
   horaLlegadaProg: string;
+
+  @ApiProperty({ required: false })
+  fechaSalida?: string;
 
   @ApiProperty()
   rutaId: number;
@@ -55,6 +58,10 @@ export class HojaTrabajoDetalladaDto {
 
   @ApiProperty()
   estado: string;
+
+  @ApiProperty()
+  esDirecto: boolean | null;
+
 } 
 
 export class FiltroViajeDto {

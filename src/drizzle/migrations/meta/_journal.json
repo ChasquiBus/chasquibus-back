@@ -246,6 +246,48 @@
       "when": 1750872102144,
       "tag": "0034_pretty_morlun",
       "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1750886484554,
+      "tag": "0035_nappy_slipstream",
+      "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1750886622863,
+      "tag": "0036_lucky_the_hand",
+      "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1750931513999,
+      "tag": "0037_fancy_molten_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1751051317091,
+      "tag": "0038_deep_boomer",
+      "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1751056650754,
+      "tag": "0039_lovely_exiles",
+      "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1751073307040,
+      "tag": "0040_modern_skrulls",
+      "breakpoints": true
     }
   ]
 }

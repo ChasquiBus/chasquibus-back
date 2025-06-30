@@ -1,0 +1,3 @@
+ALTER TABLE "metodos_pago" ALTER COLUMN "configuracion" SET DATA TYPE text;--> statement-breakpoint
+ALTER TABLE "metodos_pago" ADD COLUMN "cooperativa_id" integer NOT NULL;--> statement-breakpoint
+ALTER TABLE "metodos_pago" ADD CONSTRAINT "metodos_pago_cooperativa_id_cooperativa_transporte_id_fk" FOREIGN KEY ("cooperativa_id") REFERENCES "public"."cooperativa_transporte"("id") ON DELETE no action ON UPDATE no action;

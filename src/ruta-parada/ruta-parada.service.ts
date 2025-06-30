@@ -13,6 +13,7 @@ export class RutaParadaService {
   async create(createRutaParadaDto: CreateRutaParadaDto) {
     const { rutaId, paradaId, orden } = createRutaParadaDto;
   
+    await this.ensureRutaIsDirect(rutaId); 
     await this.ensureParadaNotIsOrigenODestino(rutaId, paradaId);
     await this.ensureOrdenIsUniqueInRuta(rutaId, orden);
   
@@ -25,6 +26,21 @@ export class RutaParadaService {
       .returning();
   
     return nuevaRutaParada;
+  }
+
+  private async ensureRutaIsDirect(rutaId: number){
+        const [ruta] = await db
+        .select({ esDirecto: rutas.esDirecto })
+        .from(rutas)
+        .where(eq(rutas.id, rutaId));
+    
+      if (!ruta) {
+        throw new NotFoundException('Ruta no encontrada');
+      }
+    
+      if (ruta.esDirecto) {
+        throw new BadRequestException('La ruta es directa y no puede tener paradas intermedias');
+      }
   }
   
   private async ensureOrdenIsUniqueInRuta(rutaId: number, orden: number) {

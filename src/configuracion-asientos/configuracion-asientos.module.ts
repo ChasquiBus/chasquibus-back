@@ -5,5 +5,6 @@ import { ConfiguracionAsientosController } from './configuracion-asientos.contro
 @Module({
   controllers: [ConfiguracionAsientosController],
   providers: [ConfiguracionAsientosService],
+  exports : [ConfiguracionAsientosService]
 })
 export class ConfiguracionAsientosModule {}

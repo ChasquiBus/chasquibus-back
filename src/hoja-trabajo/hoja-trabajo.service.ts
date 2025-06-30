@@ -220,11 +220,12 @@ export class HojaTrabajoService {
       id: hoja.id,
       placa: bus?.placa ?? '',
       imagen: bus?.imagen ?? '',
-      piso_doble: bus?.piso_doble ?? false,
-      total_asientos: bus?.total_asientos ?? 0,
-      total_asientos_piso2: bus?.total_asientos_piso2 ?? undefined,
+//      piso_doble: bus?.piso_doble ?? false,
+//      total_asientos: bus?.total_asientos ?? 0,
+//      total_asientos_piso2: bus?.total_asientos_piso2 ?? undefined,
       horaSalidaProg: frecuencia?.horaSalidaProg ?? '',
       horaLlegadaProg: frecuencia?.horaLlegadaProg ?? '',
+      fechaSalida: hoja.fechaSalida ?? undefined,
       codigo: ruta?.codigo ?? '',
       ciudad_origen: ciudadOrigen?.ciudad ?? '',
       ciudad_destino: ciudadDestino?.ciudad ?? '',
@@ -235,6 +236,7 @@ export class HojaTrabajoService {
       idCooperativa: cooperativa?.id ?? 0,
       rutaId: ruta?.id ?? 0,
       idFrecuencia: hoja?.frecDiaId ?? 0,
+      esDirecto: ruta?.esDirecto ?? null
     };
   }
 

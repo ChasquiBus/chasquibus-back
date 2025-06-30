@@ -1,16 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsString, IsOptional, IsDecimal, Min, MaxLength } from 'class-validator';
+import { IsNumber, IsString, IsOptional, IsDecimal, Min, MaxLength, IsNumberString } from 'class-validator';
 
 export class CreateBoletoDto {
-  @ApiProperty({ description: 'ID de la venta asociada' })
+/*  @ApiProperty({ description: 'ID de la venta asociada' })
   @IsNumber()
   ventaId: number;
+*/
 
-  @ApiProperty({ description: 'ID de la hoja de trabajo' })
-  @IsNumber()
-  hojaTrabajoId: number;
-
-  @ApiProperty({ description: 'ID del asiento' })
+  @ApiProperty({ description: 'Numero de asiento' })
   @IsNumber()
   asientoNumero: number;
 
@@ -39,21 +36,15 @@ export class CreateBoletoDto {
   @MaxLength(255)
   nombre: string;
 
-  @ApiProperty({ description: 'Total sin descuento por persona' })
-  @IsString()
-  @IsDecimal({ decimal_digits: '0,2' })
-  @Min(0)
+  @ApiProperty({ description: 'Total sin descuento por persona', example: '25.50' })
+  @IsNumberString({}, { message: 'totalSinDescPorPers debe ser un número válido' })
   totalSinDescPorPers: string;
-
-  @ApiProperty({ description: 'Total de descuento por persona' })
-  @IsString()
-  @IsDecimal({ decimal_digits: '0,2' })
-  @Min(0)
+  
+  @ApiProperty({ description: 'Total de descuento por persona', example: '2.50' })
+  @IsNumberString({}, { message: 'totalDescPorPers debe ser un número válido' })
   totalDescPorPers: string;
-
-  @ApiProperty({ description: 'Total por persona' })
-  @IsString()
-  @IsDecimal({ decimal_digits: '0,2' })
-  @Min(0)
+  
+  @ApiProperty({ description: 'Total por persona', example: '23.00' })
+  @IsNumberString({}, { message: 'totalPorPer debe ser un número válido' })
   totalPorPer: string;
 } 
