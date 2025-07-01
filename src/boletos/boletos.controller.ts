@@ -140,4 +140,16 @@ export class BoletosController {
 
     return { nombre, cedula, textoCompleto: texto };
   }
+
+  @Patch('abordar/:id')
+@Role(RolUsuario.CHOFER)
+@ApiOperation({ summary: 'Registrar abordaje del pasajero (marcar boleto como usado)' })
+@ApiParam({ name: 'id', description: 'ID del boleto' })
+@ApiResponse({ status: 200, description: 'Boleto actualizado como usado', type: Boleto })
+@ApiResponse({ status: 404, description: 'Boleto no encontrado' })
+@ApiResponse({ status: 400, description: 'El boleto ya fue usado' })
+registrarAbordaje(@Param('id', ParseIntPipe) id: number): Promise<{ id: number; usado: boolean }>{
+  return this.boletosService.registrarAbordaje(id);
+}
+
 } 

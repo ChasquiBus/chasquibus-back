@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Inject } from '@nestjs/common';
 import { DRIZZLE } from '../drizzle/drizzle.module';
 import { Database } from '../drizzle/database';
@@ -211,4 +211,28 @@ export class BoletosService {
       .innerJoin(choferes, eq(hojaTrabajo.choferId, choferes.id))
       .where(and(...conditions));
   }
+
+  async registrarAbordaje(idBoleto: number): Promise<{ id: number; usado: boolean }> {
+    const [boleto] = await this.db
+      .select()
+      .from(boletos)
+      .where(eq(boletos.id, idBoleto));
+  
+    if (!boleto) {
+      throw new NotFoundException(`Boleto con ID ${idBoleto} no encontrado`);
+    }
+  
+    if (boleto.usado) {
+      throw new BadRequestException('El boleto ya fue usado para abordar');
+    }
+  
+    const [boletoActualizado] = await this.db
+      .update(boletos)
+      .set({ usado: true })
+      .where(eq(boletos.id, idBoleto))
+      .returning({ id: boletos.id, usado: boletos.usado });
+  
+    return boletoActualizado;
+  }
+  
 } 
