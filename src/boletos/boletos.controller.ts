@@ -15,7 +15,6 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
 import { BoletosService } from './boletos.service';
-import { CreateBoletoDto } from './dto/create-boleto.dto';
 import { UpdateBoletoDto } from './dto/update-boleto.dto';
 import { Boleto } from './entities/boleto.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -29,6 +28,7 @@ import * as Tesseract from 'tesseract.js';
 
 @ApiTags('boletos')
 @Controller('boletos')
+@ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 export class BoletosController {
@@ -140,4 +140,16 @@ export class BoletosController {
 
     return { nombre, cedula, textoCompleto: texto };
   }
+
+  @Patch('abordar/:id')
+@Role(RolUsuario.CHOFER)
+@ApiOperation({ summary: 'Registrar abordaje del pasajero (marcar boleto como usado)' })
+@ApiParam({ name: 'id', description: 'ID del boleto' })
+@ApiResponse({ status: 200, description: 'Boleto actualizado como usado', type: Boleto })
+@ApiResponse({ status: 404, description: 'Boleto no encontrado' })
+@ApiResponse({ status: 400, description: 'El boleto ya fue usado' })
+registrarAbordaje(@Param('id', ParseIntPipe) id: number): Promise<{ id: number; usado: boolean }>{
+  return this.boletosService.registrarAbordaje(id);
+}
+
 } 

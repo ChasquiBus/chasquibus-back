@@ -114,7 +114,7 @@ export class ConfiguracionAsientosController {
   }
 
   @Get('bus/:busId')
-  @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA, RolUsuario.CLIENTE)
+  @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA, RolUsuario.CLIENTE, RolUsuario.CHOFER)
   @ApiOperation({ 
     summary: 'Obtener configuración de asientos por ID de bus',
     description: 'Retorna la configuración de asientos de un bus específico'
@@ -169,7 +169,7 @@ export class ConfiguracionAsientosController {
   }
 
   @Get(':id')
-  @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA, RolUsuario.CLIENTE)
+  @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA, RolUsuario.CLIENTE, RolUsuario.CHOFER)
   @ApiOperation({ 
     summary: 'Obtener una configuración de asientos por ID',
     description: 'Retorna una configuración de asientos específica por su ID'

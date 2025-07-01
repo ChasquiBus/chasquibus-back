@@ -80,7 +80,6 @@ export class CrearVentaService {
     const boletosToInsert: CreateBoletoDto[] = boletosData.map(boleto => ({
       ...boleto,
       ventaId: nuevaVenta.id,
-      codigoQr: 'null',
     }));
 
     await this.boletosService.crearBoletos(boletosToInsert);
@@ -161,7 +160,6 @@ export class CrearVentaService {
     const boletosToInsert: CreateBoletoDto[] = boletosData.map(boleto => ({
       ...boleto,
       ventaId: nuevaVenta.id,
-      codigoQr: 'null',
     }));
 
     await this.boletosService.crearBoletos(boletosToInsert);

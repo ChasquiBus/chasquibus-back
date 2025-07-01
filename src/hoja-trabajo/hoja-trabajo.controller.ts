@@ -12,7 +12,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Role } from '../auth/decorators/roles.decorator';
 import { RolUsuario } from '../auth/roles.enum';
-import { EstadoHojaTrabajo } from './dto/create-hoja-trabajo.dto';
+import { EstadoHojaTrabajo } from './dto/estado-viaje.enum';
 import { FiltroViajeDto, HojaTrabajoDetalladaDto } from './dto/hoja-trabajo-detallada.dto';
 import { CrearHojaTrabajoService } from './crear-hoja-trabajo.service';
 
@@ -136,6 +136,29 @@ export class HojaTrabajoController {
   @ApiParam({ name: 'id', type: 'number' })
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.hojaTrabajoService.remove(id);
+  }
+
+
+  @Patch('actualizar-viaje/:id/:estado')
+  @Role(RolUsuario.OFICINISTA, RolUsuario.CHOFER)
+  @ApiOperation({ summary: 'Actualizar estado de hoja de trabajo a EN_CURSO o FINALIZADO' })
+  @ApiParam({ name: 'id', type: 'number', description: 'ID de la hoja de trabajo' })
+  @ApiParam({ name: 'estado', enum: EstadoHojaTrabajo, description: 'Nuevo estado de la hoja de trabajo' })
+  async actualizarEstado(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('estado') estado: EstadoHojaTrabajo,
+    @Request() req: any
+  ) {
+    const cooperativaId = req.user?.cooperativaId;
+    if (!cooperativaId) {
+      return { message: 'El usuario no tiene una cooperativa asignada' };
+    }
+  
+    const result = await this.hojaTrabajoService.actualizarEstadoHojaTrabajo(id, estado);
+    return {
+      message: `Estado actualizado a ${estado}`,
+      data: result,
+    };
   }
 
 }
