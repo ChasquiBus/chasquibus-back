@@ -176,7 +176,42 @@ export class ConfiguracionAsientosService {
       throw new BadRequestException('Configuración de asientos no encontrada para este bus');
     }
   
-    // ✅ Reutilizas tu método original
     return this.update(config.id, dto);
+  }
+
+  /**
+   * Libera todos los asientos de un bus (pone ocupado: false en todos)
+   */
+  async liberarAsientosPorBusId(busId: number) {
+    const config = await db
+      .select()
+      .from(configuracionAsientos)
+      .where(eq(configuracionAsientos.busId, busId))
+      .then(rows => rows[0]);
+
+    if (!config) {
+      throw new BadRequestException('Configuración de asientos no encontrada para este bus');
+    }
+
+    // Parsear posiciones
+    let posiciones: any[] = [];
+    try {
+      posiciones = JSON.parse(config.posicionesJson);
+    } catch (e) {
+      throw new BadRequestException('Error al parsear las posiciones de asientos');
+    }
+
+    // Liberar todos los asientos
+    posiciones = posiciones.map(pos => Object.assign({}, pos, { ocupado: false }));
+
+    // Guardar en la base de datos
+    const posicionesJson = JSON.stringify(posiciones);
+    const [actualizado] = await db
+      .update(configuracionAsientos)
+      .set({ posicionesJson })
+      .where(eq(configuracionAsientos.id, config.id))
+      .returning();
+
+    return actualizado;
   }
 }
