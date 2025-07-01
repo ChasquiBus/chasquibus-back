@@ -15,6 +15,7 @@ import { cooperativaTransporte } from '../drizzle/schema/cooperativa-transporte'
 import { HojaTrabajoDetalladaDto } from './dto/hoja-trabajo-detallada.dto';
 import { usuarios } from '../drizzle/schema/usuarios';
 import { CreateHojaTrabajoManualDto } from './dto/create-hoja-trabajo.dto';
+import { EstadoHojaTrabajo } from './dto/estado-viaje.enum';
 
 @Injectable()
 export class HojaTrabajoService {
@@ -220,9 +221,9 @@ export class HojaTrabajoService {
       id: hoja.id,
       placa: bus?.placa ?? '',
       imagen: bus?.imagen ?? '',
-//      piso_doble: bus?.piso_doble ?? false,
-//      total_asientos: bus?.total_asientos ?? 0,
-//      total_asientos_piso2: bus?.total_asientos_piso2 ?? undefined,
+      piso_doble: bus?.piso_doble ?? false,
+      total_asientos: bus?.total_asientos ?? 0,
+      total_asientos_piso2: bus?.total_asientos_piso2 ?? undefined,
       horaSalidaProg: frecuencia?.horaSalidaProg ?? '',
       horaLlegadaProg: frecuencia?.horaLlegadaProg ?? '',
       fechaSalida: hoja.fechaSalida ?? undefined,
@@ -390,5 +391,32 @@ export class HojaTrabajoService {
       data: hojasDetalladas,
       count: hojasDetalladas.length
     };
+  }
+
+  async actualizarEstadoHojaTrabajo(id: number, estado: EstadoHojaTrabajo) {
+    if (![EstadoHojaTrabajo.EN_CURSO, EstadoHojaTrabajo.FINALIZADO].includes(estado)) {
+      throw new BadRequestException('Solo se permite EN_CURSO o FINALIZADO');
+    }
+  
+    // Obtener hoja de trabajo
+    const hoja = await db.query.hojaTrabajo.findFirst({
+      where: eq(hojaTrabajo.id, id),
+    });
+  
+    if (!hoja) {
+      throw new NotFoundException('Hoja de trabajo no encontrada');
+    }
+    const ahora = new Date();
+    const updateData: Partial<typeof hojaTrabajo.$inferInsert> = {
+      estado,
+      ...(estado === EstadoHojaTrabajo.EN_CURSO && { horaSalidaReal: ahora }),
+      ...(estado === EstadoHojaTrabajo.FINALIZADO && { horaLlegadaReal: ahora }),
+    };
+  
+    await db.update(hojaTrabajo)
+      .set(updateData)
+      .where(eq(hojaTrabajo.id, id));
+  
+    return { id, ...updateData };
   }
 } 
