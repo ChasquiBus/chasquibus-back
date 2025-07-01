@@ -11,7 +11,7 @@ import { rutas } from '../drizzle/schema/rutas';
 import { rutaDias } from '../drizzle/schema/ruta-dia';
 import { dias } from '../drizzle/schema/dias';
 import { frecuencias } from '../drizzle/schema/frecuencias';
-import { EstadoHojaTrabajo } from './dto/create-hoja-trabajo.dto';
+import { EstadoHojaTrabajo } from './dto/estado-viaje.enum';
 import { and, inArray } from 'drizzle-orm';
 
 @Injectable()
@@ -144,4 +144,5 @@ export class CrearHojaTrabajoService {
 
     return { message: 'Hojas de trabajo creadas automáticamente', count: hojasAInsertar.length };
   }
+  
 }
