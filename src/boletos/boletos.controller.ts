@@ -25,8 +25,8 @@ import { RolUsuario } from '../auth/roles.enum';
 
 @ApiTags('boletos')
 @Controller('boletos')
+@ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@ApiBearerAuth()
 export class BoletosController {
   constructor(private readonly boletosService: BoletosService) {}
 
