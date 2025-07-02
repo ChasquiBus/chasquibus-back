@@ -58,8 +58,13 @@ export class CrearVentaService {
     );
 
     // Actualizar asientos
+    // Enviar solo los asientos comprados con ocupado: true
+    const asientosOcupados = createVentaDto.posiciones.map(pos => ({
+      numeroAsiento: pos.numeroAsiento,
+      ocupado: true
+    }));
     await this.asientosService.updateByBusId(createVentaDto.busId, {
-      posiciones: createVentaDto.posiciones,
+      posiciones: asientosOcupados,
     });
 
     // Insertar venta
@@ -136,8 +141,13 @@ export class CrearVentaService {
     );
 
     // 4. Actualizar asientos
+    // Enviar solo los asientos comprados con ocupado: true
+    const asientosOcupados = createVentaPresencialDto.posiciones.map(pos => ({
+      numeroAsiento: pos.numeroAsiento,
+      ocupado: true
+    }));
     await this.asientosService.updateByBusId(createVentaPresencialDto.busId, {
-      posiciones: createVentaPresencialDto.posiciones,
+      posiciones: asientosOcupados,
     });
 
     // 5. Insertar venta
