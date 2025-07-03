@@ -116,24 +116,74 @@ export class BoletosController {
     const { data } = await Tesseract.recognize(file.buffer, 'spa'); // 'spa' para español
     const texto = data.text;
 
-    // Buscar cédula (10 dígitos)
-    const cedulaMatch = texto.match(/\d{10}/);
-    const cedula = cedulaMatch ? cedulaMatch[0] : null;
-
-    // Buscar nombre (ajusta según el formato de la cédula)
-    // Ejemplo: busca la palabra NOMBRES o NOMBRE y toma la línea siguiente
-    let nombre: string | null = null;
-    const nombreRegex = /NOMBRES?\s*[:\-]?\s*([A-ZÁÉÍÓÚÑ ]+)/i;
-    const nombreMatch = texto.match(nombreRegex);
-    if (nombreMatch) {
-      nombre = nombreMatch[1].trim();
-    } else {
-      // Alternativa: tomar la primera línea en mayúsculas que no sea la cédula
-      const lineas = texto.split('\n').map(l => l.trim()).filter(Boolean);
-      for (const linea of lineas) {
-        if (/^[A-ZÁÉÍÓÚÑ ]{5,}$/.test(linea) && !/\d{10}/.test(linea)) {
-          nombre = linea;
+    // Buscar cédula en línea con 'N°', 'CEDULA' o 'CÉDULA'
+    let cedula: string | null = null;
+    const lineas = texto.split('\n').map(l => l.trim()).filter(Boolean);
+    for (const linea of lineas) {
+      if (/N°|Nº|C[ÉE]DULA/i.test(linea)) {
+        const match = linea.match(/\d{10}/);
+        if (match) {
+          cedula = match[0];
           break;
+        }
+      }
+    }
+    // Si no se encontró en la línea de 'N°' o 'CEDULA', buscar en todo el texto
+    if (!cedula) {
+      const match = texto.match(/\d{10}/);
+      if (match) {
+        cedula = match[0];
+      }
+    }
+
+    // Buscar apellidos y nombres
+    let nombre: string | null = null;
+    for (let i = 0; i < lineas.length; i++) {
+      if (/APELLIDOS? Y? NOMBRES?/i.test(lineas[i])) {
+        let apellidos = (lineas[i + 1] || '').replace(/[^A-ZÁÉÍÓÚÑ ]/gi, '').replace(/\s+/g, ' ').trim();
+        let nombres = (lineas[i + 2] || '').replace(/[^A-ZÁÉÍÓÚÑ ]/gi, '').replace(/\s+/g, ' ').trim();
+        // Ignorar líneas con palabras clave
+        if (/LUGAR|NACIMIENTO|FECHA|NACIONALIDAD|SEXO|ESTADO/i.test(apellidos)) apellidos = '';
+        if (/LUGAR|NACIMIENTO|FECHA|NACIONALIDAD|SEXO|ESTADO/i.test(nombres)) nombres = '';
+        nombre = [apellidos, nombres].filter(Boolean).join(' ');
+        break;
+      }
+    }
+    // Fallbacks anteriores si no se encuentra el patrón
+    if (!nombre || nombre.length < 5) {
+      const palabrasClave = [
+        'APELLIDOS', 'NOMBRES', 'APELLIDOS Y NOMBRES', 'CEDULA', 'IDENTIFICACION', 'CIUDADANIA', 'NACIONALIDAD', 'SEXO', 'LUGARDE NACIMIENTO'
+      ];
+      // 1. Buscar la línea más larga con 3-5 palabras en mayúsculas
+      let maxLinea = '';
+      for (const linea of lineas) {
+        if (
+          /^[A-ZÁÉÍÓÚÑ ]{10,}$/.test(linea) &&
+          !/\d/.test(linea) &&
+          !palabrasClave.some(clave => linea.includes(clave)) &&
+          linea.split(' ').length >= 3 &&
+          linea.split(' ').length <= 5 &&
+          linea.length > maxLinea.length
+        ) {
+          maxLinea = linea;
+        }
+      }
+      if (maxLinea.length > 5) {
+        nombre = maxLinea;
+      }
+      // 2. Fallback: lógica anterior
+      if (!nombre || nombre.length < 5) {
+        const nombreRegex = /NOMBRES?\s*[:\-]?\s*([A-ZÁÉÍÓÚÑ ]+)/i;
+        const nombreMatch = texto.match(nombreRegex);
+        if (nombreMatch) {
+          nombre = nombreMatch[1].trim();
+        } else {
+          for (const linea of lineas) {
+            if (/^[A-ZÁÉÍÓÚÑ ]{5,}$/.test(linea) && !/\d{10}/.test(linea)) {
+              nombre = linea;
+              break;
+            }
+          }
         }
       }
     }

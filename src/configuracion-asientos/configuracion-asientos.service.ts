@@ -23,22 +23,21 @@ export class ConfiguracionAsientosService {
     const isDoubleDecker = bus.piso_doble;
 
     // Validar que el número total de asientos no exceda el límite
-    if (isDoubleDecker) {
-      // Para buses de dos pisos, mantenemos la validación contra el total del bus
-      if (dto.posiciones.length > bus.total_asientos) {
-        throw new BadRequestException(
-          `El número total de asientos (${dto.posiciones.length}) excede el total definido para el bus de dos pisos (${bus.total_asientos})`,
-        );
-      }
-    } else {
+    if (!isDoubleDecker) {
       // Para buses de un piso, el límite es 50
       if (dto.posiciones.length > 50) {
         throw new BadRequestException(
           `El número total de asientos (${dto.posiciones.length}) excede el límite de 50 para un bus de un solo piso.`,
         );
       }
+    } else {
+      // Para buses de dos pisos, validar que no exceda 80 asientos
+      if (dto.posiciones.length > 80) {
+        throw new BadRequestException(
+          `El número total de asientos (${dto.posiciones.length}) excede el límite de 80 para un bus de dos pisos.`,
+        );
+      }
     }
-
     // Validar que las posiciones de asientos coincidan con el tipo de bus
     const invalidPisoPositions = dto.posiciones.filter(pos => pos.piso > (isDoubleDecker ? 2 : 1));
     
@@ -83,7 +82,6 @@ export class ConfiguracionAsientosService {
   }
 
   async update(id: number, dto: UpdateConfiguracionAsientosDto) {
-    // Si se están actualizando las posiciones, validar contra el tipo de bus
     if (dto.posiciones) {
       const config = await this.findOne(id);
       if (!config) {
@@ -100,43 +98,35 @@ export class ConfiguracionAsientosService {
         throw new BadRequestException('El bus no existe');
       }
 
-      const isDoubleDecker = bus.piso_doble;
-
-      // Validar que el número total de asientos no exceda el límite
-      if (isDoubleDecker) {
-        // Para buses de dos pisos, mantenemos la validación contra el total del bus
-        if (dto.posiciones.length > bus.total_asientos) {
+      // Solo valida los campos completos si el primer objeto tiene 'fila', 'columna', etc.
+      if (
+        dto.posiciones.length > 0 &&
+        'fila' in dto.posiciones[0]
+      ) {
+        const isDoubleDecker = bus.piso_doble;
+        const invalidPositions = dto.posiciones.filter(
+          (pos: any) => pos.piso > (isDoubleDecker ? 2 : 1)
+        );
+        if (invalidPositions.length > 0) {
           throw new BadRequestException(
-            `El número total de asientos (${dto.posiciones.length}) excede el total definido para el bus de dos pisos (${bus.total_asientos})`,
+            `Posiciones inválidas para un bus ${isDoubleDecker ? 'de dos pisos' : 'de un piso'}. ` +
+            'Los números de piso deben ser 1' + (isDoubleDecker ? ' o 2' : '')
           );
         }
-      } else {
-        // Para buses de un piso, el límite es 50
-        if (dto.posiciones.length > 50) {
+
+        const missingFieldsPositions = dto.posiciones.filter(
+          (pos: any) =>
+            !pos.fila ||
+            !pos.columna ||
+            !pos.piso ||
+            !pos.tipoAsiento ||
+            !pos.numeroAsiento
+        );
+        if (missingFieldsPositions.length > 0) {
           throw new BadRequestException(
-            `El número total de asientos (${dto.posiciones.length}) excede el límite de 50 para un bus de un solo piso.`,
+            'Todas las posiciones deben tener fila, columna, piso, tipoAsiento y numeroAsiento'
           );
         }
-      }
-
-      const invalidPositions = dto.posiciones.filter(pos => pos.piso > (isDoubleDecker ? 2 : 1));
-      
-      if (invalidPositions.length > 0) {
-        throw new BadRequestException(
-          `Posiciones inválidas para un bus ${isDoubleDecker ? 'de dos pisos' : 'de un piso'}. ` +
-          'Los números de piso deben ser 1' + (isDoubleDecker ? ' o 2' : '')
-        );
-      }
-
-      // Validar que cada posición tenga todos los campos requeridos
-      const missingFieldsPositions = dto.posiciones.filter(
-        pos => !pos.fila || !pos.columna || !pos.piso || !pos.tipoAsiento || !pos.numeroAsiento
-      );
-
-      if (missingFieldsPositions.length > 0) {
-        throw new BadRequestException(
-          'Todas las posiciones deben tener fila, columna, piso, tipoAsiento y numeroAsiento'
-        );
       }
 
       // Convertir las posiciones a JSON para almacenamiento
@@ -175,7 +165,37 @@ export class ConfiguracionAsientosService {
     if (!config) {
       throw new BadRequestException('Configuración de asientos no encontrada para este bus');
     }
+
+    // Si se reciben posiciones (asientos a actualizar), solo actualizar el campo 'ocupado' en el array completo
+    if (dto.posiciones && Array.isArray(dto.posiciones) && dto.posiciones.length > 0) {
+      // 1. Obtener el array completo de asientos
+      let posicionesCompletas: any[] = [];
+      try {
+        posicionesCompletas = JSON.parse(config.posicionesJson);
+      } catch (e) {
+        throw new BadRequestException('Error al parsear las posiciones de asientos');
+      }
+
+      // 2. Para cada asiento recibido, buscarlo en el array completo y actualizar 'ocupado'
+      for (const asientoActualizado of dto.posiciones) {
+        const pos = posicionesCompletas.find(p => p.numeroAsiento === asientoActualizado.numeroAsiento);
+        if (pos) {
+          pos.ocupado = asientoActualizado.ocupado;
+        }
+      }
+
+      // 3. Guardar el array completo actualizado
+      const posicionesJson = JSON.stringify(posicionesCompletas);
+      const [actualizado] = await db
+        .update(configuracionAsientos)
+        .set({ posicionesJson })
+        .where(eq(configuracionAsientos.id, config.id))
+        .returning();
+
+      return actualizado;
+    }
   
+    // Si no se reciben posiciones, usar el update original
     return this.update(config.id, dto);
   }
 
