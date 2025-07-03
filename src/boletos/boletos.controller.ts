@@ -16,7 +16,7 @@ import {
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
 import { BoletosService } from './boletos.service';
 import { UpdateBoletoDto } from './dto/update-boleto.dto';
-import { Boleto } from './entities/boleto.entity';
+import { Boleto, BoletoDetalleResponseDto } from './entities/boleto.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Role } from '../auth/decorators/roles.decorator';
@@ -38,20 +38,30 @@ export class BoletosController {
   @Get()
   @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
   @ApiOperation({ summary: 'Obtener todos los boletos de la cooperativa' })
-  @ApiResponse({ status: 200, description: 'Lista de boletos de la cooperativa', type: [Boleto] })
-  findAll(@CurrentUser() user: JwtPayload): Promise<Boleto[]> {
+  @ApiResponse({ status: 200, description: 'Lista de boletos de la cooperativa', type: [BoletoDetalleResponseDto] })
+  @ApiQuery({ name: 'usado', required: false, type: Boolean, description: 'Filtrar por si el boleto fue usado o no' })
+  findAll(@CurrentUser() user: JwtPayload, @Query('usado') usado?: string): Promise<BoletoDetalleResponseDto[]> {
     if (!user.cooperativaId) {
       throw new BadRequestException('Cooperativa ID no encontrada en el token');
     }
-    return this.boletosService.findByCooperativa(user.cooperativaId);
+    let usadoBool: boolean | undefined = undefined;
+    if (usado !== undefined) {
+      usadoBool = usado === 'true';
+    }
+    return this.boletosService.findByCooperativa(user.cooperativaId, usadoBool);
   }
 
   @Get('mis-boletos')
   @Role(RolUsuario.CLIENTE)
   @ApiOperation({ summary: 'Obtener boletos del cliente autenticado los pagados' })
-  @ApiResponse({ status: 200, description: 'Lista de boletos del cliente', type: [Boleto] })
-  findMyBoletos(@CurrentUser() user: JwtPayload): Promise<Boleto[]> {
-    return this.boletosService.findByCliente(user.sub);
+  @ApiResponse({ status: 200, description: 'Lista de boletos del cliente', type: [BoletoDetalleResponseDto] })
+  @ApiQuery({ name: 'usado', required: false, type: Boolean, description: 'Filtrar por si el boleto fue usado o no' })
+  findMyBoletos(@CurrentUser() user: JwtPayload, @Query('usado') usado?: string): Promise<BoletoDetalleResponseDto[]> {
+    let usadoBool: boolean | undefined = undefined;
+    if (usado !== undefined) {
+      usadoBool = usado === 'true';
+    }
+    return this.boletosService.findByCliente(user.sub, usadoBool);
   }
 
   @Get('chofer')
