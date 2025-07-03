@@ -9,7 +9,7 @@ export class PaypalService {
     const configuracion = JSON.parse(metodoPago.configuracion);
     
     // Generar referencia única para la transacción
-    const externalReference = `PAYPAL-${venta.id}-${Date.now()}`;
+    const externalReference = generarReferenciaPaypal(venta.id);
     
     // URL simulada del sandbox de PayPal
     const fakeUrl = `https://www.sandbox.paypal.com/checkoutnow?token=${externalReference}&ventaId=${venta.id}`;
@@ -68,4 +68,8 @@ export class PaypalService {
       timestamp: new Date().toISOString()
     };
   }
+}
+
+export function generarReferenciaPaypal(ventaId: number): string {
+  return `PAYPAL-${ventaId}-${Date.now()}`;
 }

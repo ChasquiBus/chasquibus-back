@@ -8,6 +8,7 @@ import { DRIZZLE } from '../drizzle/drizzle.module';
 import { Database } from '../drizzle/database';
 import { eq } from 'drizzle-orm';
 import { MetodosPagoService } from '../metodos-pago/metodos-pago.service';
+import { VentasService } from '../ventas/ventas.service';
 
 @Injectable()
 export class PagosService {
@@ -15,7 +16,8 @@ export class PagosService {
     private paypalService: PaypalService,
     private depositoService: DepositoService,
     private metodosPagoService: MetodosPagoService,
-    @Inject(DRIZZLE) private readonly db: Database
+    @Inject(DRIZZLE) private readonly db: Database,
+    private ventasService: VentasService
   ) {}
 
   /**
@@ -100,5 +102,47 @@ export class PagosService {
    */
   async cancelarPago(ventaId: number) {
     return this.actualizarEstado(ventaId, EstadoPago.CANCELADO);
+  }
+
+  async procesarWebhook({ headers, body }: { headers: any, body: any }) {
+    // Validar evento y extraer referencia de venta
+    // (omitimos validación de firma en desarrollo)
+    const eventType = body.event_type;
+    let externalReference: string | null = null;
+    // Buscar la referencia en el body (puede variar según el tipo de evento)
+    if (body.resource && body.resource.custom_id) {
+      externalReference = body.resource.custom_id;
+    } else if (body.resource && body.resource.invoice_id) {
+      externalReference = body.resource.invoice_id;
+    } else if (body.resource && body.resource.supplementary_data && body.resource.supplementary_data.related_ids && body.resource.supplementary_data.related_ids.order_id) {
+      externalReference = body.resource.supplementary_data.related_ids.order_id;
+    }
+    // Extraer ventaId de la referencia (asumiendo formato 'PAYPAL-<ventaId>-timestamp')
+    let ventaId: number | null = null;
+    if (externalReference && typeof externalReference === 'string' && externalReference.startsWith('PAYPAL-')) {
+      const parts = externalReference.split('-');
+      ventaId = parseInt(parts[1], 10);
+    } else if (body.ventaId) {
+      ventaId = parseInt(body.ventaId, 10);
+    }
+    // Procesar solo si es evento de pago aprobado/completado
+    if (
+      [
+        'CHECKOUT.ORDER.APPROVED',
+        'PAYMENT.CAPTURE.COMPLETED',
+        'CHECKOUT.ORDER.COMPLETED'
+      ].includes(eventType) && ventaId !== null
+    ) {
+      await this.updatearEstadoVentaPagado(ventaId);
+      return { ok: true, ventaId, evento: eventType, mensaje: 'Venta marcada como pagada' };
+    }
+    return { ok: true, mensaje: 'Evento recibido pero no relevante para actualizar venta', eventType };
+  }
+
+  async updatearEstadoVentaPagado(ventaId: number) {
+    // Usa el método de ventas.service para actualizar el estado
+    if (this.ventasService && this.ventasService.updateEstadoPago) {
+      await this.ventasService.updateEstadoPago(ventaId, EstadoPago.APROBADO);
+    }
   }
 }

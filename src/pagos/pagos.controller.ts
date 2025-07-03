@@ -1,4 +1,4 @@
-import { Body, Controller, Param, Patch, Post, Get, UseGuards } from '@nestjs/common';
+import { Body, Controller, Param, Patch, Post, Get, UseGuards, Req, Res, Headers } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody } from '@nestjs/swagger';
 import { PagosService } from './pagos.service';
 import { ValidarDepositoDto } from './dto/validar-deposito.dto';
@@ -9,6 +9,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Role } from '../auth/decorators/roles.decorator';
 import { RolUsuario } from '../auth/roles.enum';
+import { Request, Response } from 'express';
 
 @ApiTags('Pagos')
 @Controller('pagos')
@@ -144,5 +145,39 @@ export class PagosController {
     @Body() dto: RechazarPagoDto
   ) {
     return await this.pagosService.rechazarPago(+ventaId, dto.motivo);
+  }
+
+  /**
+   * Webhook real de PayPal
+   */
+  @Post('webhook/paypal')
+  @ApiOperation({ summary: 'Webhook real de PayPal', description: 'Recibe notificaciones de PayPal y actualiza el estado de la venta' })
+  @ApiBody({ type: Object })
+  async webhookPaypalReal(
+    @Req() req: Request,
+    @Res() res: Response,
+    @Headers('paypal-transmission-id') transmissionId: string,
+    @Headers('paypal-transmission-time') transmissionTime: string,
+    @Headers('paypal-cert-url') certUrl: string,
+    @Headers('paypal-auth-algo') authAlgo: string,
+    @Headers('paypal-transmission-sig') transmissionSig: string,
+    @Headers('paypal-webhook-id') webhookId: string
+  ) {
+    try {
+      const result = await this.pagosService.procesarWebhook({
+        headers: {
+          transmissionId,
+          transmissionTime,
+          certUrl,
+          authAlgo,
+          transmissionSig,
+          webhookId
+        },
+        body: req.body
+      });
+      return res.status(200).json(result);
+    } catch (error) {
+      return res.status(400).json({ error: error.message });
+    }
   }
 }
