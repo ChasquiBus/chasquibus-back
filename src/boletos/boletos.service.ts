@@ -14,6 +14,11 @@ import { Boleto } from './entities/boleto.entity';
 import { eq, and } from 'drizzle-orm';
 import { EstadoPago } from 'ventas/dto/ventas.enum';
 import { generarCodigoQRBoleto, determinarAplicoDescuento } from './utils/qr-generator.util';
+import { tarifas } from '../drizzle/schema/tarifas';
+import { buses } from '../drizzle/schema/bus';
+import { frecuencias } from '../drizzle/schema/frecuencias';
+import { rutas } from '../drizzle/schema/rutas';
+import { BoletoDetalleResponseDto } from './entities/boleto.entity';
 
 @Injectable()
 export class BoletosService {
@@ -133,8 +138,12 @@ export class BoletosService {
   }
 
   // Para oficinistas/admins - obtener todos los boletos de la cooperativa
-  async findByCooperativa(cooperativaId: number): Promise<Boleto[]> {
-    return await this.db
+  async findByCooperativa(cooperativaId: number, usado?: boolean): Promise<BoletoDetalleResponseDto[]> {
+    const whereConds = [eq(ventas.cooperativaId, cooperativaId)];
+    if (usado !== undefined) {
+      whereConds.push(eq(boletos.usado, usado));
+    }
+    const rows = await this.db
       .select({
         id: boletos.id,
         ventaId: boletos.ventaId,
@@ -147,15 +156,35 @@ export class BoletosService {
         totalSinDescPorPers: boletos.totalSinDescPorPers,
         totalDescPorPers: boletos.totalDescPorPers,
         totalPorPer: boletos.totalPorPer,
+        valorTarifa: tarifas.valor,
+        tipoAsiento: tarifas.tipoAsiento,
+        tipoVenta: ventas.tipoVenta,
+        hojaTrabajoId: ventas.hojaTrabajoId,
+        busId: hojaTrabajo.busId,
+        estadoHojaTrabajo: hojaTrabajo.estado,
+        fechaSalida: hojaTrabajo.fechaSalida,
+        numeroBus: buses.numero_bus,
+        placaBus: buses.placa,
       })
       .from(boletos)
       .innerJoin(ventas, eq(boletos.ventaId, ventas.id))
-      .where(eq(ventas.cooperativaId, cooperativaId));
+      .innerJoin(tarifas, eq(boletos.tarifaId, tarifas.id))
+      .leftJoin(hojaTrabajo, eq(ventas.hojaTrabajoId, hojaTrabajo.id))
+      .leftJoin(buses, eq(hojaTrabajo.busId, buses.id))
+      .where(whereConds.length > 1 ? and(...whereConds) : whereConds[0]);
+    return rows as BoletoDetalleResponseDto[];
   }
 
   // Para clientes - obtener boletos del cliente con ventas pagadas
-  async findByCliente(usuarioId: number): Promise<Boleto[]> {
-    return await this.db
+  async findByCliente(usuarioId: number, usado?: boolean): Promise<BoletoDetalleResponseDto[]> {
+    const whereConds = [
+      eq(clientes.usuarioId, usuarioId),
+      eq(ventas.estadoPago, EstadoPago.APROBADO)
+    ];
+    if (usado !== undefined) {
+      whereConds.push(eq(boletos.usado, usado));
+    }
+    const rows = await this.db
       .select({
         id: boletos.id,
         ventaId: boletos.ventaId,
@@ -168,16 +197,35 @@ export class BoletosService {
         totalSinDescPorPers: boletos.totalSinDescPorPers,
         totalDescPorPers: boletos.totalDescPorPers,
         totalPorPer: boletos.totalPorPer,
+        valorTarifa: tarifas.valor,
+        tipoAsiento: tarifas.tipoAsiento,
+        tipoVenta: ventas.tipoVenta,
+        hojaTrabajoId: ventas.hojaTrabajoId,
+        cooperativaId: ventas.cooperativaId,
+        nombreCooperativa: cooperativaTransporte.nombre,
+        logoCooperativa: cooperativaTransporte.logo,
+        telefonoCooperativa: cooperativaTransporte.telefono,
+        busId: hojaTrabajo.busId,
+        estadoHojaTrabajo: hojaTrabajo.estado,
+        frecDiaId: hojaTrabajo.frecDiaId,
+        fechaSalida: hojaTrabajo.fechaSalida,
+        numeroBus: buses.numero_bus,
+        placaBus: buses.placa,
+        horaSalidaProg: frecuencias.horaSalidaProg,
+        rutaId: frecuencias.rutaId,
+        codigoRuta: rutas.codigo,
       })
       .from(boletos)
       .innerJoin(ventas, eq(boletos.ventaId, ventas.id))
       .innerJoin(clientes, eq(ventas.clienteId, clientes.id))
-      .where(
-        and(
-          eq(clientes.usuarioId, usuarioId),
-          eq(ventas.estadoPago, EstadoPago.APROBADO)
-        )
-      );
+      .innerJoin(tarifas, eq(boletos.tarifaId, tarifas.id))
+      .leftJoin(hojaTrabajo, eq(ventas.hojaTrabajoId, hojaTrabajo.id))
+      .leftJoin(cooperativaTransporte, eq(ventas.cooperativaId, cooperativaTransporte.id))
+      .leftJoin(buses, eq(hojaTrabajo.busId, buses.id))
+      .leftJoin(frecuencias, eq(hojaTrabajo.frecDiaId, frecuencias.id))
+      .leftJoin(rutas, eq(frecuencias.rutaId, rutas.id))
+      .where(and(...whereConds));
+    return rows as BoletoDetalleResponseDto[];
   }
 
   // Para choferes - obtener boletos por hoja de trabajo y ventas pagadas
@@ -204,6 +252,7 @@ export class BoletosService {
         totalSinDescPorPers: boletos.totalSinDescPorPers,
         totalDescPorPers: boletos.totalDescPorPers,
         totalPorPer: boletos.totalPorPer,
+        usado: boletos.usado,
       })
       .from(boletos)
       .innerJoin(ventas, eq(boletos.ventaId, ventas.id))
