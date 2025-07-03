@@ -22,7 +22,6 @@ import { RolesGuard } from 'auth/guards/roles.guard';
 @ApiTags('configuracion-asientos')
 @ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
 export class ConfiguracionAsientosController {
   constructor(private readonly service: ConfiguracionAsientosService) {}
 
