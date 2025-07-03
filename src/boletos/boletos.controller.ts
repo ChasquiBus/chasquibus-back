@@ -91,7 +91,7 @@ export class BoletosController {
   }
 
   @Get('venta/:ventaId')
-  @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
+  @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA, RolUsuario.CLIENTE)
   @ApiOperation({ summary: 'Obtener boletos por ID de venta' })
   @ApiParam({ name: 'ventaId', description: 'ID de la venta' })
   @ApiResponse({ status: 200, description: 'Boletos de la venta', type: [Boleto] })
