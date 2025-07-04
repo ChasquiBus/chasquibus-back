@@ -75,6 +75,8 @@ export class CrearVentaService {
       metodoPagoId: ventaData.metodoPagoId,
       estadoPago: EstadoPago.PENDIENTE,
       tipoVenta: TipoVenta.ONLINE,
+      comprobanteUrl: null,
+      hojaTrabajoId: ventaData.hojaTrabajoId,   
       totalSinDescuento: totalSinDescuento.toString(),
       totalDescuentos: totalDescuentos.toString(),
       totalFinal: totalFinal.toString(),
