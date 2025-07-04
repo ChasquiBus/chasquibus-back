@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { VentasService } from './ventas.service';
 import { VentasController } from './ventas.controller';
 import { DrizzleModule } from '../drizzle/drizzle.module';
@@ -8,7 +8,7 @@ import { ConfiguracionAsientosModule } from '../configuracion-asientos/configura
 import { PagosModule } from '../pagos/pagos.module';
 
 @Module({
-  imports: [DrizzleModule, BoletosModule, ConfiguracionAsientosModule, PagosModule],
+  imports: [DrizzleModule, BoletosModule, ConfiguracionAsientosModule, forwardRef(() => PagosModule)],
   controllers: [VentasController],
   providers: [VentasService, CrearVentaService],
   exports: [VentasService],
