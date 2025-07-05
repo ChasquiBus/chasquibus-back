@@ -15,8 +15,6 @@ import {
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { VentasService } from './ventas.service';
 import { CreateVentaDto, CreateVentaPresencialDto } from './dto/create-venta.dto';
-import { UpdateVentaDto } from './dto/update-venta.dto';
-import { UpdateEstadoPagoDto } from './dto/update-estado-pago.dto';
 import { Venta } from './entities/venta.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -145,20 +143,7 @@ export class VentasController {
     return this.ventasService.findByCooperativaAndTipoVenta(user.cooperativaId, tipoVenta);
   }
 
-  // Para oficinistas - modificar estado de pago de una venta
-  @Patch(':id/estado-pago')
-  @Role(RolUsuario.OFICINISTA)
-  @ApiOperation({ summary: 'Modificar el estado de pago de una venta' })
-  @ApiParam({ name: 'id', description: 'ID de la venta' })
-  @ApiResponse({ status: 200, description: 'Estado de pago actualizado exitosamente', type: Venta })
-  @ApiResponse({ status: 404, description: 'Venta no encontrada' })
-  @ApiResponse({ status: 401, description: 'No autorizado' })
-  updateEstadoPago(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() updateEstadoPagoDto: UpdateEstadoPagoDto
-  ): Promise<Venta> {
-    return this.ventasService.updateEstadoPago(id, updateEstadoPagoDto.estadoPago);
-  }
+
 
   // Para clientes - obtener ventas del cliente con estado pagado
   @Get('mis-ventas')
