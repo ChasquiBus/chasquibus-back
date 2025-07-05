@@ -1,8 +1,13 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import axios from 'axios';
+import { ventas } from '../drizzle/schema/ventas';
+import { eq } from 'drizzle-orm';
+import { Database } from 'drizzle/database';
+import { DRIZZLE } from 'drizzle/drizzle.module';
 
 @Injectable()
 export class PaypalService {
+  constructor(@Inject(DRIZZLE) private readonly db: Database){}
 
   private async generateAccessToken(
     clientId: string,
@@ -27,82 +32,84 @@ export class PaypalService {
     return data.access_token;
   }
 
-  async iniciarPago(venta: any, metodoPago: any) {
-    const configuracion = JSON.parse(metodoPago.configuracion);
-    // Ahora accedemos a las credenciales desde la configuración
-    const { clientId, clientSecret, mode, webhookId } = configuracion;
+async procesarPagoPaypal(venta: any, metodoPago: any) {
+  const configuracion = JSON.parse(metodoPago.configuracion);
+  const { clientId, clientSecret, mode, webhookId } = configuracion;
+  console.log('Venta:', venta);
+  const paypalApiBaseUrl =
+    mode === 'sandbox'
+      ? 'https://api-m.sandbox.paypal.com'
+      : 'https://api-m.paypal.com';
 
-    // Determinar la URL base de PayPal según el modo (sandbox o live)
-    const paypalApiBaseUrl =
-      mode === 'sandbox'
-        ? 'https://api-m.sandbox.paypal.com'
-        : 'https://api-m.paypal.com';
+  const accessToken = await this.generateAccessToken(
+    clientId,
+    clientSecret,
+    mode,
+  );
 
-    // Pasamos las credenciales al generador de token
-    const accessToken = await this.generateAccessToken(
-      clientId,
-      clientSecret,
-      mode,
-    ); // Generar referencia única para la transacción (custom_id)
-    const externalReference = `PAYPAL-${venta.id}-${Date.now()}`;
-
-    try {
-      const orderResponse = await axios.post(
-        `${paypalApiBaseUrl}/v2/checkout/orders`, // Usamos la URL base dinámica
-        {
-          intent: 'CAPTURE',
-          purchase_units: [
-            {
-              amount: {
-                currency_code: 'USD', // Asegúrate de que esta moneda coincida con tu configuración de PayPal
-                value: venta.totalFinal,
-              },
-              custom_id: externalReference, // Usar custom_id para la referencia de la venta
-              description: `Venta de boletos #${venta.id}`,
+  try {
+    const orderResponse = await axios.post(
+      `${paypalApiBaseUrl}/v2/checkout/orders`,
+      {
+        intent: 'CAPTURE',
+        purchase_units: [
+          {
+            amount: {
+              currency_code: 'USD',
+              value: venta.totalFinal,
             },
-          ],
-          application_context: {
-            return_url: `${process.env.HOST_MOVIL}/paypal/success`, // Asegúrate de que HOST_MOVIL esté configurado correctamente
-            cancel_url: `${process.env.HOST_MOVIL}/paypal/cancel`,
+            description: `Venta de boletos #${venta.id}`,
           },
+        ],
+        application_context: {
+          return_url: `${process.env.NGROK_URL}/pagos/paypal/success`,
+          cancel_url: `${process.env.NGROK_URL}/pagos/paypal/cancel`,
         },
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-          },
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
         },
-      );
+      },
+    );
 
-      const order = orderResponse.data;
-      const approvalLink = order.links.find(
-        (link: any) => link.rel === 'approve',
-      ).href;
+    const order = orderResponse.data;
+    const approvalLink = order.links.find(
+      (link: any) => link.rel === 'approve',
+    )?.href;
 
-      return {
-        url: approvalLink,
-        externalReference: order.id, // ID de la orden de PayPal, no tu custom_id aquí para el front
-        mensaje: 'Redirigiendo a PayPal para completar el pago',
-        configuracion: {
-          // Devolvemos la configuración para que el front sepa qué credenciales se usaron
-          clientId: configuracion.clientId,
-          mode: configuracion.mode,
-          webhookId: configuracion.webhookId,
-        },
-        venta: {
-          id: venta.id,
-          totalFinal: venta.totalFinal,
-          fechaVenta: venta.fechaVenta,
-        },
-      };
-    } catch (error) {
-      console.error(
-        'Error al iniciar pago con PayPal:',
-        error.response?.data || error.message,
-      );
-      throw new Error('Error al procesar el pago con PayPal.');
-    }
+    // 🔥 AQUÍ ESTÁ LA SOLUCIÓN: Actualizar la venta con el orderId
+    await this.db
+      .update(ventas)
+      .set({ orderId: order.id })
+      .where(eq(ventas.id, venta.id));
+
+    console.log(`Venta ${venta.id} actualizada con orderId: ${order.id}`);
+
+    return {
+      url: approvalLink,
+      orderId: order.id,
+      mensaje: 'Redirigiendo a PayPal para completar el pago',
+      configuracion: {
+        clientId: configuracion.clientId,
+        mode: configuracion.mode,
+        webhookId: configuracion.webhookId,
+      },
+      venta: {
+        id: venta.id,
+        totalFinal: venta.totalFinal,
+        fechaVenta: venta.fechaVenta,
+      },
+    };
+  } catch (error) {
+    console.error(
+      'Error al iniciar pago con PayPal:',
+      error.response?.data || error.message,
+    );
+    throw new Error('Error al procesar el pago con PayPal.');
   }
+}
 
 
 }
