@@ -76,6 +76,7 @@ export class CrearVentaService {
       clienteId: cliente.id,
       oficinistaId: null,
       metodoPagoId: ventaData.metodoPagoId,
+      hojaTrabajoId: ventaData.hojaTrabajoId,
       estadoPago: EstadoPago.PENDIENTE,
       tipoVenta: TipoVenta.ONLINE,
       comprobanteUrl: null,
