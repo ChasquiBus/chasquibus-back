@@ -242,18 +242,19 @@ async procesarWebhook({ headers, body }: { headers: any; body: any }) {
     }
   }
 
-    async handlePaypalSuccess(orderId: string) {
+  async handlePaypalSuccess(orderId: string) {
     const venta = await this.findVentaByOrderId(orderId);
     
     if (!venta) {
       return { ok: false, mensaje: 'Venta no encontrada' };
     }
-
-    const metodoPagoId = Number(venta.metodoPagoId);
-    const resultado = await this.capturarOrdenPaypal(orderId, venta.id, metodoPagoId);
-    
-    return resultado;
-  }
+    return {
+        ok: true,
+        orderId: orderId,
+        mensaje: 'Pago procesado exitosamente',
+        ventaId: venta.id
+    };
+}
 
     async handlePaypalCancel(orderId?: string) {
     if (!orderId) {

@@ -68,7 +68,6 @@ export class PagosController {
     };
   }
 
-
   @Patch('deposito/:ventaId/cancelar')
 //  @Role(RolUsuario.OFICINISTA, RolUsuario.ADMIN, RolUsuario.CLIENTE)
   @ApiOperation({ 
@@ -91,9 +90,6 @@ export class PagosController {
     };
   }
 
-  /**
-   * Webhook real de PayPal
-   */
 @Public() 
 @Post('webhook/paypal')
 @ApiOperation({ summary: 'Webhook real de PayPal', description: 'Recibe notificaciones de PayPal y actualiza el estado de la venta' })
@@ -145,52 +141,67 @@ async webhookPaypalReal(
    */
  @Public() 
 @Get('paypal/success')
-async paypalSuccess(@Query('token') token: string, @Res() res: Response) {
-    console.log('Redirigiendo al cliente con token:', token);
-    //console.log('respuesta:', res);
+async paypalSuccess(@Query('token') token: string) {
+    console.log('Procesando éxito de PayPal con token:', token);
+    
     try {
         // Validar que el token existe
         if (!token) {
-            return res.redirect(
-                `${process.env.CLIENT_HOST_MOVIL}/paypal/error?message=Token+no+proporcionado`
-            );
+            return {
+                ok: false,
+                mensaje: 'Token no proporcionado',
+                redirectTo: 'error'
+            };
         }
 
         const resultado = await this.pagosService.handlePaypalSuccess(token);
         
         if (resultado.ok) {
-            return res.redirect(
-                `${process.env.CLIENT_HOST_MOVIL}/paginas-pagos/paypal-success?orderId=${token}&status=success`
-            );
+            return {
+                ok: true,
+                orderId: token,
+                status: 'success',
+                mensaje: resultado.mensaje || 'Pago procesado exitosamente',
+                redirectTo: 'success'
+            };
         } else {
-            const mensaje = resultado.mensaje || 'Error+desconocido';
-            return res.redirect(
-                `${process.env.CLIENT_HOST_MOVIL}/paypal/error?message=${encodeURIComponent(mensaje)}`
-            );
+            return {
+                ok: false,
+                mensaje: resultado.mensaje || 'Error desconocido',
+                redirectTo: 'error'
+            };
         }
 
     } catch (error) {
         console.error('Error en paypalSuccess controller:', error);
-        return res.redirect(
-            `${process.env.CLIENT_HOST_MOVIL}/paypal/error?message=Error+interno`
-        );
+        return {
+            ok: false,
+            mensaje: 'Error interno del servidor',
+            redirectTo: 'error'
+        };
     }
 }
 
  @Public() 
   @Get('paypal/cancel')
-  async paypalCancel(@Query('token') token: string, @Res() res: Response) {
+  async paypalCancel(@Query('token') token: string) {
     try {
       const resultado = await this.pagosService.handlePaypalCancel(token);
       
-      // Independientemente del resultado, redirigir a la página de cancelación
-      return res.redirect(`${process.env.CLIENT_HOST_MOVIL}/paypal/cancel`);
+      return {
+        ok: true,
+        orderId: token,
+        mensaje: resultado.mensaje || 'Pago cancelado',
+        redirectTo: 'cancel'
+      };
       
     } catch (error) {
       console.error('Error en paypalCancel controller:', error);
-      return res.redirect(
-        `${process.env.CLIENT_HOST_MOVIL}/paypal/error?message=Error+al+cancelar`
-      );
+      return {
+        ok: false,
+        mensaje: 'Error al cancelar el pago',
+        redirectTo: 'error'
+      };
     }
   }
 
