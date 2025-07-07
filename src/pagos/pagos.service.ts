@@ -248,11 +248,13 @@ async procesarWebhook({ headers, body }: { headers: any; body: any }) {
     if (!venta) {
       return { ok: false, mensaje: 'Venta no encontrada' };
     }
+    const updatedVenta = await this.ventasService.updateEstadoPago(venta.id, EstadoPago.APROBADO);
+    console.log('Venta después de actualizar estadoPago:', updatedVenta);
     return {
         ok: true,
         orderId: orderId,
         mensaje: 'Pago procesado exitosamente',
-        ventaId: venta.id
+        ventaId: venta.id
     };
 }
 
