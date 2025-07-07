@@ -75,7 +75,14 @@ export class RutasController {
       if (typeof body.diasOperacion === 'string') {
         body.diasOperacion = JSON.parse(body.diasOperacion);
       }
-  
+      // Convertir 'estado' a booleano si viene como string
+      if (typeof body.estado === 'string') {
+        body.estado = body.estado === 'true';
+      }
+      // Convertir 'esDirecto' a booleano si viene como string
+      if (typeof body.esDirecto === 'string') {
+        body.esDirecto = body.esDirecto === 'true';
+      }
       // Convertir a instancia de DTO y validar
       const createRutaDto = plainToInstance(CreateRutaDto, body);
       await validateOrReject(createRutaDto);
@@ -162,7 +169,7 @@ async delete(@Param('id') id: number, @Req() req: any) {
   @UseInterceptors(FileInterceptor('file'))
   async update(
     @Param('id') id: number,
-    @Body() body: any, // usamos `any` aquí para parsear manualmente
+    @Body() body: any, // usamos any aquí para parsear manualmente
     @UploadedFile() file: Express.Multer.File,
     @Req() req: any,
   ) {
