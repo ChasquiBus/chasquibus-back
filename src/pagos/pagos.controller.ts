@@ -14,13 +14,11 @@ import { Public } from 'auth/decorators/public.decorator';
 
 @ApiTags('Pagos')
 @Controller('pagos')
-//@ApiBearerAuth('access-token')
-//@UseGuards(JwtAuthGuard, RolesGuard)
 export class PagosController {
   constructor(private pagosService: PagosService,
     private paypalService: PaypalService
   ) {}
-
+/*
   @Patch('deposito/:ventaId/validar')
 //  @Role(RolUsuario.OFICINISTA, RolUsuario.ADMIN)
   @ApiOperation({ 
@@ -46,6 +44,7 @@ export class PagosController {
   /**
    * Rechazar depósito
    */
+  /*
   @Patch('deposito/:ventaId/rechazar')
 //  @Role(RolUsuario.OFICINISTA, RolUsuario.ADMIN)
   @ApiOperation({ 
@@ -89,7 +88,7 @@ export class PagosController {
       mensaje: 'Depósito rechazado correctamente'
     };
   }
-
+*/
 @Public() 
 @Post('webhook/paypal')
 @ApiOperation({ summary: 'Webhook real de PayPal', description: 'Recibe notificaciones de PayPal y actualiza el estado de la venta' })
@@ -139,7 +138,7 @@ async webhookPaypalReal(
   /**
    * Endpoint para capturar la orden de PayPal aprobada por el usuario
    */
- @Public() 
+@Public() 
 @Get('paypal/success')
 async paypalSuccess(@Query('token') token: string) {
     console.log('Procesando éxito de PayPal con token:', token);

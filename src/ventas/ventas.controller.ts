@@ -126,7 +126,6 @@ export class VentasController {
     return this.ventasService.findByCooperativaAndEstadoPago(user.cooperativaId, estadoPago);
   }
 
-  // Para oficinistas/admins - obtener ventas por tipo de venta de la cooperativa
   @Get('cooperativa/tipo/:tipoVenta')
   @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA)
   @ApiOperation({ summary: 'Obtener ventas por tipo de venta de la cooperativa' })
