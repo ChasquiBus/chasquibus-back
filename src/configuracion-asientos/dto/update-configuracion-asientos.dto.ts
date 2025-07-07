@@ -1,9 +1,12 @@
-import { PartialType } from '@nestjs/mapped-types';
-import { CreateConfiguracionAsientosDto } from './create-configuracion-asientos.dto';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsOptional } from 'class-validator';
+import { IsString, IsOptional, IsArray } from 'class-validator';
 
-export class UpdateConfiguracionAsientosDto extends PartialType(CreateConfiguracionAsientosDto) {
+export class UpdateConfiguracionAsientosDto {
+  @ApiProperty({ required: false, type: 'array', items: { type: 'object' } })
+  @IsOptional()
+  @IsArray()
+  posiciones?: { numeroAsiento: number; ocupado: boolean }[];
+
   @ApiProperty({ required: false })
   @IsString()
   @IsOptional()

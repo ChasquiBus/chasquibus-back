@@ -288,6 +288,20 @@
       "when": 1751073307040,
       "tag": "0040_modern_skrulls",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1751321444095,
+      "tag": "0041_nice_malice",
+      "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1751654447258,
+      "tag": "0042_noisy_scourge",
+      "breakpoints": true
     }
   ]
 }

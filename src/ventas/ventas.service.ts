@@ -28,6 +28,7 @@ export class VentasService {
     return venta;
   }
 
+  
   async findByCliente(clienteId: number): Promise<Venta[]> {
     return await this.db
       .select()
@@ -95,7 +96,6 @@ export class VentasService {
     if (!updatedVenta) {
       throw new NotFoundException(`Venta con ID ${id} no encontrada`);
     }
-
     return updatedVenta;
   }
 

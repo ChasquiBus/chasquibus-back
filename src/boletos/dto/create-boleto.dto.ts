@@ -1,8 +1,17 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsString, IsOptional, IsDecimal, Min, MaxLength, IsNumberString } from 'class-validator';
+import {
+  IsNumber,
+  IsString,
+  IsOptional,
+  IsDecimal,
+  Min,
+  MaxLength,
+  IsNumberString,
+  IsBoolean,
+} from 'class-validator';
 
 export class CreateBoletoDto {
-/*  @ApiProperty({ description: 'ID de la venta asociada' })
+  /*  @ApiProperty({ description: 'ID de la venta asociada' })
   @IsNumber()
   ventaId: number;
 */
@@ -20,6 +29,7 @@ export class CreateBoletoDto {
   @IsNumber()
   descuentoId?: number;
 
+
   @ApiProperty({ description: 'Código QR del boleto', required: false })
   @IsOptional()
   @IsString()
@@ -36,15 +46,29 @@ export class CreateBoletoDto {
   @MaxLength(255)
   nombre: string;
 
-  @ApiProperty({ description: 'Total sin descuento por persona', example: '25.50' })
-  @IsNumberString({}, { message: 'totalSinDescPorPers debe ser un número válido' })
+  @ApiProperty({ description: 'Apellido del pasajero' })
+  @IsString({ message: 'Debe enviarse un apellido' })
+  @MaxLength(255)
+  apellido: string;
+
+  @ApiProperty({
+    description: 'Total sin descuento por persona',
+    example: '25.50',
+  })
+  @IsNumberString(
+    {},
+    { message: 'totalSinDescPorPers debe ser un número válido' },
+  )
   totalSinDescPorPers: string;
-  
-  @ApiProperty({ description: 'Total de descuento por persona', example: '2.50' })
+
+  @ApiProperty({
+    description: 'Total de descuento por persona',
+    example: '2.50',
+  })
   @IsNumberString({}, { message: 'totalDescPorPers debe ser un número válido' })
   totalDescPorPers: string;
-  
+
   @ApiProperty({ description: 'Total por persona', example: '23.00' })
   @IsNumberString({}, { message: 'totalPorPer debe ser un número válido' })
   totalPorPer: string;
-} 
+}

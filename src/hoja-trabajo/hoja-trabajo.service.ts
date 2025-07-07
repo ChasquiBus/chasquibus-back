@@ -15,9 +15,12 @@ import { cooperativaTransporte } from '../drizzle/schema/cooperativa-transporte'
 import { HojaTrabajoDetalladaDto } from './dto/hoja-trabajo-detallada.dto';
 import { usuarios } from '../drizzle/schema/usuarios';
 import { CreateHojaTrabajoManualDto } from './dto/create-hoja-trabajo.dto';
+import { EstadoHojaTrabajo } from './dto/estado-viaje.enum';
+import { ConfiguracionAsientosService } from 'configuracion-asientos/configuracion-asientos.service';
 
 @Injectable()
 export class HojaTrabajoService {
+  constructor (private readonly configuracionAsientosService: ConfiguracionAsientosService){}
   async createManual(createHojaTrabajoDto: CreateHojaTrabajoManualDto, idCooperativa: number) {
     // Validar que el bus existe y pertenece a la cooperativa y no está en uso
     const [bus] = await db.select().from(buses).where(and(
@@ -220,9 +223,9 @@ export class HojaTrabajoService {
       id: hoja.id,
       placa: bus?.placa ?? '',
       imagen: bus?.imagen ?? '',
-//      piso_doble: bus?.piso_doble ?? false,
-//      total_asientos: bus?.total_asientos ?? 0,
-//      total_asientos_piso2: bus?.total_asientos_piso2 ?? undefined,
+      piso_doble: bus?.piso_doble ?? false,
+      total_asientos: bus?.total_asientos ?? 0,
+      total_asientos_piso2: bus?.total_asientos_piso2 ?? undefined,
       horaSalidaProg: frecuencia?.horaSalidaProg ?? '',
       horaLlegadaProg: frecuencia?.horaLlegadaProg ?? '',
       fechaSalida: hoja.fechaSalida ?? undefined,
@@ -391,4 +394,46 @@ export class HojaTrabajoService {
       count: hojasDetalladas.length
     };
   }
-} 
+
+  async actualizarEstadoHojaTrabajo(id: number, estado: EstadoHojaTrabajo) {
+    if (![EstadoHojaTrabajo.EN_CURSO, EstadoHojaTrabajo.FINALIZADO].includes(estado)) {
+      throw new BadRequestException('Solo se permite EN_CURSO o FINALIZADO');
+    }
+
+    // Obtener hoja de trabajo
+    const hoja = await db.query.hojaTrabajo.findFirst({
+      where: eq(hojaTrabajo.id, id),
+    });
+
+    if (!hoja) {
+      throw new NotFoundException('Hoja de trabajo no encontrada');
+    }
+
+    const ahora = new Date();
+    const updateData: Partial<typeof hojaTrabajo.$inferInsert> = {
+      estado,
+      ...(estado === EstadoHojaTrabajo.EN_CURSO && { horaSalidaReal: ahora }),
+      ...(estado === EstadoHojaTrabajo.FINALIZADO && { horaLlegadaReal: ahora }),
+    };
+
+    // Lógica para actualizar el campo 'enUso' del bus
+    if (estado === EstadoHojaTrabajo.EN_CURSO) {
+      await db.update(buses)
+        .set({ enUso: true })
+        .where(eq(buses.id, hoja.busId));
+    } else if (estado === EstadoHojaTrabajo.FINALIZADO) {
+      await db.update(buses)
+        .set({ enUso: false })
+        .where(eq(buses.id, hoja.busId));
+
+      // Llamar al servicio para liberar asientos
+      await this.configuracionAsientosService.liberarAsientosPorBusId(hoja.busId);
+    }
+
+    await db.update(hojaTrabajo)
+      .set(updateData)
+      .where(eq(hojaTrabajo.id, id));
+
+    return { id, ...updateData };
+  }
+}

@@ -1,71 +1,115 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import axios from 'axios';
+import { ventas } from '../drizzle/schema/ventas';
+import { eq } from 'drizzle-orm';
+import { Database } from 'drizzle/database';
+import { DRIZZLE } from 'drizzle/drizzle.module';
 
 @Injectable()
 export class PaypalService {
-  /**
-   * Iniciar pago con PayPal
-   */
-  iniciarPago(venta: any, metodoPago: any) {
-    const configuracion = JSON.parse(metodoPago.configuracion);
-    
-    // Generar referencia única para la transacción
-    const externalReference = `PAYPAL-${venta.id}-${Date.now()}`;
-    
-    // URL simulada del sandbox de PayPal
-    const fakeUrl = `https://www.sandbox.paypal.com/checkoutnow?token=${externalReference}&ventaId=${venta.id}`;
-    
+  constructor(@Inject(DRIZZLE) private readonly db: Database){}
+
+  private async generateAccessToken(
+    clientId: string,
+    clientSecret: string,
+    mode: 'sandbox' | 'live',
+  ): Promise<string> {
+    const paypalApiBaseUrl =
+      mode === 'sandbox'
+        ? 'https://api-m.sandbox.paypal.com'
+        : 'https://api-m.paypal.com';
+    const auth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+    const { data } = await axios.post(
+      `${paypalApiBaseUrl}/v1/oauth2/token`,
+      'grant_type=client_credentials',
+      {
+        headers: {
+          Authorization: `Basic ${auth}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      },
+    );
+    return data.access_token;
+  }
+
+async procesarPagoPaypal(venta: any, metodoPago: any) {
+  const configuracion = JSON.parse(metodoPago.configuracion);
+  const { clientId, clientSecret, mode, webhookId } = configuracion;
+  console.log('Venta:', venta);
+  const paypalApiBaseUrl =
+    mode === 'sandbox'
+      ? 'https://api-m.sandbox.paypal.com'
+      : 'https://api-m.paypal.com';
+
+  const accessToken = await this.generateAccessToken(
+    clientId,
+    clientSecret,
+    mode,
+  );
+
+  try {
+    const orderResponse = await axios.post(
+      `${paypalApiBaseUrl}/v2/checkout/orders`,
+      {
+        intent: 'CAPTURE',
+        purchase_units: [
+          {
+            amount: {
+              currency_code: 'USD',
+              value: venta.totalFinal,
+            },
+            description: `Venta de boletos #${venta.id}`,
+          },
+        ],
+        application_context: {
+          return_url: `${process.env.NGROK_URL}/pagos/paypal/success`,
+          cancel_url: `${process.env.NGROK_URL}/pagos/paypal/cancel`,
+        },
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      },
+    );
+
+    const order = orderResponse.data;
+    const approvalLink = order.links.find(
+      (link: any) => link.rel === 'approve',
+    )?.href;
+
+    // 🔥 AQUÍ ESTÁ LA SOLUCIÓN: Actualizar la venta con el orderId
+    await this.db
+      .update(ventas)
+      .set({ orderId: order.id })
+      .where(eq(ventas.id, venta.id));
+
+    console.log(`Venta ${venta.id} actualizada con orderId: ${order.id}`);
+
     return {
-      url: fakeUrl,
-      externalReference,
-      mensaje: 'Redirigiendo al sandbox de PayPal',
+      url: approvalLink,
+      orderId: order.id,
+      mensaje: 'Redirigiendo a PayPal para completar el pago',
       configuracion: {
         clientId: configuracion.clientId,
         mode: configuracion.mode,
-        webhookId: configuracion.webhookId
+        webhookId: configuracion.webhookId,
       },
       venta: {
         id: venta.id,
         totalFinal: venta.totalFinal,
-        fechaVenta: venta.fechaVenta
-      }
+        fechaVenta: venta.fechaVenta,
+      },
     };
+  } catch (error) {
+    console.error(
+      'Error al iniciar pago con PayPal:',
+      error.response?.data || error.message,
+    );
+    throw new Error('Error al procesar el pago con PayPal.');
   }
+}
 
-  /**
-   * Simula el webhook que confirmaría el pago
-   */
-  confirmarPagoSimulado(ventaId: number, estado: 'aprobado' | 'rechazado' = 'aprobado') {
-    return {
-      estado,
-      ventaId,
-      mensaje: estado === 'aprobado' ? 'Pago aprobado vía PayPal' : 'Pago rechazado vía PayPal',
-      timestamp: new Date().toISOString()
-    };
-  }
 
-  /**
-   * Simular webhook de PayPal con parámetros
-   */
-  simularWebhook(ventaId: number, paymentStatus: string, transactionId?: string) {
-    let estado: 'aprobado' | 'rechazado';
-    
-    // Simular lógica de validación
-    if (paymentStatus === 'COMPLETED' || paymentStatus === 'APPROVED') {
-      estado = 'aprobado';
-    } else if (paymentStatus === 'DENIED' || paymentStatus === 'FAILED') {
-      estado = 'rechazado';
-    } else {
-      // Para otros estados, simular aprobación aleatoria (70% aprobado, 30% rechazado)
-      estado = Math.random() > 0.3 ? 'aprobado' : 'rechazado';
-    }
-
-    return {
-      estado,
-      ventaId,
-      transactionId: transactionId || `TXN-${ventaId}-${Date.now()}`,
-      paymentStatus,
-      mensaje: `Webhook simulado: ${estado}`,
-      timestamp: new Date().toISOString()
-    };
-  }
 }

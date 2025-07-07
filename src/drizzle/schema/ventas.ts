@@ -23,6 +23,7 @@ export const ventas = pgTable('ventas', {
   totalDescuentos: decimal('total_desc', { precision: 10, scale: 2 }),
   totalFinal: decimal('total_final', { precision: 10, scale: 2 }),
 
+  orderId: varchar('order_id', { length: 50 }),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });

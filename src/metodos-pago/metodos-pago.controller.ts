@@ -79,7 +79,7 @@ export class MetodosPagoController {
   }
 
   @Get('activos')
-  @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA, RolUsuario.CHOFER)
+  @Role(RolUsuario.ADMIN, RolUsuario.OFICINISTA, RolUsuario.CHOFER, RolUsuario.CLIENTE)
   @ApiOperation({ 
     summary: 'Obtener métodos de pago activos',
     description: 'Obtiene solo los métodos de pago activos de la cooperativa del usuario'

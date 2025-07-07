@@ -4,6 +4,7 @@ import { Database } from '../drizzle/database';
 import { clientes } from '../drizzle/schema/clientes';
 import { usuarioCooperativa } from '../drizzle/schema/usuario-cooperativa';
 import { ventas } from '../drizzle/schema/ventas';
+import { metodosPago } from '../drizzle/schema/metodos-pago';
 import { eq } from 'drizzle-orm';
 import { CreateVentaDto, CreateVentaPresencialDto } from './dto/create-venta.dto';
 import { CreateBoletoDto } from '../boletos/dto/create-boleto.dto';
@@ -11,6 +12,7 @@ import { EstadoPago, TipoVenta } from './dto/ventas.enum';
 import { BoletosService } from '../boletos/boletos.service';
 import { ConfiguracionAsientosService } from '../configuracion-asientos/configuracion-asientos.service';
 import { PagosService } from '../pagos/pagos.service';
+import { DepositoService } from 'pagos/pagos.deposito.service';
 
 @Injectable()
 export class CrearVentaService {
@@ -19,6 +21,7 @@ export class CrearVentaService {
     private readonly boletosService: BoletosService,
     private readonly asientosService: ConfiguracionAsientosService,
     private readonly pagosService: PagosService,
+    private readonly depositoService: DepositoService
   ) {}
   /**
    * Método adicional para obtener información completa de la venta con pago
@@ -58,8 +61,13 @@ export class CrearVentaService {
     );
 
     // Actualizar asientos
+    // Enviar solo los asientos comprados con ocupado: true
+    const asientosOcupados = createVentaDto.posiciones.map(pos => ({
+      numeroAsiento: pos.numeroAsiento,
+      ocupado: true
+    }));
     await this.asientosService.updateByBusId(createVentaDto.busId, {
-      posiciones: createVentaDto.posiciones,
+      posiciones: asientosOcupados,
     });
 
     // Insertar venta
@@ -68,8 +76,10 @@ export class CrearVentaService {
       clienteId: cliente.id,
       oficinistaId: null,
       metodoPagoId: ventaData.metodoPagoId,
+      hojaTrabajoId: ventaData.hojaTrabajoId,
       estadoPago: EstadoPago.PENDIENTE,
       tipoVenta: TipoVenta.ONLINE,
+      comprobanteUrl: null,
       totalSinDescuento: totalSinDescuento.toString(),
       totalDescuentos: totalDescuentos.toString(),
       totalFinal: totalFinal.toString(),
@@ -80,20 +90,48 @@ export class CrearVentaService {
     const boletosToInsert: CreateBoletoDto[] = boletosData.map(boleto => ({
       ...boleto,
       ventaId: nuevaVenta.id,
-      codigoQr: 'null',
     }));
 
     await this.boletosService.crearBoletos(boletosToInsert);
 
-    // Procesar pago después de crear la venta
-    let resultadoPago;
+  // Obtener el método de pago
+  const [metodoPago] = await this.db
+    .select()
+    .from(metodosPago)
+    .where(eq(metodosPago.id, ventaData.metodoPagoId))
+    .limit(1);
+
+  if (!metodoPago) {
+    throw new NotFoundException(`Método de pago con ID ${ventaData.metodoPagoId} no encontrado`);
+  }
+
+  let resultadoPago;
+
+  // Proceso específico para cada tipo de procesador
+  if (metodoPago.procesador === 'deposito') {
+    resultadoPago = await this.depositoService.procesarPagoDeposito(nuevaVenta, metodoPago);
+  } else {
     try {
       resultadoPago = await this.pagosService.procesarPago(nuevaVenta.id, ventaData.metodoPagoId);
+
+      // Solo aplicable a PayPal (guardar orderId)
+      if (
+        resultadoPago &&
+        resultadoPago.configuracion &&
+        resultadoPago.externalReference &&
+        resultadoPago.url &&
+        resultadoPago.mensaje &&
+        (resultadoPago.configuracion.mode === 'sandbox' || resultadoPago.configuracion.mode === 'live')
+      ) {
+        await this.db.update(ventas)
+          .set({ orderId: resultadoPago.externalReference })
+          .where(eq(ventas.id, nuevaVenta.id));
+      }
     } catch (error) {
-      // Si falla el procesamiento del pago, no afectamos la creación de la venta
       console.error('Error al procesar pago:', error);
       resultadoPago = { error: 'Error al procesar pago', mensaje: error.message };
     }
+  }
 
     return {
       venta: nuevaVenta,
@@ -137,8 +175,13 @@ export class CrearVentaService {
     );
 
     // 4. Actualizar asientos
+    // Enviar solo los asientos comprados con ocupado: true
+    const asientosOcupados = createVentaPresencialDto.posiciones.map(pos => ({
+      numeroAsiento: pos.numeroAsiento,
+      ocupado: true
+    }));
     await this.asientosService.updateByBusId(createVentaPresencialDto.busId, {
-      posiciones: createVentaPresencialDto.posiciones,
+      posiciones: asientosOcupados,
     });
 
     // 5. Insertar venta
@@ -161,7 +204,6 @@ export class CrearVentaService {
     const boletosToInsert: CreateBoletoDto[] = boletosData.map(boleto => ({
       ...boleto,
       ventaId: nuevaVenta.id,
-      codigoQr: 'null',
     }));
 
     await this.boletosService.crearBoletos(boletosToInsert);
