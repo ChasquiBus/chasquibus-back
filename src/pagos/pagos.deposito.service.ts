@@ -5,7 +5,7 @@ export class DepositoService {
   /**
    * Generar instrucciones de depósito
    */
-  generarInstrucciones(venta: any, metodoPago: any) {
+  procesarPagoDeposito (venta: any, metodoPago: any) {
     const configuracion = JSON.parse(metodoPago.configuracion);
     
     // Generar código de referencia único

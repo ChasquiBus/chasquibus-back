@@ -1,0 +1,1 @@
+ALTER TABLE "ventas" ADD COLUMN "order_id" varchar(50);
