@@ -1,98 +1,214 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# ChasquiBus - Backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+---
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## 📱 Descripción
 
-## Description
+**ChasquiBus** es el backend de una plataforma integral para la gestión de rutas, boletos, buses, choferes y operaciones de cooperativas de transporte interprovincial. Este sistema está diseñado para integrarse con aplicaciones móviles y web, facilitando la administración y operación diaria de las cooperativas y mejorando la experiencia de los usuarios y choferes.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+---
 
-## Project setup
+## ✨ Características Principales
 
-```bash
-$ npm install
-```
+- Gestión de usuarios, roles y autenticación JWT.
+- Administración de cooperativas, buses, choferes y clientes.
+- Control de rutas, paradas, frecuencias y tarifas.
+- Generación y validación de boletos con QR.
+- Gestión de ventas, pagos y métodos de pago.
+- Módulo de descuentos y promociones.
+- Configuración flexible de asientos (incluye buses de dos pisos).
+- Endpoints para hojas de trabajo y programación de viajes.
+- Integración con OCR (tesseract.js) y generación de reportes.
+- API documentada con Swagger.
 
-## Compile and run the project
+---
 
-```bash
-# development
-$ npm run start
+## 🛠️ Tecnologías Utilizadas
 
-# watch mode
-$ npm run start:dev
+- **Node.js** (runtime)
+- **NestJS** (framework principal)
+- **TypeScript**
+- **PostgreSQL** (base de datos)
+- **Drizzle ORM** (acceso a datos y migraciones)
+- **JWT** (autenticación)
+- **Swagger** (documentación de API)
+- **Tesseract.js** (OCR)
+- **Supabase** (integración opcional)
+- **Jest** (testing)
+- **Prettier, ESLint** (formateo y calidad de código)
 
-# production mode
-$ npm run start:prod
-```
+---
 
-## Run tests
+## 📋 Requisitos Previos
 
-```bash
-# unit tests
-$ npm run test
+- Node.js >= 18.x
+- npm >= 9.x
+- PostgreSQL >= 13
+- (Opcional) Cuenta en Supabase para ciertas integraciones
 
-# e2e tests
-$ npm run test:e2e
+---
 
-# test coverage
-$ npm run test:cov
-```
-
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+## 🚀 Instalación y Configuración
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+# Clona el repositorio
+git clone <repo-url>
+cd chasquibus-back
+
+# Instala dependencias
+npm install
+
+# Configura las variables de entorno (.env)
+# Ejemplo:
+# DATABASE_URL=postgres://user:password@localhost:5432/chasquibus
+# JWT_SECRET=tu_secreto
+# (Agrega otras variables según tu entorno)
+
+# Ejecuta migraciones y seeds iniciales
+npm run drizzle:migrate:push
+npm run seed:superadmin
+npm run seed:ciudades
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+---
 
-## Resources
+## 📱 Estructura del Proyecto
 
-Check out a few resources that may come in handy when working with NestJS:
+```
+chasquibus-back/
+│
+├── src/
+│   ├── admin-cooperativas/
+│   ├── boletos/
+│   ├── buses/
+│   ├── choferes/
+│   ├── ciudades_provincias/
+│   ├── clientes/
+│   ├── configuracion-asientos/
+│   ├── cooperativas/
+│   ├── descuentos/
+│   ├── drizzle/           # ORM, migraciones, seeds
+│   ├── frecuencias/
+│   ├── hoja-trabajo/
+│   ├── metodos-pago/
+│   ├── pagos/
+│   ├── paradas/
+│   ├── ruta-parada/
+│   ├── rutas/
+│   ├── tarifas-paradas/
+│   ├── usuarios/
+│   ├── ventas/
+│   ├── app.controller.ts
+│   ├── app.module.ts
+│   └── app.service.ts
+├── package.json
+├── tsconfig.json
+├── README.md
+└── ...
+```
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+---
 
-## Support
+## 🎯 Funcionalidades Principales
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+- **Autenticación y roles:** Registro, login, recuperación de contraseña, control de acceso.
+- **Gestión de cooperativas:** CRUD de cooperativas, admins, buses y choferes.
+- **Rutas y frecuencias:** Definición de rutas, paradas, horarios y tarifas.
+- **Boletos y ventas:** Compra, validación y control de boletos (con QR).
+- **Pagos:** Integración de métodos de pago y control de estados.
+- **Descuentos:** Aplicación de descuentos y promociones.
+- **Hojas de trabajo:** Programación y seguimiento de viajes.
+- **Reportes y estadísticas:** (Opcional, según módulos implementados).
 
-## Stay in touch
+---
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+## 🔧 Scripts Disponibles
 
-## License
+- `npm run start` — Inicia el servidor en modo producción.
+- `npm run start:dev` — Inicia en modo desarrollo con recarga automática.
+- `npm run build` — Compila el proyecto.
+- `npm run test` — Ejecuta los tests unitarios.
+- `npm run test:e2e` — Ejecuta los tests end-to-end.
+- `npm run drizzle:migrate:push` — Aplica migraciones de base de datos.
+- `npm run seed:superadmin` — Crea el usuario superadmin.
+- `npm run seed:ciudades` — Carga ciudades y provincias iniciales.
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+---
+
+## 📱 Configuración de Dispositivos
+
+- El backend expone endpoints REST y Swagger para integración con apps móviles y web.
+- URL base por defecto: `http://localhost:3001/`
+- Documentación interactiva: `http://localhost:3001/api`
+
+---
+
+## 🔐 Configuración de Permisos
+
+- Acceso protegido por JWT.
+- Roles: superadmin, admin, chofer, cliente, etc.
+- Endpoints protegidos según rol y permisos.
+
+---
+
+## 🧪 Testing
+
+- Tests unitarios y de integración con Jest.
+- Cobertura de código:  
+  ```bash
+  npm run test:cov
+  ```
+
+---
+
+## 📦 Build y Deploy
+
+- Compilación:  
+  ```bash
+  npm run build
+  ```
+- Despliegue recomendado en servidores Node.js o plataformas como Heroku, AWS, etc.
+- Verifica variables de entorno y base de datos antes de producción.
+
+---
+
+## 🐛 Solución de Problemas
+
+- Revisa los logs del servidor para errores.
+- Verifica la conexión a la base de datos y las variables de entorno.
+- Usa la documentación Swagger para probar endpoints.
+- Si tienes problemas con migraciones, revisa la configuración de Drizzle ORM.
+
+---
+
+## 🤝 Contribución
+
+1. Haz un fork del repositorio.
+2. Crea una rama para tu feature o fix.
+3. Haz tus cambios y asegúrate de pasar los tests.
+4. Haz un Pull Request con una descripción clara.
+
+---
+
+## 📄 Licencia
+
+Este proyecto es privado y no tiene licencia de distribución pública.  
+Contacta al equipo para más información.
+
+---
+
+## 👥 Equipo de Desarrollo
+
+- **Desarrollador Principal**: NeoSoft
+- **Diseño UI/UX**: NeoSoft
+- **Backend**: Neosoft
+
+---
+
+## 📞 Soporte
+
+Para soporte técnico o preguntas:
+
+- 📧 Email: soporte@chasquibus.com
+- 📱 WhatsApp: +593 968622132
+- 🌐 Website: https://neosoft-a8aeb.web.app/
